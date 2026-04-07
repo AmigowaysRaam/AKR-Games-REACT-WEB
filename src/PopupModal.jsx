@@ -1,13 +1,64 @@
 import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { getPopdata } from "./services/authService";
-
 export default function PopupModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [current, setCurrent] = useState(0);
   const [animate, setAnimate] = useState(false);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const POPUP_EXPIRY = 6 * 60 * 60 * 1000; // 6 hours
+
+  const getPopupHash = (images) => {
+    return images.map((img) => img.src).join("|");
+  };
+
+  const handleNext = () => {
+    if (current === images.length - 1) {
+      const hash = getPopupHash(images);
+      localStorage.setItem("popup_last_closed", Date.now().toString());
+      localStorage.setItem("popup_data_hash", hash);
+      setAnimate(false);
+      setTimeout(() => setIsOpen(false), 250);
+    } else {
+      setAnimate(false);
+      setTimeout(() => {
+        setCurrent((prev) => prev + 1);
+        setAnimate(true);
+      }, 150);
+    }
+  };
+
+  const openPopup = () => {
+    setTimeout(() => {
+      setIsOpen(true);
+      setAnimate(true);
+    }, 500);
+  };
+
+  useEffect(() => {
+    if (!loading && images.length > 0) {
+      const lastClosed = localStorage.getItem("popup_last_closed");
+      const oldHash = localStorage.getItem("popup_data_hash");
+
+      const newHash = getPopupHash(images);
+
+      // ✅ If images changed → show immediately
+      if (oldHash !== newHash) {
+        openPopup();
+        return;
+      }
+
+      // ✅ If same → check 6 hour expiry
+      if (lastClosed) {
+        const diff = Date.now() - parseInt(lastClosed, 10);
+        if (diff < POPUP_EXPIRY) return;
+      }
+
+      openPopup();
+    }
+  }, [loading, images]);
+
   const fetchHome = async () => {
     try {
       const res = await getPopdata();
@@ -17,7 +68,7 @@ export default function PopupModal() {
           id: item.id || index + 1,
           src: item.image,
         }));
-  
+
         console.log(formatted, "Formatted Popup Data");
         setImages(formatted);
       } else {
@@ -30,14 +81,17 @@ export default function PopupModal() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchHome();
   }, []);
-
-  // ✅ Open popup after load
   useEffect(() => {
     if (!loading && images.length > 0) {
+      const lastClosed = localStorage.getItem("popup_last_closed");
+      if (lastClosed) {
+        const diff = Date.now() - parseInt(lastClosed, 10);
+        // ❌ within 6 hours → don't show
+        if (diff < POPUP_EXPIRY) return;
+      }
       const timer = setTimeout(() => {
         setIsOpen(true);
         setAnimate(true);
@@ -55,19 +109,6 @@ export default function PopupModal() {
     };
   }, [isOpen]);
 
-  // ✅ Next / Close
-  const handleNext = () => {
-    if (current === images.length - 1) {
-      setAnimate(false);
-      setTimeout(() => setIsOpen(false), 250);
-    } else {
-      setAnimate(false);
-      setTimeout(() => {
-        setCurrent((prev) => prev + 1);
-        setAnimate(true);
-      }, 150);
-    }
-  };
 
   // ✅ Loader
   if (loading) {

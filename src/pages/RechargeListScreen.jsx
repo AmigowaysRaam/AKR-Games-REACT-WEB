@@ -14,6 +14,11 @@ export default function RechargeListScreen() {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(0);
 
+  // 👉 drag states
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedWallet = localStorage.getItem("wallet");
@@ -25,13 +30,13 @@ export default function RechargeListScreen() {
       setWallet(storedWallet);
     }
   }, []);
+
   // ✅ API CALL
   useEffect(() => {
     const fetchRechargeList = async () => {
       try {
         setLoading(true);
         const res = await getRechargeList();
-        // alert(JSON.stringify(res));
         if (res?.status && Array.isArray(res?.plans)) {
           setListData(res.plans);
         } else {
@@ -53,16 +58,44 @@ export default function RechargeListScreen() {
     listData.length > 0
       ? listData[activeIndex] || listData[0]
       : null;
+
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const container = scrollRef.current;
-    const scrollLeft = container.scrollLeft;
+    const scrollLeftVal = container.scrollLeft;
     const cardWidth = container.offsetWidth * 0.9;
-    const newIndex = Math.round(scrollLeft / cardWidth);
+    const newIndex = Math.round(scrollLeftVal / cardWidth);
     if (newIndex !== activeIndex) {
       setActiveIndex(newIndex);
     }
   };
+
+  // ✅ MOUSE DRAG LOGIC (NEW)
+  const handleMouseDown = (e) => {
+    isDown.current = true;
+    scrollRef.current.classList.add("cursor-grabbing");
+    startX.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeft.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    scrollRef.current.classList.remove("cursor-grabbing");
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    scrollRef.current.classList.remove("cursor-grabbing");
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDown.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
   return (
     <div className="container">
       {/* HEADER */}
@@ -89,7 +122,11 @@ export default function RechargeListScreen() {
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="slider"
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          className="slider cursor-grab"
         >
           {listData.map((item, i) => (
             <div key={i} className="slide">
@@ -136,7 +173,7 @@ export default function RechargeListScreen() {
           ))}
         </div>
 
-        {/* DETAILS (AUTO CHANGE ON SWIPE) */}
+        {/* DETAILS */}
         {vip && (
           <div className="details">
             <VipRow
@@ -145,32 +182,51 @@ export default function RechargeListScreen() {
                 <>
                   Reach <span className="highlight">VIP{activeIndex}</span> to receive a one-time reward :
                   <div className="rewardRow">
-                    🪙 x ₹{vip?.money || 0}
-                    🎟 x{vip?.scrathcard || 0}
-                    🎯 x{vip?.spin || 0}
+                    <span className="rewardItem">🪙 ₹{vip?.money || 0}</span>
+                    <span className="rewardItem">🎟 {vip?.scrathcard || 0}</span>
+                    <span className="rewardItem">🎯 {vip?.spin || 0}</span>
                   </div>
+                </>
+              }
+            />
+            <VipRow
+              title="02.Weekly VIP Reward"
+              content={
+                <>
+                  Reach <span className="highlight">VIP{activeIndex}</span> to receive weekly base rewards
+                  <span className="highlight"> ₹{vip?.weeklyRward || 0}</span>.
                 </>
               }
             />
 
             <VipRow
-              title="02.Weekly VIP Reward"
-              content={`Reach the VIP${activeIndex} to receive weekly base rewards ₹${vip?.weeklyRward || 0}.`}
-            />
-
-            <VipRow
               title="03.VIP Withdrawal"
-              content={`At VIP${activeIndex}, the maximum amount per withdrawal is ₹${vip?.withdrawAmount || 0}`}
+              content={
+                <>
+                  At <span className="highlight">VIP{activeIndex}</span>, the maximum amount per withdrawal is
+                  <span className="highlight"> ₹{vip?.withdrawAmount || 0}</span>
+                </>
+              }
             />
 
             <VipRow
               title="04.VIP Withdrawal Frequency"
-              content={`At VIP${activeIndex}, you can withdraw up to ${vip?.withdrawFreq || 0} times per day`}
+              content={
+                <>
+                  At <span className="highlight">VIP{activeIndex}</span>, you can withdraw up to
+                  <span className="highlight"> {vip?.withdrawFreq || 0}</span> times per day
+                </>
+              }
             />
 
             <VipRow
               title="05.VIP Withdrawal Fee"
-              content={`At VIP${activeIndex}, withdrawal fees are as low as ${vip?.withdrawFee || 0}% per transaction.`}
+              content={
+                <>
+                  At <span className="highlight">VIP{activeIndex}</span>, withdrawal fees are as low as
+                  <span className="highlight"> {vip?.withdrawFee || 0}%</span> per transaction.
+                </>
+              }
             />
           </div>
         )}
@@ -199,13 +255,13 @@ export default function RechargeListScreen() {
           display: flex;
           overflow-x: auto;
           padding: 10px;
-          scroll-snap-type: x mandatory; /* ✅ smooth snap */
+          scroll-snap-type: x mandatory;
         }
 
         .slide {
           min-width: 90%;
           margin-right: 10px;
-          scroll-snap-align: center; /* ✅ snap center */
+          scroll-snap-align: center;
         }
 
         .card {
@@ -249,20 +305,19 @@ export default function RechargeListScreen() {
         .vipIcon {
           width: 60px;
         }
-.rechargeBtn {
-  background: linear-gradient(135deg,#9333ea,#7e22ce);
-  color: white;
-  border: none;
 
-  padding: 4px 12px;   /* 🔽 reduced */
-  font-size: 12px;     /* 🔽 smaller text */
-  border-radius: 16px; /* slightly tighter */
-  height: 28px;        /* fixed small height */
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+        .rechargeBtn {
+          background: linear-gradient(135deg,#9333ea,#7e22ce);
+          color: white;
+          border: none;
+          padding: 4px 12px;
+          font-size: 12px;
+          border-radius: 16px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
 
         .progressBar {
           height: 5px;
@@ -296,7 +351,13 @@ export default function RechargeListScreen() {
           align-items: center;
           justify-content: center;
         }
+.rewardRow {
+  display: flex;
+}
 
+.rewardItem {
+  padding: 0 10px; /* horizontal padding for EACH item */
+}
         .loader {
           width: 35px;
           height: 35px;

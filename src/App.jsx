@@ -42,13 +42,14 @@ import SearchScreen from "./pages/SearchScreen";
 import PasswordChangeScreen from "./pages/PasswordChangeScreen";
 import RechargeRecords from "./pages/RechargeRecords";
 import Maintenance from "./pages/Maintaincemode";
-import ThreeDigitGame from "./games/ThreeDigit";
 import WalletScreen from "./pages/WalletScreen";
-
+import AddbankAccount from "./pages/AddbankAccount";
 import StateLotteryGrid from "./games/StateLotteryGrid";
 import StateLotteryScreen from "./games/StateLotteryScreen";
 import StateLotteryGridWrapper from "./games/StateLotteryGridWrapper";
-
+import KeralaLotteryList, { KeralaLotteryDetail } from "./games/KeralaLotteryCard";
+import SattaMatkaList, { SattaMatkaDetail } from "./games/SattaMatkaGame";  
+import ThreeDigitList, { ThreeDigitDetail } from "./games/ThreeDigit";
 // ─── APP WRAPPER ─────────────────
 function AppWrapper() {
   const location = useLocation();
@@ -146,13 +147,13 @@ function AppWrapper() {
           <Routes>
             <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
             <Route path="/dice" element={<PrivateRoute><DiceGame /></PrivateRoute>} />
+            <Route path="/AddbankAccount" element={<PrivateRoute><AddbankAccount /></PrivateRoute>} />
             <Route path="/color" element={<PrivateRoute><ColorPrediction /></PrivateRoute>} />
             <Route path="/earn" element={<PrivateRoute><InviteFriends /></PrivateRoute>} />
             <Route path="/promo" element={<PrivateRoute><PromotionScreen /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="/PlayerProfileScreen" element={<PrivateRoute><PlayerProfileScreen /></PrivateRoute>} />
             <Route path="/Recharge" element={<PrivateRoute><RechargeListScreen /></PrivateRoute>} />
-            <Route path="/threedigit" element={<PrivateRoute><ThreeDigitGame /></PrivateRoute>} />
             <Route path="/payRecharge" element={<PrivateRoute><RechargeScreen /></PrivateRoute>} />
             <Route path="/WithdrawScreen" element={<PrivateRoute><WithdrawScreen /></PrivateRoute>} />
             <Route path="/MyBets" element={<PrivateRoute><MyBets /></PrivateRoute>} />
@@ -197,6 +198,16 @@ function AppWrapper() {
                 </PrivateRoute>
               }
             />
+            
+            <Route path="/threedigit" element={<PrivateRoute><ThreeDigitList /></PrivateRoute>} />
+            <Route path="/threedigit/:id" element={<PrivateRoute><ThreeDigitDetail /></PrivateRoute>} />
+
+            <Route path="/matka" element={<PrivateRoute><SattaMatkaList /></PrivateRoute>} />
+            <Route path="/matka/:id" element={<PrivateRoute><SattaMatkaDetail /></PrivateRoute>} />
+
+            <Route path="/kerala-lottery" element={<PrivateRoute><KeralaLotteryList /></PrivateRoute>} />
+           <Route path="/kerala-lottery/:id" element={<PrivateRoute><KeralaLotteryDetail /></PrivateRoute>} />
+
 
 
 

@@ -1,63 +1,87 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, Headphones, Info } from "lucide-react";
+import { ChevronLeft, Headphones, Info, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getWalletSummary } from "../services/authService";
 
 export default function WalletScreen() {
   const navigate = useNavigate();
-
   const [showInfo, setShowInfo] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [walletData, setWalletData] = useState({
     totalWallet: 0,
-    actions: [
-      {
-        name: "Recharge",
-        route: "/Recharge",
-        img: "https://www.singamlottery.com/static/media/recharge.d00b25b4176157c6f18e.webp",
-      },
-      {
-        name: "Withdraw",
-        route: "/WithdrawScreen",
-        img: "https://www.singamlottery.com/static/media/withdraw.fe7869677c95448c365b.webp",
-      },
-      {
-        name: "Transfer",
-        route: "/TransferScreen",
-        img: "https://www.singamlottery.com/static/media/transfer-gif.cc3e6a33a684f24550be.gif",
-      },
-    ],
-    games: [
-      { name: "Dice", icon: "🎲", balance: 0 },
-      { name: "Color", icon: "🎨", balance: 0 },
-      { name: "3Digit", icon: "🔢", balance: 0 },
-      { name: "QuickRace", icon: "🏎️", balance: 0 },
-      { name: "Kerala", icon: "🎟️", balance: 0 },
-      { name: "Matka", icon: "🎰", balance: 0 },
-      { name: "Lucky Spin", icon: "🎡", balance: 0 },
-      { name: "ScratchOff", icon: "🧾", balance: 0 },
-    ],
+    cash_balance: 0,
+    withdrawable_balance: 0,
+    actions: [],
+    games: [],
+    info: "",
   });
 
+  // ✅ INITIAL LOAD
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setWalletData((prev) => ({
-        ...prev,
-        totalWallet: parsed.wallet || 0,
-      }));
+      const parsedUser = JSON.parse(storedUser);
+      fetchWallet(parsedUser.id);
+    } else {
+      setLoading(false);
     }
   }, []);
 
+  // ✅ API CALL
+  const fetchWallet = async (uid, isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+      const res = await getWalletSummary({ id: uid });
+      const api = res?.data;
+      if (!api) return;
+      setWalletData({
+        totalWallet: Number(api?.wallet?.cash_balance || 0),
+        cash_balance: Number(api?.wallet?.cash_balance || 0),
+        withdrawable_balance: Number(api?.wallet?.withdrawable || 0),
+        actions: api?.actions || [],
+        games: api?.games || [],
+        info:
+          api?.info ||
+          "Transfer funds between main wallet and game wallets.",
+      });
+    } catch (err) {
+      console.log("API Error:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+  const handleRefresh = () => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return;
+
+    const parsedUser = JSON.parse(storedUser);
+    fetchWallet(parsedUser.id, true);
+  };
+
   return (
     <div className="max-w-[430px] mx-auto min-h-screen bg-gray-100 relative">
-
       {/* HEADER */}
       <div className="bg-gradient-to-b from-purple-700 to-pink-500 text-white p-4 pb-20 rounded-b-3xl">
         <div className="flex justify-between items-center mb-4">
           <ChevronLeft onClick={() => navigate(-1)} />
+
           <span className="font-semibold text-lg">My Wallet</span>
-          <Headphones onClick={() => navigate("/CustomerSupport")} />
+
+          <div className="flex items-center gap-3">
+            {/* 🔄 REFRESH BUTTON */}
+            <RefreshCw
+              onClick={handleRefresh}
+              className={`cursor-pointer ${
+                refreshing ? "animate-spin opacity-70" : ""
+              }`}
+            />
+
+            <Headphones onClick={() => navigate("/CustomerSupport")} />
+          </div>
         </div>
 
         <div className="flex justify-between items-center">
@@ -86,7 +110,11 @@ export default function WalletScreen() {
               onClick={() => navigate(item.route)}
               className="flex flex-col items-center cursor-pointer flex-1"
             >
-              <img src={item.img} className="w-10 h-10 object-contain" />
+              <img
+                src={item.img}
+                className="w-10 h-10 object-contain"
+                alt={item.name}
+              />
               <span className="text-sm mt-1">{item.name}</span>
             </div>
           ))}
@@ -100,7 +128,6 @@ export default function WalletScreen() {
             Gaming Wallet
           </p>
 
-          {/* INFO BUTTON */}
           <Info
             size={18}
             className="cursor-pointer text-gray-500"
@@ -117,34 +144,26 @@ export default function WalletScreen() {
               <div className="text-3xl">{g.icon}</div>
               <p className="text-sm font-medium mt-1">{g.name}</p>
               <p className="text-xs text-gray-500">
-                ₹ {g.balance.toFixed(2)}
+                ₹ {Number(g.balance || 0).toFixed(2)}
               </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 🔥 INFO POPUP */}
+      {/* INFO POPUP */}
       {showInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-
           <div className="relative w-[90%] max-w-sm rounded-xl overflow-hidden">
-
-            {/* GRADIENT BACKGROUND */}
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-yellow-400 opacity-90"></div>
 
-            {/* IMAGE */}
-
-
-            {/* CONTENT */}
             <div className="relative z-10 p-5 text-white text-center">
               <h2 className="font-bold text-lg mb-2">
                 Gaming Wallet Info
               </h2>
 
               <p className="text-sm mb-4">
-                Transfer funds between main wallet and game wallets.
-                Each game has a separate balance.
+                {walletData.info}
               </p>
 
               <button
@@ -157,7 +176,6 @@ export default function WalletScreen() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

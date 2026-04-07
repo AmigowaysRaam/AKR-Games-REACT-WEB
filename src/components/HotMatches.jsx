@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useRef } from "react";
+
 function MatchCard({ match }) {
   const isLive = match.status === "LIVE";
+
   return (
     <div
-      className="flex-shrink-0 w-64 rounded-2xl overflow-hidden border border-black/10 hover:border-black/20 transition-all duration-200 hover:-translate-y-0.5"
+      className="flex-shrink-0 w-64 rounded-xl overflow-hidden border border-black/10 hover:border-black/20 transition-all duration-200 hover:-translate-y-0.4"
       style={{
         background:
           "linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
@@ -107,8 +109,40 @@ function MatchCard({ match }) {
     </div>
   );
 }
+
 export default function HotMatchesSection({ matches }) {
-  // console.log("MATCHES 👉", matches);
+  const scrollRef = useRef(null);
+
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  // Mouse events for drag scroll
+  const handleMouseDown = (e) => {
+    isDown = true;
+    scrollRef.current.classList.add("cursor-grabbing");
+    startX = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeft = scrollRef.current.scrollLeft;
+  };
+
+  const handleMouseLeave = () => {
+    isDown = false;
+    scrollRef.current.classList.remove("cursor-grabbing");
+  };
+
+  const handleMouseUp = () => {
+    isDown = false;
+    scrollRef.current.classList.remove("cursor-grabbing");
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // scroll speed
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   if (!matches || matches.length === 0) {
     return (
       <div className="text-center text-gray-400 py-10">
@@ -116,9 +150,17 @@ export default function HotMatchesSection({ matches }) {
       </div>
     );
   }
+
   return (
     <div className="py-2">
-      <div className="flex overflow-x-auto no-scrollbar px-4 gap-3 pb-2">
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto no-scrollbar px-4 gap-3 pb-2 cursor-grab"
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+      >
         {matches.map((m) => (
           <MatchCard key={m.id} match={m} />
         ))}

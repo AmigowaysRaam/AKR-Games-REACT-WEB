@@ -85,27 +85,38 @@ export const changepassword = async (data) => {
   }
 };
 
-
 // ✅ LOGOUT
 export const logoutUser = () => {
   localStorage.removeItem("token");
 };
-
 // ✅ AUTH CHECK
 export const isAuthenticated = () => {
   return !!localStorage.getItem("token");
 };
 
-// ✅ HOME
 export const homeApi = async () => {
   try {
     const response = await API.post("?url=home");
+    console.log(response.data, "home data in service");
     return response.data;
   } catch (error) {
     console.error("Home API Error:", error.response?.data || error.message);
     throw error;
   }
 };
+
+// 
+export const checkMaintaince = async (data) => {
+  try {
+    const response = await API.post("?url=get-settings", data);
+    console.log(response.data, "maintenanceCheck data in service");
+    return response.data;
+  } catch (error) {
+    console.error("Home API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // rechargeCall
 export const rechargeCall = async (data) => {
   try {
@@ -116,6 +127,31 @@ export const rechargeCall = async (data) => {
     throw error;
   }
 };
+
+
+// getrechargeDetailsCall
+export const getrechargeDetailsCall = async (data) => {
+  try {
+    const response = await API.post("?url=recharge-details-full", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// getSideBarMenu
+export const getSideBarMenu = async (data) => {
+  try {
+    const response = await API.post("?url=sidebar-menu", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
 
 export const getRechargeHist = async (data) => {
   try {
@@ -129,6 +165,15 @@ export const getRechargeHist = async (data) => {
 export const getTransactionHist = async (data) => {
   try {
     const response = await API.post("?url=transaction-history", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const getResultHistory = async (data) => {
+  try {
+    const response = await API.post("?url=result", data);
     return response.data;
   } catch (error) {
     console.error("create-recharge API Error:", error.response?.data || error.message);

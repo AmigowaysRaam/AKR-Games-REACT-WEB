@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function SattaMatka({ items = [] }) {
   const [timers, setTimers] = useState([]);
+  const navigate =useNavigate();
 
   useEffect(() => {
     const initialTimers = items.map(() =>
       Math.floor(Math.random() * (60 * 60 * 6))
     );
     setTimers(initialTimers);
-
+   console.log("satta matka", items)
     const interval = setInterval(() => {
       setTimers((prev) => prev.map((t) => (t > 0 ? t - 1 : 0)));
     }, 1000);
@@ -20,7 +22,7 @@ export default function SattaMatka({ items = [] }) {
 
   return (
     <div className="px-3 py-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3" >
         {items.map((item, index) => {
           const time = timers[index] || 0;
 
@@ -31,6 +33,7 @@ export default function SattaMatka({ items = [] }) {
             <div
               key={item.id}
               className="rounded-sm overflow-hidden shadow-sm bg-white"
+              // onClick={()=>navigate(`/matka/${item.id}`)}
             >
               {/* CARD IMAGE */}
               <div

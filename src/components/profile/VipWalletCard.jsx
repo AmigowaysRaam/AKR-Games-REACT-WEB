@@ -12,9 +12,7 @@ export default function VipWalletCard() {
   const [walletData, setWalletData] = useState(null);
   const [vipData, setVipData] = useState(null);
   const [userdata, setuserdata] = useState(null);
-
   const navigate = useNavigate();
-
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -31,20 +29,14 @@ export default function VipWalletCard() {
     try {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
-
       const res = await getWalletSummary({ id: uid });
       const apiData = res?.data;
-
       console.log("Wallet Summary API Response:", apiData);
-
       if (apiData) {
-        // ✅ FIXED BINDING
         setWalletData({
           cash_balance: apiData?.wallet?.cash_balance || "0",
           withdrawable_balance: apiData?.wallet?.withdrawable || "0",
         });
-
-        // ✅ VIP DATA
         setVipData({
           level: apiData?.vip_level,
           progress: Number(apiData?.progress_percent) || 0,
@@ -53,7 +45,6 @@ export default function VipWalletCard() {
           icon: apiData?.vip_icon,
           bg: apiData?.vip_bg_image,
         });
-
         setProgress(Number(apiData?.progress_percent) || 0);
       }
     } catch (err) {
@@ -66,7 +57,6 @@ export default function VipWalletCard() {
 
   const handleRefresh = (e) => {
     e.stopPropagation();
-
     const storedUser = localStorage.getItem("user");
     if (!storedUser) {
       navigate("/Login");
@@ -147,8 +137,6 @@ export default function VipWalletCard() {
               <RefreshCw size={18} />
             </button>
           </div>
-
-          {/* BALANCE */}
           <div
             onClick={() => userdata && navigate("/WalletScreen")}
             className={`flex items-center gap-2 cursor-pointer ${userdata ? "" : "opacity-50 cursor-not-allowed"

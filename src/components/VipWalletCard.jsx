@@ -25,7 +25,7 @@ return (
         <span className="text-gray-700 font-bold text-lg">V1</span>
       </div>
 
-      {/* PROGRESS */}
+
       <div className="mt-3">
         <div className="w-full h-1.5 bg-gray-300 rounded-full overflow-hidden">
           <div

@@ -10,6 +10,7 @@ export default function ThreeDigits({ items = [] }) {
       () => Math.floor(Math.random() * 3600) // up to 60 mins
     );
     setTimers(initialTimers);
+    console.log("threedigit",items)
   }, [items]);
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,7 +34,7 @@ export default function ThreeDigits({ items = [] }) {
 
           return (
             <div
-              onClick={() => navigate('/threedigit')}
+              onClick={() => navigate(`/threedigit/${item.id}`)}
               key={item.id}
               className="rounded-lg overflow-hidden bg-white shadow-sm"
             >

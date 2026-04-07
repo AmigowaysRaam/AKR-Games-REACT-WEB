@@ -4,12 +4,10 @@ import { useNavigate } from "react-router-dom";
 
 export default function WithdrawScreen() {
   const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState("UPI");
   const [amount, setAmount] = useState(100);
 
   const amounts = [100, 200, 300, 500, 1000, 2000, 5000, 10000, 20000];
-
   return (
     <div className="max-w-[430px] mx-auto bg-gray-100 min-h-screen pb-24">
 
@@ -60,21 +58,16 @@ export default function WithdrawScreen() {
           </button>
         ))}
       </div>
-
-      {/* BANK SECTION */}
       <div className="mx-3 mt-3 bg-white rounded-xl p-4">
         <p className="text-sm text-gray-700 mb-3">Transfer to bank account</p>
 
-        <div className="border-2 border-dashed rounded-xl py-6 flex flex-col items-center justify-center text-purple-600 cursor-pointer">
+        <div onClick={()=>navigate('/AddbankAccount')} className="border-2 border-dashed rounded-xl py-6 flex flex-col items-center justify-center text-purple-600 cursor-pointer">
           <span className="text-2xl">+</span>
           <span className="text-sm mt-1">Add Bank Account</span>
         </div>
       </div>
-
-      {/* AMOUNT GRID */}
       <div className="mx-3 mt-3 bg-white rounded-xl p-4">
         <p className="text-sm font-medium mb-3">Withdraw Amount</p>
-
         <div className="grid grid-cols-3 gap-3">
           {amounts.map((amt) => (
             <div

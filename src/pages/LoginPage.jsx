@@ -9,11 +9,9 @@ export default function LoginPage() {
   const phoneRef = useRef(null);
   const passwordRef = useRef(null);
   const otpRef = useRef(null);
-  // const [phone, setPhone] = useState("");
-  // const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("9876543110");
   const [password, setPassword] = useState("test123");
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState("1234");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -110,7 +108,7 @@ export default function LoginPage() {
         activeTab,
         otp, countryCode,
       );
-console?.log(res,"resresres")
+      console?.log(res, "resresres")
       if (res?.token) {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
@@ -153,22 +151,27 @@ console?.log(res,"resresres")
             LOGIN
           </h2>
         </div>
-
         <div className="flex-1 px-6 pt-1">
           {/* Tabs */}
-          <div className="flex mb-8">
+          <div className="relative flex mb-8  py-2">
+            {/* Animated Slider */}
+            <div
+              className={`absolute top-1 bottom-1 w-1/2 rounded-sm bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-400`}
+              style={{
+                transform:
+                  activeTab === "password"
+                    ? "translateX(0%)"
+                    : "translateX(100%)",
+              }}
+            />
             {["password", "otp"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="flex-1 py-3 relative"
+                className={`relative flex-1 py-2 text-sm font-bold z-10 transition-colors duration-300 ${activeTab === tab ? "text-white" : "text-gray-700"
+                  }`}
               >
-                {activeTab === tab && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-purple-400 via-purple-400 to-indigo-400 rounded-t"></span>
-                )}
-                <span className="relative">
-                  {tab === "password" ? "Password Login" : "OTP Login"}
-                </span>
+                {tab === "password" ? "Password Login" : "OTP Login"}
               </button>
             ))}
           </div>

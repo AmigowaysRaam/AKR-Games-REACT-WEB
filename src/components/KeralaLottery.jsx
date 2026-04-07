@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function KeralaLottery({ items = [] }) {
     const [timers, setTimers] = useState([]);
+    const navigate =useNavigate();
 
     // ⏱️ Initialize random timers (example: countdown in seconds)
     useEffect(() => {
@@ -9,6 +11,7 @@ export default function KeralaLottery({ items = [] }) {
             Math.floor(Math.random() * (60 * 60 * 12)) // up to 12 hrs
         );
         setTimers(initialTimers);
+        console.log("kerala lottery",items)
 
         const interval = setInterval(() => {
             setTimers((prev) =>
@@ -21,8 +24,9 @@ export default function KeralaLottery({ items = [] }) {
     if (!items.length) return null;
     return (
         <div className="px-3 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3" >
                 {items.map((item, index) => {
+
                     const time = timers[index] || 0;
                     const hours = String(Math.floor(time / 3600)).padStart(2, "0");
                     const minutes = String(Math.floor((time % 3600) / 60)).padStart(2, "0");
@@ -31,6 +35,7 @@ export default function KeralaLottery({ items = [] }) {
                     return (
                         <div
                             key={item.id}
+                            onClick={()=>navigate(`/kerala-lottery/${item.id}`)}
                             className="rounded-sm overflow-hidden bg-white shadow-sm"
                         >
                             {/* 🔥 IMAGE SECTION */}

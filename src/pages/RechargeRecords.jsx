@@ -9,8 +9,6 @@ export default function RechargeRecords() {
   const navigate = useNavigate();
   const [openId, setOpenId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
-  const [user, setUser] = useState(null);
-  const [histdata, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   // ✅ FORMAT DATE
   const formatDate = (iso) => {
@@ -24,7 +22,8 @@ export default function RechargeRecords() {
       minute: "2-digit",
     });
   };
-
+  const [user, setUser] = useState(null);
+  const [histdata, setData] = useState([]);
   // ✅ LOAD USER + API
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

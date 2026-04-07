@@ -243,7 +243,7 @@ export default function PlayerProfileScreen() {
             </div>
 
             <input
-            maxLength={20}
+              maxLength={20}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Enter new username"
@@ -309,9 +309,14 @@ const avatarBox = {
   borderRadius: "50%",
   overflow: "hidden",
   margin: "auto",
+  borderWidth: 4, borderColor: "#555", borderStyle: "solid",
+  padding: 2,
 };
 
-const avatarImg = { width: "100%", height: "100%" };
+const avatarImg = {
+  width: "100%", height: "100%",
+  borderWidth: 2, borderColor: "#ddd", borderStyle: "solid",
+};
 
 const avatarList = {
   display: "flex",

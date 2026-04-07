@@ -12,6 +12,26 @@
       transform: scale(1);
     }
   }
+  /* 🔥 Blink + Pulse effect */
+.bonus-blink {
+  background: #ff2d2d;
+  animation: blinkPulse 1s infinite;
+}
+
+@keyframes blinkPulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
   /* hide scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

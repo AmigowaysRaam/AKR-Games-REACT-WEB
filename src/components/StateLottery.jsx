@@ -2,35 +2,28 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function StateLottery({ items = [] }) {
-
-  const navigate =useNavigate();
+  const navigate = useNavigate();
   useEffect(() => {
-    // console.log("State Lottery Items:", items);
-    console.log("ids->",items)
+    console.log("ids->", items)
   }, [items]);
-
   if (!items.length) return null;
-
   const times = [
-    "Mar 30th 12:57",
-    "Mar 30th 14:57",
-    "Mar 30th 17:57",
-    "Mar 30th 19:57",
-    "Mar 31st 14:57",
-    "Apr 01st 14:57",
-  ];
+    "Mar 30th 12:57", "Mar 30th 14:57",
+    "Mar 30th 17:57", "Mar 30th 19:57", "Mar 31st 14:57",
+    "Apr 01st 14:57",];
+
   return (
     <div className="px-3 py-3">
-  <div className="grid grid-cols-3 gap-3">
-  {items.map((item, index) => (
-    <div
-      key={item.id}
-      onClick={() => navigate(`/state-lottery/${item.nav}`)} // ✅ FIX HERE
-      className="rounded-xl text-white p-2 py-8 shadow-md relative overflow-hidden cursor-pointer"
-      style={{
-        background: `linear-gradient(135deg, ${item.colorCode?.join(",")})`,
-      }}
-    >
+      <div className="grid grid-cols-3 gap-3">
+        {items.map((item, index) => (
+          <div
+            key={item.id}
+            onClick={() => navigate(`/state-lottery/${item.nav}`)} // ✅ FIX HERE
+            className="rounded-xl text-white p-2 py-8 shadow-md relative overflow-hidden cursor-pointer"
+            style={{
+              background: `linear-gradient(135deg, ${item.colorCode?.join(",")})`,
+            }}
+          >
             <div className="flex justify-center mb-1">
               <img
                 src={item.img}

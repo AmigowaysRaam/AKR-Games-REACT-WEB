@@ -1,36 +1,102 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
+import { getRechargeHist, getResultHistory } from "../services/authService";
 
 export default function ResultScreen() {
   const navigate = useNavigate();
 
   const [mainTab, setMainTab] = useState("lottery");
   const [subTab, setSubTab] = useState("scratch");
+  const [user, setUser] = useState(null);
+  const [histdata, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Tabs (API ready)
-  const mainTabs = [
-    { id: "lottery", label: "Lottery" },
-    { id: "casino", label: "Casino" },
-  ];
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      fetchHistory(parsedUser.id); // 🔥 FIXED
+    } else {
+      setLoading(false);
+    }
+  }, []);
+  
+  const fetchHistory = async (userId) => {
+    try {
+      setLoading(true);
+      const res = await getResultHistory({
+        id: userId,
+      });
+      alert(JSON.stringify(res));
+      // 🔥 SAFE SET
+      // setData(res?.history || []);
+    } catch (err) {
+      console.log("API Error:", err);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const subTabs = [
-    { id: "scratch", label: "Scratch Off" },
-    { id: "kerala", label: "Kerala" },
-    { id: "3digit", label: "3 Digits" },
-    { id: "quick3", label: "Quick 3 Digits" },
-    { id: "color", label: "Color" },
-    { id: "dice", label: "Dice" },
-    { id: "matka", label: "Matka" },
-  ];
+  const dataConfig = {
 
-  // Dummy leaderboard data (API-ready)
-  const dummyData = [
-    { rank: 1, name: "Wild-1", user: "957****978", amount: "₹23,000" },
-    { rank: 2, name: "SAPPHIRE", user: "810****307", amount: "₹13,320" },
-    { rank: 3, name: "SAPPHIRE", user: "994****625", amount: "₹11,860" },
-    { rank: 4, name: "Wild-1", user: "879****702", amount: "₹10,700" },
-  ];
+    lottery: {
+      label: "Lottery",
+      subTabs: {
+        scratch: {
+          label: "Scratch Off",
+          leaderboard: [
+            { rank: 1, name: "Wild-1", user: "957****978", amount: "₹23,000" },
+            { rank: 2, name: "SAPPHIRE", user: "810****307", amount: "₹13,320" },
+          ],
+        },
+        kerala: {
+          label: "Kerala",
+          leaderboard: [
+            { rank: 1, name: "Kerala-1", user: "900****111", amount: "₹10,000" },
+          ],
+        },
+        "3digit": {
+          label: "3 Digits",
+          leaderboard: [],
+        },
+        quick3: {
+          label: "Quick 3 Digits",
+          leaderboard: [],
+        },
+        color: {
+          label: "Color",
+          leaderboard: [],
+        },
+        dice: {
+          label: "Dice",
+          leaderboard: [],
+        },
+        matka: {
+          label: "Matka",
+          leaderboard: [],
+        },
+      },
+    },
+    casino: {
+      label: "Casino",
+      subTabs: {
+        scratch: {
+          label: "Scratch Off",
+          leaderboard: [
+            { rank: 1, name: "Casino-X", user: "888****999", amount: "₹50,000" },
+          ],
+        },
+      },
+    },
+  };
+  const mainTabs = Object.keys(dataConfig);
+  const currentSubTabs = dataConfig[mainTab].subTabs;
+  const subTabs = Object.keys(currentSubTabs);
+  const currentData =
+    dataConfig[mainTab]?.subTabs?.[subTab]?.leaderboard || [];
 
   return (
     <div style={styles.container}>
@@ -44,37 +110,40 @@ export default function ResultScreen() {
 
       {/* Main Tabs */}
       <div style={styles.mainTabs}>
-        {mainTabs.map((tab) => (
+        {mainTabs.map((tabKey) => (
           <div
-            key={tab.id}
-            onClick={() => setMainTab(tab.id)}
+            key={tabKey}
+            onClick={() => {
+              setMainTab(tabKey);
+              setSubTab(Object.keys(dataConfig[tabKey].subTabs)[0]); // reset subtab
+            }}
             style={{
               ...styles.mainTab,
-              ...(mainTab === tab.id && styles.activeMainTab),
+              ...(mainTab === tabKey && styles.activeMainTab),
             }}
           >
-            {tab.label}
+            {dataConfig[tabKey].label}
           </div>
         ))}
       </div>
 
       {/* Sub Tabs */}
       <div style={styles.subTabs}>
-        {subTabs.map((tab) => (
+        {subTabs.map((key) => (
           <div
-            key={tab.id}
-            onClick={() => setSubTab(tab.id)}
+            key={key}
+            onClick={() => setSubTab(key)}
             style={styles.subTabItem}
           >
             <span
               style={{
                 ...styles.subTabText,
-                color: subTab === tab.id ? "#000" : "#555",
+                color: subTab === key ? "#000" : "#555",
               }}
             >
-              {tab.label}
+              {currentSubTabs[key].label}
             </span>
-            {subTab === tab.id && <div style={styles.activeUnderline} />}
+            {subTab === key && <div style={styles.activeUnderline} />}
           </div>
         ))}
       </div>
@@ -83,7 +152,7 @@ export default function ResultScreen() {
       <div style={styles.content}>
         <div style={styles.card}>
           <div style={styles.cardTitle}>
-            {subTabs.find((t) => t.id === subTab)?.label} Leaderboard
+            {currentSubTabs[subTab]?.label} Leaderboard
           </div>
 
           {/* Table Header */}
@@ -94,21 +163,28 @@ export default function ResultScreen() {
           </div>
 
           {/* List */}
-          {dummyData.map((item) => (
-            <div key={item.rank} style={styles.row}>
-              <div style={styles.game}>
-                <span style={styles.rank}>{item.rank}</span>
-                {item.name}
+          {currentData.length > 0 ? (
+            currentData.map((item) => (
+              <div key={item.rank} style={styles.row}>
+                <div style={styles.game}>
+                  <span style={styles.rank}>{item.rank}</span>
+                  {item.name}
+                </div>
+                <div>{item.user}</div>
+                <div style={styles.amount}>{item.amount}</div>
               </div>
-              <div>{item.user}</div>
-              <div style={styles.amount}>{item.amount}</div>
+            ))
+          ) : (
+            <div style={{ textAlign: "center", padding: 20, color: "#999" }}>
+              No Data Available
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 const styles = {
   container: {
     maxWidth: 430,
@@ -155,6 +231,7 @@ const styles = {
     background: "#fff",
     borderTop: "3px solid #7c3aed",
   },
+
   subTabs: {
     display: "flex",
     gap: 20,
@@ -162,21 +239,19 @@ const styles = {
     overflowX: "auto",
     background: "#fff",
     borderTop: "1px solid #eee",
-  
     scrollbarWidth: "none",
     msOverflowStyle: "none",
     WebkitOverflowScrolling: "touch",
-  
-    scrollSnapType: "x mandatory", // 👈 key
+    scrollSnapType: "x mandatory",
   },
+
   subTabItem: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     cursor: "pointer",
     whiteSpace: "nowrap",
-  
-    scrollSnapAlign: "start", // 👈 snap each tab
+    scrollSnapAlign: "start",
   },
 
   subTabText: {
