@@ -3,7 +3,7 @@ import { Mail } from "lucide-react";
 
 export default function SupportFooter() {
   return (
-    <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
+    <div className="bg-white rounded-2xl p-4 text-center shadow-sm w=[20px]">
       <p className="text-xs text-gray-500 mb-2">
         For any queries and complaints please email us
       </p>

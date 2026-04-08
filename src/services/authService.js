@@ -139,6 +139,40 @@ export const getrechargeDetailsCall = async (data) => {
     throw error;
   }
 };
+
+// addBankAccont
+export const addBankAccont = async (data) => {
+  try {
+    const response = await API.post("?url=add-bank-account", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// removeBankId
+export const removeBankId = async (data) => {
+  try {
+    const response = await API.post("?url=delete-bank-account", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const getWithdrawApi = async (data) => {
+  try {
+    const response = await API.post("?url=withdraw-details", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
 // getSideBarMenu
 export const getSideBarMenu = async (data) => {
   try {

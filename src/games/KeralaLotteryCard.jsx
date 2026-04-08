@@ -1,3 +1,4 @@
+import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -9,10 +10,11 @@ const LOTTERY_DATA = [
     number: "KN-618",
     drawTime: "11-04-2026 01:30 PM",
     lastJackpot: ["K", "A", "8", "3", "6", "0", "1", "7"],
-    tickets: ["KA456789"],
+    tickets: ["KA456789","KA456789"],
     prize: "80 Lakhs",
     bgColor: "from-orange-500 to-red-500",
     price: 50,
+    img:'https://cdn2.cloudfrontstatic.com/manager/3b38b10e93364fb28afb0ddd82395abe.webp'
   },
   {
     id: "online-only",
@@ -25,6 +27,7 @@ const LOTTERY_DATA = [
     prize: "1.2 Crores",
     bgColor: "from-green-500 to-teal-600",
     price: 50,
+    img: 'https://cdn2.cloudfrontstatic.com/manager/2074adc38db24ca4a676d0c43554c721.webp'
   },
   {
     id: "samrudh",
@@ -37,6 +40,7 @@ const LOTTERY_DATA = [
     prize: "1.2 Crores",
     bgColor: "from-green-500 to-teal-600",
     price: 50,
+     img: 'https://cdn2.cloudfrontstatic.com/manager/94b3640dd9f346f6b3daed0dfbfb99f8.webp'
   },
   {
     id: "online-only",
@@ -49,6 +53,7 @@ const LOTTERY_DATA = [
     prize: "1.2 Crores",
     bgColor: "from-green-500 to-teal-600",
     price: 50,
+    img: 'https://cdn2.cloudfrontstatic.com/manager/2074adc38db24ca4a676d0c43554c721.webp'
   },
   {
     id: "bhagyadhara",
@@ -61,6 +66,7 @@ const LOTTERY_DATA = [
     prize: "80 Lakhs",
     bgColor: "from-orange-500 to-red-500",
     price: 50,
+     img: 'https://cdn2.cloudfrontstatic.com/manager/f4a9a49106da40c8be0e5ef2848498d8.webp'
   },
   {
     id: "sthree-sakthi",
@@ -73,6 +79,7 @@ const LOTTERY_DATA = [
     prize: "75 Lakhs",
     bgColor: "from-pink-500 to-purple-600",
     price: 50,
+    img: 'https://cdn2.cloudfrontstatic.com/manager/e823528c97b046d99c14bdf47c4c39d6.webp'
   },
   {
     id: "dhanalakshmi",
@@ -85,6 +92,7 @@ const LOTTERY_DATA = [
     prize: "1 Crore",
     bgColor: "from-blue-500 to-indigo-600",
     price: 50,
+    img: 'https://cdn2.cloudfrontstatic.com/manager/f2f8289f43b8421889671fc3d83a5aaa.webp'
   },
   {
     id: "karunya-plus",
@@ -97,6 +105,7 @@ const LOTTERY_DATA = [
     prize: "80 Lakhs",
     bgColor: "from-orange-500 to-red-500",
     price: 50,
+    img: 'https://cdn2.cloudfrontstatic.com/manager/3b089a01b87c4c2a90df0c6412060c90.webp'
   },
   {
     id: "suvarana-keralam",
@@ -109,6 +118,7 @@ const LOTTERY_DATA = [
     prize: "80 Lakhs",
     bgColor: "from-orange-500 to-red-500",
     price: 50,
+    img: 'https://cdn2.cloudfrontstatic.com/manager/c9d5d47a575d4dd997bf16e17997ad55.webp'
   },
 
 
@@ -130,7 +140,7 @@ function JackpotBall({ value, index }) {
   const isLetter = isNaN(value);
   return (
     <div
-      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shadow-inner ${isLetter ? "bg-orange-400" : "bg-red-500"
+      className={`w-20 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shadow-inner ${isLetter ? "bg-orange-400" : "bg-red-500"
         }`}
     >
       {value}
@@ -171,10 +181,10 @@ function BettingTab({ lottery, onRemoveTicket }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 pt-4">
+    <div className="flex flex-col gap-1 pt-4">
       <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="font-semibold text-gray-800 text-sm">
+          <span className="font-bold text-gray-800 text-medium">
             Shopping Cart ({tickets.length})
           </span>
           <button
@@ -189,11 +199,11 @@ function BettingTab({ lottery, onRemoveTicket }) {
             </svg>
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-4 mt-8">
           {tickets.map((t, i) => (
             <div
               key={i}
-              className="flex items-center gap-1 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-700"
+              className="flex items-center gap-2 bg-white border border-gray-400 rounded-lg px-2 py-1 text-sm font-medium text-gray-700"
             >
               {t}
               <button
@@ -232,7 +242,7 @@ function BettingTab({ lottery, onRemoveTicket }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 mt-4">
         {["10 Quick Picks", "25 Quick Picks", "Customize Your Tickets"].map((label) => (
           <button
             key={label}
@@ -312,7 +322,7 @@ export function KeralaLotteryDetail() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
-        <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-800 text-xl">‹</button>
+        <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-800 text-xl"><ChevronLeft/></button>
         <span className="font-semibold text-gray-800">Kerala State Lottery</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">Balance</span>
@@ -323,9 +333,13 @@ export function KeralaLotteryDetail() {
       <div className="px-4 py-4 bg-white border-b border-gray-100">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${lottery.bgColor} flex items-center justify-center`}>
-              <span className="text-2xl">🎟️</span>
-            </div>
+            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${lottery.bgColor} flex items-center justify-center overflow-hidden`}>
+  <img
+    src={lottery.img}
+    alt="lottery"
+    className="w-full h-full object-cover"
+  />
+</div>
             <div>
               <div className="font-bold text-gray-900 text-base">{lottery.name}</div>
               <div className="text-xs text-gray-500">NO.{lottery.number}</div>
@@ -333,11 +347,11 @@ export function KeralaLotteryDetail() {
           </div>
           <div className="text-right">
             <div className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Draw Time</div>
-            <div className="font-bold text-gray-800 text-sm">{lottery.drawTime}</div>
+            <div className="font-bold text-gray-800 text-sm mt-3">{lottery.drawTime}</div>
           </div>
         </div>
 
-        <div className="mt-4 bg-gray-100 rounded-xl px-3 py-2 flex items-center gap-3">
+        <div className="mt-8 bg-gray-100 rounded-xl px-3 py-6 flex items-center gap-3">
           <span className="text-xs text-gray-500 whitespace-nowrap">Last Jackpot<br />Outcome:</span>
           <div className="flex gap-1.5 overflow-x-auto">
             {lottery.lastJackpot.map((v, i) => (
@@ -347,7 +361,7 @@ export function KeralaLotteryDetail() {
         </div>
       </div>
 
-      <div className="bg-white border-b border-gray-100 px-4">
+      <div className="bg-white border-b border-gray-100 px-4 mt-5">
         <div className="flex">
           {["betting", "result history", "my order"].map((t) => (
             <TabButton key={t} label={t.charAt(0).toUpperCase() + t.slice(1)} active={tab === t} onClick={() => setTab(t)} />

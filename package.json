@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
-    "@capacitor/app": "^8.1.0",
+    "@matmachry/react-wheel-of-fortune": "^1.0.6",
     "@tailwindcss/vite": "^4.2.2",
     "axios": "^1.13.6",
     "lucide-react": "^1.7.0",

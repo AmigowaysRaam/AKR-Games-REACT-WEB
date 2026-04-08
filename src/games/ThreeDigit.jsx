@@ -1,3 +1,4 @@
+import { ChevronLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
  
@@ -304,7 +305,7 @@ export function ThreeDigitDetail() {
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
-        <button onClick={() => navigate(-1)} className="text-2xl text-gray-500 leading-none">‹</button>
+        <button onClick={() => navigate(-1)} className="text-2xl text-gray-500 leading-none"><ChevronLeft/></button>
         <span className="font-semibold text-gray-900">{game.name}</span>
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <span>Balance</span>

@@ -26,11 +26,15 @@ export default function RechargeScreen() {
   };
   useEffect(() => {
     getRechargDetails();
-  }, []);
+  }, [activeTab]);
+  
   const getRechargDetails = async () => {
     try {
       const res = await getrechargeDetailsCall({
-        user_id: JSON.parse(localStorage.getItem("user"))?.id
+        user_id: JSON.parse(localStorage.getItem("user"))?.id,
+        "name": "general",
+        "method": activeTab == "UPI" ? "UPI" : "CRYPTO",
+        amount: amount || rules.min
       });
       if (res?.success) {
         const data = res.data;
@@ -41,7 +45,6 @@ export default function RechargeScreen() {
           img: m.icon
         }));
         setChannels(mappedChannels);
-        // ✅ set quick amounts
         setUpiAmounts(data.quick_amounts);
         // ✅ AUTO SELECT FIRST AMOUNT
         if (data.quick_amounts?.length > 0) {
@@ -139,14 +142,11 @@ export default function RechargeScreen() {
             </div>
           </div>
         </div>
-
         <div className="absolute bottom-0 w-full bg-purple-900/80 px-4 py-3">
           <p className="text-sm font-semibold">{methodText}</p>
           <p className="text-xs opacity-80 mt-1">{note}</p>
         </div>
       </div>
-
-      {/* TABS */}
       <div className="flex mx-3 bg-gray-200 rounded-xl p-1">
         {["UPI", "USDT"].map((tab) => (
           <button
@@ -162,12 +162,9 @@ export default function RechargeScreen() {
           </button>
         ))}
       </div>
-      {/* <p>{JSON.stringify(bonusCards)}</p> */}
-
       <div className="flex gap-3 px-3 mt-3">
         {bonusCards?.map((card, i) => {
           const isActive = selectedBonus === i;
-
           return (
             <div
               key={i}
@@ -191,13 +188,9 @@ export default function RechargeScreen() {
                   {card?.title}
                 </div>
               </div>
-
-              {/* Active Border */}
               {isActive && (
                 <>
                   <div className="absolute inset-0 border-2 border-blue-500 rounded-xl"></div>
-
-                  {/* Tick Badge */}
                   <div className="absolute top-1 right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs shadow">
                     ✓
                   </div>
@@ -207,6 +200,7 @@ export default function RechargeScreen() {
           );
         })}
       </div>
+
       <div className="mx-3 mt-3">
         <input
           className="w-full p-3 rounded-lg border outline-none"
@@ -241,7 +235,7 @@ export default function RechargeScreen() {
         </div>
       )}
       <div className="grid grid-cols-4 gap-3 px-3 mt-3">
-        {(activeTab === "UPI" ? upiAmounts : cryptoAmounts).map((amt, i) => (
+        {(activeTab === "UPI" ? upiAmounts : upiAmounts).map((amt, i) => (
           <div
             key={i}
             onClick={() => {
@@ -285,7 +279,6 @@ export default function RechargeScreen() {
           ))}
         </div>
       </div>
-      {/* CONFIRM MODAL */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center">
           <div className="bg-white p-5 rounded-xl w-[90%]">

@@ -1,3 +1,4 @@
+import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
  
@@ -283,7 +284,7 @@ export function SattaMatkaDetail() {
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
-        <button onClick={onBack} className="text-2xl text-gray-500 hover:text-gray-800 leading-none">‹</button>
+        <button onClick={onBack} className="text-2xl text-gray-500 hover:text-gray-800 leading-none"><ChevronLeft/></button>
         <span className="font-semibold text-gray-900">Satta Matka</span>
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <span>Balance</span>
@@ -506,24 +507,41 @@ export function SattaMatkaDetail() {
       </div>
  
       {/* Bottom Pay Bar */}
-      <div className="fixed bottom-0 left-185 right-185 bg-white border-t border-gray-100 px-4 py-3 flex items-center justify-between z-20">
-        <div className="flex items-center gap-2">
+            <div style={{ 
+              position: "fixed",
+              bottom: 0,
+
+              // 👇 center it to match app container
+              left: "50%",
+              transform: "translateX(-50%)",
+
+              // 👇 SAME as your app max width
+              width: "100%",
+              maxWidth: 420,   // ⚠️ match your layout (420 / 480 etc)
+
+              zIndex: 100,
+              background: "#fff",
+              borderTop: "1px solid #e5e7eb"
+            }}>
+
+        <div className="flex items-center gap-2 justify-between">
+          <div className="flex gap-2">
           <div className="w-9 h-9 bg-red-500 rounded-xl flex items-center justify-center">
             <span className="text-white text-sm">🛒</span>
           </div>
           <div>
-            <div className="font-bold text-gray-900 text-base">
-              ₹{totalBid.toFixed(2)}
-            </div>
-            <div className="text-xs text-gray-400">{bids.length} BIDS</div>
+            <div className="font-bold text-gray-900 text-base">₹{totalBid.toFixed(2)}</div>
+            <div className="text-xs text-gray-400">{bids.length} numbers</div>
           </div>
-        </div>
-        <button
+          </div>
+          <button
           disabled={bids.length === 0}
-          className="bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-8 py-3 rounded-full text-sm transition-colors"
+          className=" bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white font-bold px-8 py-3 rounded-full text-sm transition-colors"
         >
           Pay Now
         </button>
+        </div>
+        
       </div>
     </div>
   );

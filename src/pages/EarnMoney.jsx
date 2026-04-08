@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { ChevronLeft } from "lucide-react";
 
 export default function InviteFriends() {
   const navigate = useNavigate();
-
   const [data] = useState({
     code: "IB4YZV7M",
     income: 0,
@@ -14,18 +14,20 @@ export default function InviteFriends() {
       { id: 2, reward: 300, invites: 5, progress: 0 },
     ],
   });
-  
+
   const copyCode = () => {
     navigator.clipboard.writeText(data.code);
   };
+
   return (
     <div style={container}>
-      
       {/* HEADER (Fixed properly) */}
       <div style={header}>
-        <span onClick={() => navigate(-1)} style={back}>‹</span>
+        <span onClick={() => navigate(-1)} style={back}>
+          <ChevronLeft />
+        </span>
         <span style={title}>Invite Friends</span>
-        <button onClick={()=>navigate('/RulesScreeen')} style={rulesBtn}>Rules</button>
+        <button onClick={() => navigate('/RulesScreeen')} style={rulesBtn}>Rules</button>
       </div>
 
       {/* CONTENT */}
@@ -34,14 +36,9 @@ export default function InviteFriends() {
         {/* BANNER */}
         <div style={banner}>
           <div style={overlay} />
-
-          <div style={{ position: "relative", zIndex: 2 }}>
-            <div style={inviteText}>
-              Invite friends and deposit <br />
-              Both parties can receive rewards
-            </div>
-
-            {/* CODE */}
+          <div style={{
+            position: "relative", zIndex: 2, paddingTop: "45%",
+          }}>
             <div style={codeWrapper}>
               <div style={codeLeft}>
                 <span style={codeText}>{data.code}</span>
@@ -82,7 +79,7 @@ export default function InviteFriends() {
         <div style={list}>
           {data.bonuses.map((b) => (
             <div key={b.id} style={card}>
-              
+
               <div style={cardHeader}>
                 <span>Bonus {b.id}</span>
                 <span style={{ color: "#7c3aed" }}>₹{b.reward}</span>
@@ -99,7 +96,6 @@ export default function InviteFriends() {
                   ₹{data.rechargePerPerson}
                 </span>
               </div>
-
               <div style={progressRow}>
                 <div>
                   <span style={highlight}>{b.progress}</span>/{b.invites}
@@ -120,9 +116,6 @@ export default function InviteFriends() {
     </div>
   );
 }
-
-/* ================= FIXED STYLES ================= */
-
 const container = {
   maxWidth: 430,
   margin: "0 auto",
@@ -132,7 +125,6 @@ const container = {
   background: "#f5f5f5",
   overflow: "hidden",
 };
-
 const header = {
   height: 55,
   background: "#7c3aed",
@@ -143,16 +135,12 @@ const header = {
   padding: "0 12px",
   flexShrink: 0,
 };
-
 const content = {
   flex: 1,
   overflowY: "auto",
 };
-
 const back = { fontSize: 22, cursor: "pointer" };
-
 const title = { fontWeight: "bold" };
-
 const rulesBtn = {
   background: "white",
   border: "none",
@@ -180,6 +168,7 @@ const inviteText = {
   color: "white",
   fontWeight: "bold",
   marginBottom: 12,
+
 };
 
 const codeWrapper = {

@@ -23,19 +23,30 @@ export default function Profile() {
 
   const fetchHistory = async () => {
     try {
+      // ✅ 1. Check localStorage first
+      const localData = localStorage.getItem("sidebarMenu");
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        setSections(parsed); // instant render (no loading)
+        // alert(JSON.stringify(parsed?.quick_actions));
+      }
+      // ✅ 2. Always call API in background (optional but recommended)
       const res = await getSideBarMenu();
-
       console.log("Sidebar Menu Data:", res);
-
       if (res?.success && Array.isArray(res?.data)) {
         setSections(res.data);
-      } else {
+
+        // ✅ 3. Update localStorage
+        localStorage.setItem("sidebarMenu", JSON.stringify(res.data));
+      } else if (!localData) {
         setSections([]);
       }
-
     } catch (err) {
       console.log("API Error:", err);
-      setSections([]);
+      const localData = localStorage.getItem("sidebarMenu");
+      if (!localData) {
+        setSections([]);
+      }
     }
   };
   // 🔥 ICON MAP
@@ -73,14 +84,13 @@ export default function Profile() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-
-      {/* HEADER */}
       <div
         onClick={() => {
           user && user?.id ? navigate("/PlayerProfileScreen") : navigate("/Login");
         }}
         className="sticky top-0 z-50 bg-white border-b border-gray-200"
       >
+        {/* <p>{user?.profile_image}</p> */}
         {user && user?.id ? (
           <div className="p-4 flex items-center gap-3 cursor-pointer">
             <img
@@ -130,55 +140,39 @@ export default function Profile() {
 
         <VipWalletCard wallet={wallet} />
         <div className="grid grid-cols-4 gap-4 px-4 mt-6 text-center">
-          {[
-            {
-              name: "Recharge",
-              nav: "payRecharge",
-              img: "https://www.singamlottery.com/static/media/recharge.d00b25b4176157c6f18e.webp",
-            },
-            {
-              name: "Withdraw",
-              nav: "WithdrawScreen",
-              img: "https://www.singamlottery.com/static/media/withdraw.fe7869677c95448c365b.webp",
-            },
-            {
-              name: "Transfer",
-              nav: "TransferScreen",
-              img: "https://www.singamlottery.com/static/media/transfer-gif.cc3e6a33a684f24550be.gif",
-            },
-            {
-              name: "Lucky Spin",
-              nav: "luckySpin",
-              img: "https://www.singamlottery.com/static/media/luckyspin.e2d3ac10d18ef8329bc7.gif",
-            },
-          ].map((item) => (
-            <div
-              key={item.name}
-              onClick={() => {
-                if (user && user?.id) {
-                  if (item.name === "Lucky Spin") {
-                    setShowSpin(true);
-                  } else {
-                    navigate(`/${item.nav}`);
+          {/* <p>{JSON.stringify(sections
+            .filter(sec => sec.type === "quick_actions"))}</p> */}
+          {sections
+            .filter(sec => sec.type === "quick_actions")
+            .flatMap(sec => sec.items)
+            .map((item, index) => (
+              <div
+                key={item.name}
+                onClick={() => {
+                  if (user && user?.id) {
+                    if (item.name === "Lucky Spin") {
+                      setShowSpin(true);
+                    } else {
+                      navigate(`/${item.nav}`);
+                    }
                   }
-                }
-                else {
-                  navigate(`/Login`);
-                }
-              }}
-            >
-              <div className="w-12 h-12 mx-auto flex items-center justify-center overflow-hidden">
-                <img
-                  src={item.img}
-                  alt={item.name}
-                  className="w-full h-full object-contain"
-                />
+                  else {
+                    navigate(`/Login`);
+                  }
+                }}
+              >
+                <div className="w-12 h-12 mx-auto flex items-center justify-center overflow-hidden">
+                  <img
+                    src={item.img}
+                    alt={item.name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <p className="text-xs mt-1 text-gray-600 font-medium">
+                  {item.name}
+                </p>
               </div>
-              <p className="text-xs mt-1 text-gray-600 font-medium">
-                {item.name}
-              </p>
-            </div>
-          ))}
+            ))}
         </div>
         {sections
           .filter(sec => sec.type === "promo")
@@ -227,7 +221,7 @@ export default function Profile() {
             </ProfileSection>
           ))}
         {user && (
-          <div className="px-4 mt-6">
+          <div className="px-4 mt-4 mb-4">
             <button
               onClick={() => setShowLogoutModal(true)}
               className="w-full flex items-center justify-center gap-2 bg-red-500 text-white py-3 rounded-xl"

@@ -4,18 +4,17 @@ export default function LuckySpinModal({ show, onClose }) {
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
     const [result, setResult] = useState(null);
-
     const [activeTab, setActiveTab] = useState("winners");
 
     const rewards = [
-        { label: "50", value: 50 },
-        { label: "1", value: 1 },
-        { label: "5000", value: 5000 },
-        { label: "5", value: 5 },
-        { label: "1000", value: 1000 },
-        { label: "200", value: 200 },
-        { label: "10", value: 10 },
-        { label: "100", value: 100 },
+        { label: "50", value: 50, color: "#ff4d4d" },
+        { label: "1", value: 1, color: "#ffd93d" },
+        { label: "5000", value: 5000, color: "#4cd137" },
+        { label: "5", value: 5, color: "#3498db" },
+        { label: "1000", value: 1000, color: "#9b59b6" },
+        { label: "200", value: 200, color: "#1abc9c" },
+        { label: "10", value: 10, color: "#e67e22" },
+        { label: "100", value: 100, color: "#00cec9" },
     ];
 
     const [bigWinners] = useState([
@@ -29,24 +28,27 @@ export default function LuckySpinModal({ show, onClose }) {
 
     if (!show) return null;
 
+    const slice = 360 / rewards.length;
+
+    // 🎨 Perfect circular gradient
+    const gradient = `conic-gradient(
+    ${rewards
+            .map(
+                (r, i) =>
+                    `${r.color} ${i * slice}deg ${(i + 1) * slice}deg`
+            )
+            .join(",")}
+  )`;
+
     const spinWheel = () => {
         if (isSpinning) return;
-
         setIsSpinning(true);
         setResult(null);
-
         const index = Math.floor(Math.random() * rewards.length);
-        const slice = 360 / rewards.length;
-
-        // 🎯 Stop exactly at center of slice
         const stopAngle = 360 - (index * slice + slice / 2);
-
-        // 🎡 Realistic spin
-        const spins = 360 * (5 + Math.random() * 2); // random extra spins
+        const spins = 360 * (5 + Math.random() * 2);
         const finalRotation = rotation + spins + stopAngle;
-
         setRotation(finalRotation);
-
         setTimeout(() => {
             const win = rewards[index];
             setResult(win);
@@ -60,42 +62,43 @@ export default function LuckySpinModal({ show, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-            <div className="relative w-[360px]">
+        <div className="fixed inset-0 bg-black/90 flex justify-center items-center z-50">
+            <div className="w-[390px] relative h-[700px]">
 
                 {/* CLOSE */}
                 <button
                     onClick={onClose}
-                    className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full z-50"
+                    className="absolute right-2 top-2 w-8 h-8 bg-white rounded-full z-50"
                 >
                     ✕
                 </button>
 
-                <div className="bg-gradient-to-b from-purple-700 to-purple-500 rounded-3xl p-4 text-center shadow-2xl">
+                <div className="bg-gradient-to-b from-yellow-700 to-brown-500 rounded-3xl p-4 text-center shadow-2xl">
 
                     {/* TITLE */}
-                    <h2 className="text-yellow-300 font-extrabold text-xl">
+                    <h2 className="text-yellow-300 text-xl font-bold">
                         🎉 LUCKY SPIN
                     </h2>
 
                     {/* POINTER */}
-                    <div className="w-0 h-0 mx-auto mt-2 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-yellow-400"></div>
+                    <div className="w-0 h-0 mx-auto mt-2 border-l-[12px] border-r-[12px] border-b-[20px] border-transparent border-b-yellow-400"></div>
 
                     {/* 🎡 WHEEL */}
-                    <div className="relative w-72 h-72 mx-auto mt-2">
+                    <div className="relative w-72 h-72 mx-auto mt-3">
 
-                        {/* WHEEL */}
                         <div
-                            className="w-full h-full rounded-full border-[12px] border-yellow-400 bg-gradient-to-br from-green-600 to-green-800"
+                            className="w-full h-full rounded-full border-[10px] border-yellow-400 shadow-[0_0_30px_rgba(255,215,0,0.7)]"
                             style={{
+                                background: gradient,
                                 transform: `rotate(${rotation}deg)`,
                                 transition: isSpinning
                                     ? "transform 4.2s cubic-bezier(0.12, 0.8, 0.32, 1)"
                                     : "none",
                             }}
                         >
+                            {/* Labels */}
                             {rewards.map((item, i) => {
-                                const angle = (360 / rewards.length) * i;
+                                const angle = slice * i + slice / 2;
 
                                 return (
                                     <div
@@ -103,10 +106,10 @@ export default function LuckySpinModal({ show, onClose }) {
                                         className="absolute left-1/2 top-1/2 text-white text-xs font-bold"
                                         style={{
                                             transform: `
-                                                rotate(${angle}deg)
-                                                translateY(-140px)
-                                                rotate(-${angle}deg)
-                                            `,
+                        rotate(${angle}deg)
+                        translateY(-120px)
+                        rotate(-${angle}deg)
+                      `,
                                         }}
                                     >
                                         ₹{item.label}
@@ -119,7 +122,7 @@ export default function LuckySpinModal({ show, onClose }) {
                         <button
                             onClick={spinWheel}
                             disabled={isSpinning}
-                            className="absolute inset-0 m-auto w-20 h-20 bg-yellow-400 rounded-full text-red-600 font-bold text-lg shadow-xl border-4 border-orange-500"
+                            className="absolute inset-0 m-auto w-20 h-20 bg-yellow-400 rounded-full text-red-600 font-bold shadow-xl border-4 border-orange-500"
                         >
                             {isSpinning ? "..." : "GO"}
                         </button>
@@ -127,7 +130,7 @@ export default function LuckySpinModal({ show, onClose }) {
 
                     {/* RESULT */}
                     {result && (
-                        <div className="mt-3 bg-green-500 py-2 rounded-lg text-white font-bold">
+                        <div className="mt-3 bg-green-500 py-2 rounded-lg text-white font-bold animate-bounce">
                             🎉 You Won ₹{result.value}
                         </div>
                     )}
@@ -136,7 +139,6 @@ export default function LuckySpinModal({ show, onClose }) {
                     <div className="flex gap-2 mt-4">
                         <button
                             onClick={spinWheel}
-                            disabled={isSpinning}
                             className="flex-1 bg-green-500 py-2 rounded-full text-white font-bold"
                         >
                             x10
@@ -160,7 +162,7 @@ export default function LuckySpinModal({ show, onClose }) {
                             </div>
                             <div
                                 onClick={() => setActiveTab("my")}
-                                className={`flex-1 py-2 ${activeTab === "my" ? "bg-orange-400 text-black font-bold" : ""}`}
+                                className={`flex-1 py-2 ${activeTab === "my" ? "bg-yellow-400 text-black font-bold" : ""}`}
                             >
                                 My Spin
                             </div>
@@ -174,7 +176,6 @@ export default function LuckySpinModal({ show, onClose }) {
                                         <span>₹{item.amount}</span>
                                     </div>
                                 ))}
-
                             {activeTab === "my" &&
                                 (mySpins.length ? (
                                     mySpins.map((item, i) => (
@@ -188,15 +189,6 @@ export default function LuckySpinModal({ show, onClose }) {
                                         No spins yet
                                     </div>
                                 ))}
-                        </div>
-                        <div className="flex justify-between px-3 pb-2 text-[10px] text-yellow-300">
-                            <span>My Free 3</span>
-                            <span>
-                                More Free{" "}
-                                <span className="bg-yellow-400 text-black px-1 rounded">
-                                    VIP
-                                </span>
-                            </span>
                         </div>
                     </div>
 

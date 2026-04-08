@@ -118,7 +118,6 @@ export default function RechargeListScreen() {
       )}
 
       <div className="contentWrapper">
-        {/* SLIDER */}
         <div
           ref={scrollRef}
           onScroll={handleScroll}
@@ -137,13 +136,15 @@ export default function RechargeListScreen() {
                 }}
               >
                 <div className="overlay" />
-
                 <div className="cardContent">
                   <div className="topRow">
                     <img src={item?.icon} className="vipIcon" />
                     <button
                       className="rechargeBtn"
-                      onClick={() => navigate("/payRecharge")}
+                      onClick={() => {
+                        user?.id ? navigate("/payRecharge") :
+                        navigate("/login")
+                      }}
                     >
                       Recharge
                     </button>

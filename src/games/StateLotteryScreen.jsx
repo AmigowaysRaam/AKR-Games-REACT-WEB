@@ -46,6 +46,7 @@ import { MyOrderTab, RulesModal, BetSummaryBar } from "./MyOrderTab";
 
 import { useCountdown, useLotteryGame } from "./hooks";
 import { GAME_TABS, PRIZE_TABS, LOTTERIES } from "../data/lotteryConfig";
+import { ChevronLeft } from "lucide-react";
 
 export default function StateLotteryScreen() {
   const { id } = useParams();
@@ -130,7 +131,7 @@ export default function StateLotteryScreen() {
             width: 34, height: 34, borderRadius: '50%', background: '#f4f4f8',
             border: 'none', cursor: 'pointer', fontSize: 20,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>‹</button>
+          }}><ChevronLeft/></button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a2e' }}>
               {lottery.shortName || lottery.name}
