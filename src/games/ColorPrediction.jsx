@@ -215,7 +215,7 @@ function ResultBall({ number, rolling }) {
 function RulesModal({ onClose }) {
   return (
     <div
-      className="fixed inset-0 bg-black/55 z-50 flex items-end justify-center"
+      className="fixed inset-0 bg-black/55 z-50 flex items-end justify-center "
       onClick={onClose}
     >
       <div

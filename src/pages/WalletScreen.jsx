@@ -38,7 +38,7 @@ export default function WalletScreen() {
       const api = res?.data;
       if (!api) return;
       setWalletData({
-        totalWallet: Number(api?.wallet?.cash_balance || 0),
+        totalWallet: Number(api?.totalWallet || 0),
         cash_balance: Number(api?.wallet?.cash_balance || 0),
         withdrawable_balance: Number(api?.wallet?.withdrawable || 0),
         actions: api?.actions || [],
@@ -75,9 +75,8 @@ export default function WalletScreen() {
             {/* 🔄 REFRESH BUTTON */}
             <RefreshCw
               onClick={handleRefresh}
-              className={`cursor-pointer ${
-                refreshing ? "animate-spin opacity-70" : ""
-              }`}
+              className={`cursor-pointer ${refreshing ? "animate-spin opacity-70" : ""
+                }`}
             />
 
             <Headphones onClick={() => navigate("/CustomerSupport")} />

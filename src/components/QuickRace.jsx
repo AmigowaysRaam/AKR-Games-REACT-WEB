@@ -1,19 +1,23 @@
 import { useEffect } from "react";
 
 export default function QuickRace({ items = [] }) {
-  useEffect(() => {}, [items]);
+  useEffect(() => { 
+
+  }, [items]);
 
   if (!items.length) return null;
 
   return (
     <div className="px-3 py-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3  cursor-pointer">
         {items.map((item, index) => (
           <div
             key={item.id}
             className="rounded-xl text-white p-2 py-8 shadow-md relative overflow-hidden"
             style={{
-              background: `linear-gradient(135deg, ${item.colorCode?.join(",")})`,
+              // background: `linear-gradient(135deg, ${item.colorCode?.join(",")})`,
+              background: item.color_code,
+
             }}
           >
             {/* Logo */}

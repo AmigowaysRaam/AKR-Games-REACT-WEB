@@ -1,30 +1,3 @@
-/**
- * StateLotteryScreen.jsx
- * ─────────────────────────────────────────────────────────────────
- * THE single reusable screen for ALL state lotteries.
- *
- * Usage — just pass a different lottery config:
- *
- *   import { LOTTERIES } from '../data/lotteryConfig';
- *   import StateLotteryScreen from './StateLotteryScreen';
- *
- *   // Suvarna Keralam
- *   <StateLotteryScreen lottery={LOTTERIES[0]} onBack={...} />
- *
- *   // Nagaland Morning  (identical UI, different data)
- *   <StateLotteryScreen lottery={LOTTERIES[1]} onBack={...} />
- *
- *   // ANY lottery
- *   <StateLotteryScreen lottery={getLotteryById('karunya')} onBack={...} />
- *
- * ─────────────────────────────────────────────────────────────────
- * Tabs:
- *   Top game tabs  → TwoSide | FishPrawnCrab | 1Digit | 2D | 3D | 4D
- *   Prize tabs     → 1st-prize | 2nd-prize
- *   Bottom tabs    → Result history | Analyze | My order
- * ─────────────────────────────────────────────────────────────────
- */
-
 
 const HIST_TABS = [
   { key: 'result',  label: 'Result history' },
@@ -32,18 +5,40 @@ const HIST_TABS = [
   { key: 'myorder', label: 'My order' },
 ];
 
-const BET_RULES_INFO =
-  'Big: 5,6,7,8,9 | Small: 0,1,2,3,4\nOdd: 1,3,5,7,9  | Even: 0,2,4,6,8';
+const getBetRulesInfo = (tab) => {
+  switch (tab) {
+    case "TwoSide":
+      return "Big: 5,6,7,8,9 | Small: 0,1,2,3,4\nOdd: 1,3,5,7,9 | Even: 0,2,4,6,8";
+
+    case "FishPrawnCrab":
+      return "Fish: 1,2,3 | Prawn: 4,5,6 | Crab: 7,8,9";
+
+    case "1Digit":
+      return "Select any single number (0–9)";
+
+    case "2D":
+      return "Select numbers for C & D positions";
+
+    case "4D":
+      return "Select numbers for A, B, C, D";
+
+    default:
+      return "";
+  }
+};
 
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import LotteryHeader from "./LotteryHeader";
 import TwoSideBetGrid from "./TwoSideBetGrid";
+import FourDBetGrid from "./FourDBetGrid";
+import TwoDBetGrid from "./TwoDBetGrid";
+import FishPrawnCrabBet from "./FishPrawnCrabBet";
+import OneDigitBetGrid from "./OneDigitBetGrid";
 import ResultHistoryTab from "./ResultHistoryTab";
 import AnalyzeTab from "./AnalyzeTab";
 import { MyOrderTab, RulesModal, BetSummaryBar } from "./MyOrderTab";
-
 import { useCountdown, useLotteryGame } from "./hooks";
 import { GAME_TABS, PRIZE_TABS, LOTTERIES } from "../data/lotteryConfig";
 import { ChevronLeft } from "lucide-react";
@@ -212,31 +207,54 @@ export default function StateLotteryScreen() {
             fontSize: 11, color: '#fff', fontWeight: 900, flexShrink: 0,
           }}>!</div>
           <div style={{ fontSize: 11, color: '#555', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-            {BET_RULES_INFO}
+            {getBetRulesInfo(game.activeGameTab)}
           </div>
         </div>
 
         {/* ── MAIN BET GRID (TwoSide tab) ── */}
         {game.activeGameTab === 'TwoSide' ? (
-          <div style={{ background: '#f4f2fb' }}>
-            <TwoSideBetGrid
-              isBetSelected={game.isBetSelected}
-              toggleBet={game.toggleBet}
-            />
-          </div>
-        ) : (
-          <div style={{
-            padding: 40, textAlign: 'center', color: '#bbb', background: '#fff',
-          }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🎮</div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>
-              {game.activeGameTab} — Coming Soon
-            </div>
-            <div style={{ fontSize: 12, marginTop: 6 }}>
-              Switch to TwoSide to place bets
-            </div>
-          </div>
-        )}
+  <TwoSideBetGrid
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+
+) : game.activeGameTab === '1Digit' ? (
+  <OneDigitBetGrid
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+
+) : game.activeGameTab === '2D' ? (
+  <TwoDBetGrid
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+
+) : game.activeGameTab === '4D' ? (
+  <FourDBetGrid
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+
+) : game.activeGameTab === 'FishPrawnCrab' ? (
+  <FishPrawnCrabBet
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+
+) : (
+  <div style={{
+    padding: 40,
+    textAlign: 'center',
+    color: '#bbb',
+    background: '#fff'
+  }}>
+    <div style={{ fontSize: 40 }}>🎮</div>
+    <div style={{ fontWeight: 600 }}>
+      {game.activeGameTab} — Coming Soon
+    </div>
+  </div>
+)}
 
         {/* ── RESULT HISTORY SECTION ── */}
         <div style={{ background: '#fff', marginTop: 8 }}>

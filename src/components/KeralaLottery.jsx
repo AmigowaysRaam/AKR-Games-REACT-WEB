@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 export default function KeralaLottery({ items = [] }) {
     const [timers, setTimers] = useState([]);
     const navigate =useNavigate();
-
-    // ⏱️ Initialize random timers (example: countdown in seconds)
     useEffect(() => {
         const initialTimers = items.map(() =>
             Math.floor(Math.random() * (60 * 60 * 12)) // up to 12 hrs
@@ -24,7 +22,7 @@ export default function KeralaLottery({ items = [] }) {
     if (!items.length) return null;
     return (
         <div className="px-3 py-2">
-            <div className="grid grid-cols-2 gap-3" >
+            <div className="grid grid-cols-2 gap-3  cursor-pointer" >
                 {items.map((item, index) => {
 
                     const time = timers[index] || 0;
@@ -35,7 +33,7 @@ export default function KeralaLottery({ items = [] }) {
                     return (
                         <div
                             key={item.id}
-                            onClick={()=>navigate(`/kerala-lottery/${item.id}`)}
+                           onClick={() => navigate(`/kerala-lottery/${item.id}`)}
                             className="rounded-sm overflow-hidden bg-white shadow-sm"
                         >
                             {/* 🔥 IMAGE SECTION */}
@@ -47,11 +45,9 @@ export default function KeralaLottery({ items = [] }) {
                                     backgroundPosition: "center",
                                 }}
                             >
-                                {/* Top Row */}
                                 <div className="absolute top-1 left-2 text-[10px] font-semibold bg-black/40 px-2 py-[2px] rounded">
                                     weekly lottery
                                 </div>
-
                                 <div className="absolute top-1 right-2 text-[10px] font-semibold text-white">
                                     NO.<br />{item.number || "BT-47"}
                                 </div>

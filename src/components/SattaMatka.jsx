@@ -20,8 +20,8 @@ export default function SattaMatka({ items = [] }) {
   if (!items.length) return null;
 
   return (
-    <div className="px-3 py-4">
-      <div className="grid grid-cols-2 gap-3" >
+    <div className="px-3 py-4 ">
+      <div className="grid grid-cols-2 gap-3 cursor-pointer" >
         {items.map((item, index) => {
           const time = timers[index] || 0;
           const hours = String(Math.floor(time / 3600)).padStart(2, "0");
@@ -58,7 +58,7 @@ export default function SattaMatka({ items = [] }) {
 
                 {/* TITLE */}
                 <h3 className="absolute top-3 w-full text-center text-lg font-bold tracking-wide z-20">
-                  {item.title}
+                  {/* {item.title} */}
                 </h3>
 
                 {/* RESULT */}

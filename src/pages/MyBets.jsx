@@ -6,19 +6,10 @@ export default function MyBets() {
   const navigate = useNavigate();
 
   const tabs = ["ALL", "To be drawn", "Drawn", "Won"];
-  const categories = [
-    "Kerala",
-    "3 Digit",
-    "Quick 3D",
-    "Color",
-    "Quick Race",
-    "Dice",
+  const categories = ["Kerala",
+    "3 Digit", "Quick 3D", "Color", "Quick Race", "Dice",
     "Satta Matka",
-    "Scratch off",
-    "Casino",
-    "Live",
-    "Sports",
-    "State Lottery",
+    "Scratch off", "Casino", "Live", "Sports", "State Lottery",
     "Quick State Lottery",
   ];
 
@@ -117,22 +108,15 @@ const styles = {
   tab: {
     fontSize: 14,
     paddingBottom: 6,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
+    cursor: "pointer", transition: "all 0.2s ease",
   },
 
   dateBox: {
-    marginLeft: "auto",
-    fontSize: 12,
-    background: "#f1f1f1",
+    marginLeft: "auto", fontSize: 12, background: "#f1f1f1",
     padding: "6px 10px",
     borderRadius: 6,
-  },
-
-  chipsContainer: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 10,
+  }, chipsContainer: {
+    display: "flex", flexWrap: "wrap", gap: 10,
     padding: 12,
     background: "#fff",
   },

@@ -11,6 +11,8 @@ import VipWalletCard from "../components/profile/VipWalletCard";
 import { useNavigate } from "react-router-dom";
 import LuckySpinModal from "./LuckySpin";
 import { getSideBarMenu } from "../services/authService";
+import GameLoader from "./LoaderComponet";
+import QuickActions from "./QuickActions";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -20,23 +22,21 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(0);
   const [sections, setSections] = useState([]);
+  const [loading, setSloading] = useState(false);
+
 
   const fetchHistory = async () => {
     try {
-      // ✅ 1. Check localStorage first
+      setSloading(true);
       const localData = localStorage.getItem("sidebarMenu");
       if (localData) {
         const parsed = JSON.parse(localData);
-        setSections(parsed); // instant render (no loading)
-        // alert(JSON.stringify(parsed?.quick_actions));
+        setSections(parsed);
       }
-      // ✅ 2. Always call API in background (optional but recommended)
       const res = await getSideBarMenu();
       console.log("Sidebar Menu Data:", res);
       if (res?.success && Array.isArray(res?.data)) {
         setSections(res.data);
-
-        // ✅ 3. Update localStorage
         localStorage.setItem("sidebarMenu", JSON.stringify(res.data));
       } else if (!localData) {
         setSections([]);
@@ -48,21 +48,20 @@ export default function Profile() {
         setSections([]);
       }
     }
+    finally {
+      setSloading(false);
+    }
   };
-  // 🔥 ICON MAP
   const iconMap = {
     Gift, Users,
     Trophy, Wallet, BarChart3, IndianRupee,
     Bell, Lock, Globe, Headphones,
   };
-
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
     navigate("/Login");
-    // window.location.reload();
   };
-
   useEffect(() => {
     fetchHistory()
     const storedUser = localStorage.getItem("user");
@@ -75,29 +74,31 @@ export default function Profile() {
       setWallet(storedWallet);
     }
   }, []);
-
-
   const maskPhone = (phone) => {
     if (!phone) return "----";
     return phone.slice(0, 3) + "****" + phone.slice(-3);
   };
-
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-screen flex flex-col bg-gray-100 pb-10 ">
       <div
         onClick={() => {
           user && user?.id ? navigate("/PlayerProfileScreen") : navigate("/Login");
         }}
-        className="sticky top-0 z-50 bg-white border-b border-gray-200"
+        className="sticky top-0  bg-white border-b border-gray-200"
       >
-        {/* <p>{user?.profile_image}</p> */}
         {user && user?.id ? (
           <div className="p-4 flex items-center gap-3 cursor-pointer">
-            <img
-              src={user?.profile_image || ""}
-              alt="profile"
-              className="w-14 h-14 rounded-full object-cover"
-            />
+            <div className="w-9 h-9 rounded-full flex border-1 items-center justify-center bg-gray-200 overflow-hidden">
+              {user.profile_image ? (
+                <img
+                  src={user.profile_image}
+                  alt="profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user.username?.charAt(0).toUpperCase()
+              )}
+            </div>
             <div className="flex-1">
               <p className="font-bold text-gray-800">
                 {user?.username}
@@ -134,55 +135,30 @@ export default function Profile() {
           </div>
         )}
       </div>
-
-      {/* BODY */}
+      {
+        loading && (
+          <GameLoader />
+        )
+      }
       <div className="flex-1 overflow-y-auto pb-20 no-scrollbar">
-
-        <VipWalletCard wallet={wallet} />
-        <div className="grid grid-cols-4 gap-4 px-4 mt-6 text-center">
-          {/* <p>{JSON.stringify(sections
-            .filter(sec => sec.type === "quick_actions"))}</p> */}
-          {sections
-            .filter(sec => sec.type === "quick_actions")
-            .flatMap(sec => sec.items)
-            .map((item, index) => (
-              <div
-                key={item.name}
-                onClick={() => {
-                  if (user && user?.id) {
-                    if (item.name === "Lucky Spin") {
-                      setShowSpin(true);
-                    } else {
-                      navigate(`/${item.nav}`);
-                    }
-                  }
-                  else {
-                    navigate(`/Login`);
-                  }
-                }}
-              >
-                <div className="w-12 h-12 mx-auto flex items-center justify-center overflow-hidden">
-                  <img
-                    src={item.img}
-                    alt={item.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <p className="text-xs mt-1 text-gray-600 font-medium">
-                  {item.name}
-                </p>
-              </div>
-            ))}
-        </div>
+        <VipWalletCard wallet={wallet} showSpin={showSpin} />
+        <QuickActions
+          sections={sections}
+          user={user}
+          navigate={navigate}
+          setShowSpin={setShowSpin}
+        />
         {sections
           .filter(sec => sec.type === "promo")
           .map((sec, i) => (
-            <div key={i} className="grid grid-cols-2 gap-3 px-4 mt-6">
+            <div key={i} className="grid grid-cols-2 gap-3 px-4 mt-6 ">
               {sec.items.map((item, idx) => (
                 <div
                   key={idx}
-                  onClick={() => navigate("/promo", { state: { type: item.type } })}
-                  className={`flex items-center justify-between p-3 rounded-xl   ${idx === 0
+                  onClick={() =>
+                    item.type == 'bonus' && !user ? navigate("/Login") :
+                      navigate("/promo", { state: { type: item.type } })}
+                  className={`flex items-center justify-between p-3 rounded-xl  cursor-pointer  ${idx === 0
                     ? "bg-gradient-to-r from-red-100 to-red-200 border-red-400"
                     : "bg-gradient-to-r from-yellow-100 to-yellow-200 border-yellow-200"}
   `}
@@ -209,12 +185,13 @@ export default function Profile() {
                 return (
                   <ProfileItem
                     key={idx}
-                    allow={item.requires_login ? user && user?.id : true}
+                    allow={item?.requires_login ? user && user?.id : true}
                     label={item.label}
                     icon={IconComponent}
                     badge={item.badge}
                     color={item.color}
                     nav={item.route}
+                    loadData={() => fetchHistory()}
                   />
                 );
               })}
@@ -224,7 +201,7 @@ export default function Profile() {
           <div className="px-4 mt-4 mb-4">
             <button
               onClick={() => setShowLogoutModal(true)}
-              className="w-full flex items-center justify-center gap-2 bg-red-500 text-white py-3 rounded-xl"
+              className="w-full cursor-pointer flex items-center justify-center gap-2 bg-red-500 text-white py-3 rounded-xl"
             >
               <LogOut size={18} />
               Logout
@@ -235,7 +212,7 @@ export default function Profile() {
       </div>
       <LuckySpinModal show={showSpin} onClose={() => setShowSpin(false)} />
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
           <div className="bg-white w-[320px] rounded-2xl p-5 text-center">
             <h2 className="text-lg font-bold mb-2">Confirm Logout</h2>
             <p className="text-sm text-gray-500 mb-5">
@@ -250,7 +227,7 @@ export default function Profile() {
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 py-2 bg-red-500 text-white rounded-xl"
+                className="flex-1 py-2 cursor-pointer bg-red-500 text-white rounded-xl"
               >
                 Logout
               </button>

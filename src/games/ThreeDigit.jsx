@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
  
 export const THREE_DIGIT_GAMES = [
   {
-    id: "8",
+    id: "16",
     name: "Quick 3D",
     subtitle: "3min",
     pickGameType: "quick",
@@ -73,7 +73,7 @@ export const THREE_DIGIT_GAMES = [
     ],
   },
   {
-    id: "11",
+    id: "15",
     name: "ChennaiLotto",
     subtitle: "",
     pickGameType: "scheduled",
@@ -113,7 +113,7 @@ export const THREE_DIGIT_GAMES = [
     ],
   },
   {
-    id: "13",
+    id: "17",
     name: "Dear Lottery",
     subtitle: "",
     pickGameType: "scheduled",
@@ -133,7 +133,7 @@ export const THREE_DIGIT_GAMES = [
     ],
   },
   {
-    id: "14",
+    id: "18",
     name: "Kerala Lottery",
     subtitle: "",
     pickGameType: "scheduled",
@@ -153,7 +153,7 @@ export const THREE_DIGIT_GAMES = [
     ],
   },
   {
-    id: "15",
+    id: "19",
     name: "Lucwin",
     subtitle: "",
     pickGameType: "scheduled",
@@ -173,7 +173,7 @@ export const THREE_DIGIT_GAMES = [
     ],
   },
   {
-    id: "16",
+    id: "20",
     name: "Kuber Lottery",
     subtitle: "",
     pickGameType: "scheduled",

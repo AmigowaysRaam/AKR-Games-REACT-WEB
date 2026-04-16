@@ -2,7 +2,6 @@ import axios from "axios";
 const API = axios.create({
   baseURL: "https://akrlottery.com/api",
 });
-// ✅ Add TOKEN automatically to every request
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token"); // always fresh
@@ -13,18 +12,25 @@ API.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-// ✅ Maintenance Redirect
 const handleMaintenanceRedirect = () => {
   if (window.location.pathname !== "/maintenance") {
     window.location.href = "/maintenance";
   }
 };
-// ✅ Response Interceptor
+const hanleLogout = () => {
+  localStorage.clear(); // removes all items
+  sessionStorage.clear();
+  window.location.href = "/login";
+};
+
 API.interceptors.response.use(
   (response) => {
-    console.log(response, "API Response");
+    console.log(response, "API response");
     if (response?.data?.maintenance === true) {
       handleMaintenanceRedirect();
+    }
+    if (response?.data?.message === 'Invalid token') {
+      hanleLogout();
     }
     return response;
   },
@@ -35,5 +41,4 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 export default API;

@@ -1,21 +1,30 @@
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, ImageMinus, ImagePlus, LogOutIcon, X } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
+import BankList from "./BankDetails";
+
 export default function PlayerProfileScreen() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+
   const [user, setUser] = useState(null);
   const [profileImg, setProfileImg] = useState("");
   const [copied, setCopied] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [newName, setNewName] = useState("");
+
+  // ✅ NEW STATE
+  const [showLogout, setShowLogout] = useState(false);
+
   const [toast, setToast] = useState({ show: false, msg: "", type: "success" });
+
   const showToast = (msg, type = "success") => {
     setToast({ show: true, msg, type });
     setTimeout(() => {
       setToast({ show: false, msg: "", type: "success" });
     }, 2000);
   };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -26,16 +35,30 @@ export default function PlayerProfileScreen() {
       }
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("wallet");
+
+    showToast("Logged out successfully");
+
+    setTimeout(() => {
+      navigate("/"); // change if needed
+    }, 800);
+  };
+
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     try {
       const previewUrl = URL.createObjectURL(file);
       setProfileImg(previewUrl);
       const formdata = new FormData();
       formdata.append("image", file);
       formdata.append("id", user?.id);
-      formdata.append("flag", 'image');
+      formdata.append("flag", "image");
       const token = localStorage.getItem("token");
       const response = await fetch(
         `https://akrlottery.com/api/?url=update-profile`,
@@ -47,41 +70,33 @@ export default function PlayerProfileScreen() {
           body: formdata,
         }
       );
+
       const text = await response.text();
       let result = {};
+
       try {
         result = text ? JSON.parse(text) : {};
-      } catch (err) {
-        console.warn("⚠️ Non-JSON response:", text);
-      }
+      } catch { }
 
-      // 👇 Handle HTTP errors
       if (!response.ok) {
-        throw new Error(result?.message || `Upload failed: ${response.status}`);
+        throw new Error(result?.message || `Upload failed`);
       }
 
-      // 👇 Success handling
-      console?.log(result);
-      if (result?.success || Object.keys(result).length === 0) {
-        const uploadedUrl =
-          result?.data?.url ||
-          result?.url ||
-          result?.image ||
-          previewUrl;
-        const updatedUser = {
-          ...(user || {}),
-          profile_image: uploadedUrl,
-        };
-        setUser(updatedUser);
-        setProfileImg(uploadedUrl);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        showToast(result?.message || "Profile image updated");
-      } else {
-        showToast(result?.message || "Upload failed", "error");
-      }
+      const uploadedUrl =
+        result?.data?.url || result?.url || result?.image || previewUrl;
+
+      const updatedUser = {
+        ...(user || {}),
+        profile_image: uploadedUrl,
+      };
+
+      setUser(updatedUser);
+      setProfileImg(uploadedUrl);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      showToast(result?.message || "Profile image updated");
     } catch (error) {
-      console.error("❌ Upload error:", error);
-      showToast(error.message || "Something went wrong while uploading", "error");
+      showToast(error.message || "Upload failed", "error");
     }
   };
 
@@ -103,19 +118,22 @@ export default function PlayerProfileScreen() {
     setNewName(user?.username || "");
     setShowEdit(true);
   };
+
   const handleSaveName = async () => {
     if (!newName.trim()) {
       showToast("Username cannot be empty", "error");
       return;
     }
+
     try {
       const token = localStorage.getItem("token");
+
       const response = await fetch(
         "https://akrlottery.com/api/?url=update-profile",
         {
           method: "POST",
           headers: {
-            "Authorization": token ? `Bearer ${token}` : "",
+            Authorization: token ? `Bearer ${token}` : "",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -124,37 +142,27 @@ export default function PlayerProfileScreen() {
           }),
         }
       );
-      if (!response.ok) {
-        throw new Error(`Update failed: ${response.status}`);
-      }
-      const text = await response.text();
-      // console.log("API response:", text);
-      let result = null;
-      try {
-        result = text ? JSON.parse(text) : null;
-      } catch { }
-      const updatedUser = result?.data || {
+
+      if (!response.ok) throw new Error();
+
+      const updatedUser = {
         ...user,
         username: newName.trim(),
       };
+
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
+
       setShowEdit(false);
-      showToast(result?.message || "Username updated successfully");
-    } catch (error) {
-      console.error("❌ Username update error:", error);
+      showToast("Username updated successfully");
+    } catch {
       showToast("Something went wrong", "error");
     }
   };
-  const avatars = [
-    // "https://i.pravatar.cc/100?img=1",
-    // "https://i.pravatar.cc/100?img=2",
-    // "https://i.pravatar.cc/100?img=3",
-    // "https://i.pravatar.cc/100?img=4",
-  ];
+
   return (
     <div style={container}>
-      {/* 🔥 TOAST */}
+      {/* TOAST */}
       {toast.show && (
         <div
           style={{
@@ -172,248 +180,163 @@ export default function PlayerProfileScreen() {
           <ChevronLeft />
         </button>
         My Profile
+        {/* ✅ LOGOUT ICON */}
+        <LogOutIcon
+          onClick={() => setShowLogout(true)}
+          style={{ position: "absolute", right: 10, top: 12, cursor: "pointer" }}
+        />
       </div>
-
-      {/* PROFILE */}
       <div style={profileBox}>
-        <div style={avatarBox}>
-          <img src={profileImg} alt="" style={avatarImg} />
-        </div>
+        {/* Avatar */}
+        <div style={avatarWrapper}>
+          {profileImg ? (
+            <div style={avatarBox}>
+              <img src={profileImg} alt="" style={avatarImg} />
+            </div>
+          ) : (
+            <div
+              className="rounded-full flex items-center justify-center bg-gray-200 overflow-hidden"
+              style={avatarBox}
+            >
+              <span style={{ fontSize: "50px", fontWeight: "bold" }}>
+                {user?.username?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
 
-        <div style={avatarList}>
-          {avatars.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              onClick={() => setProfileImg(img)}
-              style={smallAvatar}
-            />
-          ))}
-
-          <div onClick={handleAddClick} style={addBtn}>
-            +
+          {/* 🔥 Floating Add Icon */}
+          <div style={addIconWrapper} onClick={handleAddClick}>
+            <ImagePlus size={18} color="#fff" />
           </div>
         </div>
 
+        {/* Hidden File Input */}
         <input
+          accept="image/*"
           type="file"
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleImageChange}
         />
 
+        {/* Username Row */}
         <div style={usernameRow}>
           <span style={badge}>V0</span>
           <span>{user?.username || "Player"}</span>
-          <span onClick={openEdit} style={{ cursor: "pointer" }}>
-            ✏️
-          </span>
+          <span onClick={openEdit} style={{ cursor: "pointer" }}>✏️</span>
         </div>
       </div>
-
-      {/* INFO */}
       <div style={card}>
         <div style={row}>
           <span>📱 Phone</span>
           <span>{maskPhone(user?.phone)}</span>
         </div>
-
-        <div style={row}>
+        <div style={row} onClick={() => navigate('/PasswordChangeScreen')}>
           <span>🔒 Password</span>
           <span>****** ›</span>
         </div>
 
         <div onClick={handleCopy} style={{ ...row, borderBottom: "none" }}>
           <span>🆔 User ID</span>
-          <span>
-            {user?.id || "----"} {copied ? "✔" : "📋"}
-          </span>
+          <span>{user?.id || "----"} {copied ? "✔" : "📋"}</span>
         </div>
       </div>
+      <BankList />
+      {
+        showEdit && (
+          <>
+            <div style={overlay} onClick={() => setShowEdit(false)} />
+            <div style={modal}>
+              <div style={modalHeader}>
+                <span>Edit Username</span>
+                <X onClick={() => setShowEdit(false)} />
+              </div>
 
-      {/* EDIT MODAL */}
-      {showEdit && (
-        <>
-          <div style={overlay} onClick={() => setShowEdit(false)} />
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                style={input}
+              />
 
-          <div style={modal}>
-            <div style={modalHeader}>
-              <span>Edit Username</span>
-              <X onClick={() => setShowEdit(false)} style={{ cursor: "pointer" }} />
+              <button onClick={handleSaveName} style={saveBtn}>Save</button>
             </div>
+          </>
+        )
+      }
 
-            <input
-              maxLength={20}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Enter new username"
-              style={input}
-            />
+      {
+        showLogout && (
+          <>
+            <div style={overlay} onClick={() => setShowLogout(false)} />
+            <div style={modal}>
+              <div style={modalHeader}>
+                <span>Confirm Logout</span>
+                <X
+                  className="cursor-pointer"
+                  onClick={() => setShowLogout(false)} />
+              </div>
 
-            <button onClick={handleSaveName} style={saveBtn}>
-              Save
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+              <p style={{ marginBottom: 15 }}>
+                Are you sure you want to logout?
+              </p>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  className="cursor-pointer"
+                  onClick={() => setShowLogout(false)}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="cursor-pointer"
+                  onClick={handleLogout}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: 10,
+                    background: "#ef4444",
+                    color: "#fff",
+                    border: "none",
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </>
+        )
+      }
+    </div >
   );
 }
-
-/* 🔥 TOAST STYLE */
 const toastStyle = {
-  position: "fixed",
-  top: 20,
-  left: "50%",
-  transform: "translateX(-50%)",
-  color: "#fff",
-  padding: "10px 16px",
-  borderRadius: 8,
-  fontWeight: 500,
-  zIndex: 999,
+  position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
+  color: "#fff", padding: "10px 16px", borderRadius: 8, zIndex: 999,
 };
-
-/* EXISTING STYLES (UNCHANGED) */
-const container = {
-  maxWidth: 430,
-  margin: "0 auto",
-  background: "#f2f2f2",
-  minHeight: "100vh",
-};
-
-const header = {
-  background: "#fff",
-  padding: 12,
-  textAlign: "center",
-  fontWeight: 700,
-  position: "relative",
-};
-
-const backBtn = {
-  position: "absolute",
-  left: 10,
-  top: 10,
-  background: "none",
-  border: "none",
-};
-
-const profileBox = {
-  textAlign: "center",
-  padding: 20,
-  background: "#f7f7f7",
-};
-
-const avatarBox = {
-  width: 90,
-  height: 90,
-  borderRadius: "50%",
-  overflow: "hidden",
-  margin: "auto",
-  borderWidth: 4, borderColor: "#555", borderStyle: "solid",
-  padding: 2,
-};
-
-const avatarImg = {
+const container = { maxWidth: 430, margin: "0 auto", background: "#f2f2f2", minHeight: "100vh" };
+const header = { background: "#fff", padding: 12, textAlign: "center", fontWeight: 700, position: "relative" };
+const backBtn = { position: "absolute", left: 10, top: 10, border: "none", background: "none" };
+const profileBox = { textAlign: "center", padding: 20 };
+const avatarWrapper = {
+  position: "relative", width: 120, height: 120,
+  margin: "0 auto",borderWidth: 2, borderColor: "#7c3aed", borderStyle: "solid", borderRadius: "50%",
+}; const avatarBox = {
   width: "100%", height: "100%",
-  borderWidth: 2, borderColor: "#ddd", borderStyle: "solid",
-};
-
-const avatarList = {
-  display: "flex",
-  justifyContent: "center",
-  gap: 10,
-  marginTop: 10,
-};
-
-const smallAvatar = {
-  width: 50,
-  height: 50,
-  borderRadius: "50%",
-  cursor: "pointer",
-};
-
-const addBtn = {
-  width: 50,
-  height: 50,
-  borderRadius: "50%",
-  background: "#eee",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 24,
-  color: "#7c3aed",
-};
-
-const usernameRow = {
-  marginTop: 10,
-  display: "flex",
-  justifyContent: "center",
-  gap: 6,
-  alignItems: "center",
-};
-
-const badge = {
-  background: "#d9e6ff",
-  padding: "2px 6px",
-  borderRadius: 6,
-  fontSize: 12,
-};
-
-const card = {
-  background: "#fff",
-  margin: 14,
-  borderRadius: 12,
-  padding: 14,
-};
-
-const row = {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "12px 0",
-  borderBottom: "1px solid #eee",
-};
-
-const overlay = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  backdropFilter: "blur(4px)",
-  zIndex: 50,
-};
-
-const modal = {
-  position: "fixed",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  background: "#fff",
-  padding: 20,
-  borderRadius: 16,
-  width: 300,
-  zIndex: 60,
-};
-
-const modalHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: 10,
-  fontWeight: 600,
-};
-
-const input = {
-  width: "100%",
-  padding: 10,
-  borderRadius: 8,
-  border: "1px solid #ddd",
-  marginBottom: 12,
-};
-
-const saveBtn = {
-  width: "100%",
-  padding: 10,
-  borderRadius: 10,
-  border: "none",
-  background: "#7c3aed",
-  color: "#fff",
-  fontWeight: 600,
-};
+  borderRadius: "50%", overflow: "hidden", background: "#e5e7eb",
+}; const avatarImg = {
+  width: "100%", height: "100%", objectFit: "cover",
+}; const addIconWrapper = { position: "absolute", bottom: 0, right: 0, width: 32, height: 32, borderRadius: "50%", background: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: "3px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.2)", }; const usernameRow = { marginTop: 10, display: "flex", justifyContent: "center", gap: 6 };
+const badge = { background: "#d9e6ff", padding: "2px 6px", borderRadius: 6 };
+const card = { background: "#fff", margin: 14, borderRadius: 12, padding: 14 };
+const row = { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #eee" };
+const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 50 };
+const modal = { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#fff", padding: 20, borderRadius: 16, width: "400px", zIndex: 60 };
+const modalHeader = { display: "flex", justifyContent: "space-between", marginBottom: 10 };
+const input = { width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd", marginBottom: 12 };
+const saveBtn = { width: "100%", padding: 10, borderRadius: 10, background: "#7c3aed", color: "#fff", border: "none" };

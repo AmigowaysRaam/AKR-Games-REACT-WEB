@@ -9,15 +9,15 @@ export default function LoginPage() {
   const phoneRef = useRef(null);
   const passwordRef = useRef(null);
   const otpRef = useRef(null);
-  const [phone, setPhone] = useState("9876543110");
-  const [password, setPassword] = useState("test123");
+  const [phone, setPhone] = useState("9943921242");
+  const [password, setPassword] = useState("test1212");
   const [otp, setOtp] = useState("1234");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [countryCode, setCountryCode] = useState("+91");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-
+  const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
   const [toast, setToast] = useState({
     show: false,
@@ -86,14 +86,17 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const res = await getOtpLogin(phone, countryCode, "login");
-      if (res) {
+      if (res?.success) {
         showToast(res?.message || "OTP Sent");
         setTimer(30);
+        setOtpSent(true); // ✅ IMPORTANT
       } else {
-        showToast("OTP failed", "error");
+        showToast(res?.message, "error");
+        setOtpSent(false);
       }
     } catch (err) {
       showToast(err?.response?.data?.message || "Something went wrong", "error");
+      setOtpSent(false);
     } finally {
       setLoading(false);
     }
@@ -108,13 +111,12 @@ export default function LoginPage() {
         activeTab,
         otp, countryCode,
       );
-      console?.log(res, "resresres")
       if (res?.token) {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
         localStorage.setItem("wallet", res.user.wallet);
-        showToast("Login successful");
-        navigate("/");
+        showToast(res?.message, "success");
+        navigate('/');
       } else {
         showToast("Invalid login response", "error");
       }
@@ -144,7 +146,7 @@ export default function LoginPage() {
       <div className="w-[420px] bg-white h-full flex flex-col relative">
         {/* HEADER */}
         <div className="h-[50px] flex items-center px-4 border-b relative">
-          <button onClick={() => navigate("/")}>
+          <button onClick={() => navigate(-1)}>
             <ChevronLeft size={24} />
           </button>
           <h2 className="absolute left-1/2 -translate-x-1/2 text-sm font-bold">
@@ -181,17 +183,22 @@ export default function LoginPage() {
             </p>
             <div className="flex items-center border-b pb-2 ">
               <span
-                className="mr-2 cursor-pointer bg-blue-200 px-2 py-1 rounded text-sm"
-                onClick={() =>
-                  setShowCountryDropdown(!showCountryDropdown)
-                }
+                className={`mr-2 px-2 py-1 rounded text-sm
+    ${activeTab === "otp" && otpSent
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-200 cursor-pointer"
+                  }`}
+                onClick={() => {
+                  if (activeTab === "otp" && otpSent) return; // ✅ block click
+                  setShowCountryDropdown(!showCountryDropdown);
+                }}
               >
                 {countryCode}
               </span>
-
-              {/* DROPDOWN */}
               {showCountryDropdown && (
-                <div className="absolute top-10 left-0 bg-white shadow-md rounded w-48 z-50 border max-h-60 overflow-auto">
+                <div
+                  disabled={activeTab === "otp" && otpSent} // ✅ disable if OTP sent
+                  className="absolute top-10 left-0 bg-white shadow-md rounded w-48 z-50 border max-h-60 overflow-auto">
                   {countries.map((c) => (
                     <div
                       key={c.code}
@@ -208,12 +215,14 @@ export default function LoginPage() {
               )}
 
               <input
+                disabled={activeTab === "otp" && otpSent} // ✅ disable if OTP sent
                 ref={phoneRef}
                 maxLength={15}
                 value={phone}
                 onChange={(e) => {
                   setPhone(e.target.value.replace(/\D/g, ""));
                   setErrors((prev) => ({ ...prev, phone: "" }));
+                  setOtpSent(false); // ✅ reset
                 }}
                 placeholder="Enter Phone"
                 className="flex-1 outline-none p-2"
@@ -258,44 +267,57 @@ export default function LoginPage() {
               )}
             </div>
           )}
-
-          {/* OTP */}
           {activeTab === "otp" && (
             <div className="mb-4">
-              <p className="text-gray-500 text-md">
-                {'Enter OTP'}
-              </p>
-              <div className="flex border-b pb-2 items-center">
-
-                <input
-                  ref={otpRef}
-                  value={otp}
-                  onChange={(e) => {
-                    setOtp(e.target.value.replace(/\D/g, ""));
-                    setErrors((prev) => ({ ...prev, otp: "" }));
-                  }}
-                  maxLength={4}
-                  placeholder="Enter OTP"
-                  className="flex-1 outline-none p-2"
-                />
+              {!otpSent && (
                 <button
-                  disabled={timer > 0}
                   onClick={handleGetOtpLogin}
-                  className={`ml-2 text-xs px-3 py-1 rounded
-                  ${timer > 0 ? "bg-gray-300" : "bg-gray-200"}`}
+                  disabled={loading}
+                  className={`w-full py-3 rounded-full text-white mt-2
+                 ${loading ? "bg-gray-300 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-purple-800 "}
+        `}
                 >
-                  {timer > 0 ? `Resend (${timer}s)` : "GET OTP"}
+                  {loading ? "Sending..." : "GET OTP"}
                 </button>
-              </div>
-              {errors.otp && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.otp}
-                </p>
+              )}
+              {otpSent && (
+                <>
+                  <p className="text-gray-500 text-md mt-4">
+                    Enter OTP
+                  </p>
+
+                  <div className="flex border-b pb-2 items-center">
+                    <input
+                      ref={otpRef}
+                      value={otp}
+                      onChange={(e) => {
+                        setOtp(e.target.value.replace(/\D/g, ""));
+                        setErrors((prev) => ({ ...prev, otp: "" }));
+                      }}
+                      maxLength={4}
+                      placeholder="Enter OTP"
+                      className="flex-1 outline-none p-2"
+                    />
+                  </div>
+                  <button
+                    onClick={handleGetOtpLogin}
+                    disabled={timer > 0}
+                    className={`w-full py-2 rounded-full mt-3 text-sm
+            ${timer > 0 ? "bg-gray-300" : "bg-gray-200"}
+          `}
+                  >
+                    {timer > 0 ? `Resend OTP (${timer}s)` : "Resend OTP"}
+                  </button>
+
+                  {errors.otp && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.otp}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           )}
-
-          {/* FORGOT */}
           <div
             onClick={() => navigate("/ForgetPassword")}
             className="text-center mb-6"
@@ -304,16 +326,25 @@ export default function LoginPage() {
               Forgot password?
             </button>
           </div>
-
+          {activeTab === "otp" && !otpSent && (
+            <p className="text-xs text-gray-400 text-center mt-2">
+              Please request OTP to continue
+            </p>
+          )}
           {/* LOGIN */}
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full py-3 rounded-full text-white bg-purple-500"
-          >
-            {loading ? "Processing..." : "LOGIN"}
-          </button>
-
+          {!(activeTab === "otp" && !otpSent) && (
+            <button
+              onClick={handleLogin}
+              disabled={loading}
+              className={`w-full py-3 rounded-full text-white 
+      ${loading
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-purple-500"
+                }`}
+            >
+              {loading ? "Processing..." : "LOGIN"}
+            </button>
+          )}
           {/* SIGNUP */}
           <p className="text-center text-sm mt-4">
             Need account?{" "}

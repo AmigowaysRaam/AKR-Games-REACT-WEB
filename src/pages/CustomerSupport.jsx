@@ -49,7 +49,7 @@ export default function CustomerSupport() {
     },
     {
       id: 4,
-      name: "Singam Official Channel",
+      name: "AKR Official Channel",
       message: "Photo",
       time: "14:29",
       unread: 75,
@@ -60,7 +60,7 @@ export default function CustomerSupport() {
     {
       id: 5,
       name: "Sapna",
-      message: "Hi sir this is Sapna from Singam Lottery!!!",
+      message: "Hi sir this is Sapna from AKR Lottery!!!",
       time: "2026/3/12 11:57",
       avatar:
         "https://randomuser.me/api/portraits/women/44.jpg",

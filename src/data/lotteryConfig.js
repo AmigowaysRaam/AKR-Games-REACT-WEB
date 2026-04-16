@@ -123,8 +123,8 @@ export const LOTTERIES = [
     ],
   },
     {
-    id: 'nagaland_day',
-    nav: 'nagaland_day',
+    id: 'nagalandday',
+    nav: 'nagalandday',
     name: 'Nagaland Day',
     shortName: 'Nagaland Day...',
     drawNumber: 'Draw No.Dear 6 PM',
@@ -148,8 +148,8 @@ export const LOTTERIES = [
     ],
   },
   {
-    id: 'nagaland_evening',
-    nav: 'nagaland_evening',
+    id: 'nagalandevening',
+    nav: 'nagalandevening',
     name: 'Nagaland Evening',
     shortName: 'Nagaland Eve...',
     drawNumber: 'Draw No.Dear 8 PM',
@@ -197,7 +197,7 @@ export const LOTTERIES = [
     ],
   },
   {
-    id: 'sthree_sakthi',
+    id: 'sthreesakthi',
     nav: 'sthree_sakthi',
     name: 'Sthree Sakthi',
     shortName: 'Sthree Sakthi',
@@ -221,7 +221,7 @@ export const LOTTERIES = [
     ],
   },
   {
-    id: 'dhanalekshmi',
+    id: 'dhanalakshmi',
     nav: 'dhanalekshmi',
     name: 'Dhanalekshmi',
     shortName: 'Dhanalekshmi',

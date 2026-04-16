@@ -71,8 +71,7 @@ export default function SignUpPage() {
     setTimeout(() => setToast(null), 2500);
   };
   const isValidEmail = (e) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-  // ✅ VALIDATION
+    /^[a-z][^\s@]*@[^\s@]+\.[^\s@]+$/.test(e);
   const validateFields = () => {
     let e = {};
     if (!phone || phone.length < 10) e.phone = "Enter valid phone number";
@@ -112,6 +111,7 @@ export default function SignUpPage() {
       setOtpLoading(false);
     }
   };
+  
   const handleSignup = async () => {
     if (!validateFields()) return;
     try {
@@ -215,6 +215,7 @@ export default function SignUpPage() {
           <label className="text-xs text-gray-500 mb-1 block">OTP</label>
           <div className="flex items-center border-b pb-4 mb-2">
             <input
+              maxLength={4}
               value={otp}
               onChange={(e) => {
                 setOtp(e.target.value.replace(/\D/g, ""));

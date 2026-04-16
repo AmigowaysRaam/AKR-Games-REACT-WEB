@@ -5,10 +5,8 @@ import {
   Route,
   useLocation
 } from "react-router-dom";
-
 import PrivateRoute from "./components/PrivateRoute";
 import { BottomNav } from "./components/BottomNav";
-
 import HomePage from "./pages/HomePage";
 import DiceGame from "./games/DiceGame";
 import InviteFriends from "./pages/EarnMoney";
@@ -48,13 +46,21 @@ import StateLotteryGrid from "./games/StateLotteryGrid";
 import StateLotteryScreen from "./games/StateLotteryScreen";
 import StateLotteryGridWrapper from "./games/StateLotteryGridWrapper";
 import KeralaLotteryList, { KeralaLotteryDetail } from "./games/KeralaLotteryCard";
-import SattaMatkaList, { SattaMatkaDetail } from "./games/SattaMatkaGame";  
+import SattaMatkaList, { SattaMatkaDetail } from "./games/SattaMatkaGame";
 import ThreeDigitList, { ThreeDigitDetail } from "./games/ThreeDigit";
+import WithdrawHistory from "./pages/WithdrawalHistory";
+import JackPotScreen from "./pages/JackPotScreen";
+import LanguageListScreen from "./pages/LanguageListScreen";
+import InviteRecord from "./pages/InviteRecord";
+import HotmatchesScreen from "./pages/HotmatchesScreen";
 // ─── APP WRAPPER ─────────────────
 function AppWrapper() {
   const location = useLocation();
   const { pathname } = location;
   const [navActive, setNavActive] = useState("home");
+  useEffect(() => {
+    document.title = "AKR Games";
+  }, []);
   // Scroll to top
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -112,8 +118,6 @@ function AppWrapper() {
   // 🔥 TOAST FUNCTION
   const showToast = (message, type = "success", persist = false) => {
     setToast({ message, type, persist });
-
-    // ⛔ Don't auto-hide if persist = true (e.g., no internet)
     if (!persist) {
       setTimeout(() => {
         setToast(null);
@@ -121,9 +125,10 @@ function AppWrapper() {
     }
   };
   return (
-    <div className="min-h-screen flex justify-center bg-black">
-      <div className="relative w-full max-w-[430px] min-h-screen flex flex-col bg-white shadow-lg">
-        <div className="flex-1 overflow-y-auto pb-24">
+    <div className="min-h-screen flex justify-center ">
+      <div className="relative w-full max-w-[430px] min-h-screen flex flex-col bg-white shadow-lg bg-black">
+        <div className="flex-1 overflow-y-auto 
+        ">
           {toast && (
             <div
               className={`fixed top-[8%] left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-5"
@@ -160,6 +165,14 @@ function AppWrapper() {
             <Route path="/SearchScreen" element={<PrivateRoute><SearchScreen /></PrivateRoute>} />
             <Route path="/TransferScreen" element={<PrivateRoute><TransferScreen /></PrivateRoute>} />
             <Route path="/TransferRecordScreen" element={<PrivateRoute><TransferRecordScreen /></PrivateRoute>} />
+            <Route path="/withdrawhistory" element={<PrivateRoute><WithdrawHistory /></PrivateRoute>} />
+            {/* JackPotScreen */}
+            <Route path="/jackPotScreen" element={<PrivateRoute><JackPotScreen /></PrivateRoute>} />
+            
+            <Route path="/hotmatchscreen" element={<PrivateRoute><HotmatchesScreen /></PrivateRoute>} />
+
+            <Route path="/invitationRecord" element={<PrivateRoute><InviteRecord /></PrivateRoute>} />
+            <Route path="/langscreen" element={<PrivateRoute><LanguageListScreen /></PrivateRoute>} />
             <Route path="/AgencyCenter" element={<PrivateRoute><AgencyCenter /></PrivateRoute>} />
             <Route path="/MyTransaction" element={<PrivateRoute><MyTransaction /></PrivateRoute>} />
             <Route path="/ResultHistory" element={<PrivateRoute><ResultHistory /></PrivateRoute>} />
@@ -180,8 +193,6 @@ function AppWrapper() {
             {/* Public */}
             <Route path="/Login" element={<LoginPage />} />
             <Route path="/Sign" element={<SignUpPage />} />
-
-
             <Route
               path="/state-lottery"
               element={
@@ -198,22 +209,14 @@ function AppWrapper() {
                 </PrivateRoute>
               }
             />
-            
             <Route path="/threedigit" element={<PrivateRoute><ThreeDigitList /></PrivateRoute>} />
             <Route path="/threedigit/:id" element={<PrivateRoute><ThreeDigitDetail /></PrivateRoute>} />
-
             <Route path="/matka" element={<PrivateRoute><SattaMatkaList /></PrivateRoute>} />
             <Route path="/matka/:id" element={<PrivateRoute><SattaMatkaDetail /></PrivateRoute>} />
-
             <Route path="/kerala-lottery" element={<PrivateRoute><KeralaLotteryList /></PrivateRoute>} />
-           <Route path="/kerala-lottery/:id" element={<PrivateRoute><KeralaLotteryDetail /></PrivateRoute>} />
-
-
-
-
+            <Route path="/kerala-lottery/:id" element={<PrivateRoute><KeralaLotteryDetail /></PrivateRoute>} />
           </Routes>
         </div>
-
         {showBottomNavRoutes.includes(pathname) && (
           <BottomNav active={navActive} onChange={setNavActive} />
         )}

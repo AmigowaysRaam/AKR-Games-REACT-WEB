@@ -1,24 +1,25 @@
 import { ChevronLeft, Headset } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import PromoList from "./Promolist";
 
 export default function PromotionScreen() {
-
   const navigate = useNavigate();
   const location = useLocation();
+
   const initialType = location.state?.type || "promo";
   const [activeTab, setActiveTab] = useState(initialType);
+  const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(0);
 
   useEffect(() => {
     setActiveTab(initialType);
   }, [initialType]);
 
-  const [user, setUser] = useState(null);
-  const [wallet, setWallet] = useState(0);
-
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedWallet = localStorage.getItem("wallet");
+
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
@@ -28,17 +29,15 @@ export default function PromotionScreen() {
     }
   }, []);
 
-  const handletabchange = (tab) => {
-    if (tab == 'bonus' && user != null) {
-      setActiveTab(tab)
+  const handleTabChange = (tab) => {
+    if (tab === "bonus" && user) {
+      setActiveTab(tab);
+    } else if (tab === "promo") {
+      setActiveTab(tab);
+    } else {
+      navigate("/Login");
     }
-    else if (tab == 'promo') {
-      setActiveTab(tab)
-    }
-    else {
-      navigate("/Login",)
-    }
-  }
+  };
 
   return (
     <div
@@ -50,20 +49,27 @@ export default function PromotionScreen() {
         fontFamily: "'Segoe UI', sans-serif",
       }}
     >
+      {/* ✅ FIXED HEADER */}
       <div
         style={{
+          position: "fixed",
+          top: 0,
+          width: "100%",
+          maxWidth: 430,
           background: "#fff",
           padding: "16px 12px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           borderBottom: "1px solid #eee",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+          zIndex: 1000,
         }}
       >
-        <ChevronLeft onClick={() => navigate(-1)} />
+        <ChevronLeft
+          className="cursor-pointer"
+          onClick={() => navigate(-1)}
+        />
+
         <div
           style={{
             display: "flex",
@@ -76,7 +82,7 @@ export default function PromotionScreen() {
           {["bonus", "promo"].map((tab) => (
             <div
               key={tab}
-              onClick={() => { handletabchange(tab) }}
+              onClick={() => handleTabChange(tab)}
               style={{ textAlign: "center", cursor: "pointer" }}
             >
               <div
@@ -100,130 +106,93 @@ export default function PromotionScreen() {
             </div>
           ))}
         </div>
-        <Headset onClick={() => navigate("/CustomerSupport")} />
-      </div>
-      {activeTab === "bonus" && (
-        <div style={{ background: "#f4a261", minHeight: "100vh" }}>
-          <div
-            style={{
-              background:
-                "linear-gradient(90deg, #e65100, #ff9800)",
-              color: "#fff",
-              padding: 16,
-              fontWeight: "bold",
-            }}
-          >
-            <div style={{ fontSize: 20 }}>
-              REWARDS TASK CENTER
-            </div>
-            <div style={{ fontSize: 12 }}>
-              Complete Tasks, Win Rewards
-            </div>
-          </div>
-          <div
-            style={{
-              margin: 12,
-              background: "#f1e5d6",
-              borderRadius: 12,
-              padding: 12,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 10,
-                fontSize: 13,
-              }}
-            >
-              <span>Bonus</span>
-              <span>History</span>
-            </div>
 
+        <Headset
+          className="cursor-pointer"
+          onClick={() => navigate("/CustomerSupport")}
+        />
+      </div>
+
+      {/* ✅ CONTENT OFFSET (IMPORTANT for fixed header) */}
+      <div style={{ paddingTop: 70 }}>
+        {activeTab === "bonus" && (
+          <div style={{ background: "#f4a261", minHeight: "100vh" }}>
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
+                background: "linear-gradient(90deg, #e65100, #ff9800)",
+                color: "#fff",
+                padding: 16,
                 fontWeight: "bold",
               }}
             >
-              <div>₹ 0.00</div>
-              <div>₹54.59</div>
-            </div>
-          </div>
-          <div
-            style={{
-              margin: 12,
-              background: "#fff",
-              borderRadius: 12,
-              padding: 12,
-              height: 400,
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                textAlign: "left",
-                fontWeight: 600,
-                marginBottom: 20,
-
-              }}
-            >
-              Task List
-            </div>
-
-            <div style={{ marginTop: 100, color: "#999" }}>
-              <div style={{ fontSize: 40 }}>📭</div>
-              <div>All Empty</div>
-            </div>
-          </div>
-        </div>
-      )}
-      {activeTab === "promo" && (
-        <div style={{ padding: 12 }}>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                borderRadius: 16,
-                overflow: "hidden",
-                marginBottom: 14,
-                position: "relative",
-                height: 140,
-                color: "white",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background:
-                    "linear-gradient(135deg,#7b1fa2,#4a148c)",
-                }}
-              />
-
-              <div
-                style={{
-                  position: "relative",
-                  padding: 14,
-                  height: "100%",
-                }}
-              >
-                <div style={{ fontSize: 13 }}>
-                  Recharge Cumulate
-                </div>
-                <div style={{ fontWeight: 800 }}>
-                  VIP RECHARGE REWARD
-                </div>
-                <div style={{ fontSize: 40, color: "#ffca28" }}>
-                  5%
-                </div>
-                <div>BONUS</div>
+              <div style={{ fontSize: 20 }}>REWARDS TASK CENTER</div>
+              <div style={{ fontSize: 12 }}>
+                Complete Tasks, Win Rewards
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <div
+              style={{
+                margin: 12,
+                background: "#f1e5d6",
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 10,
+                  fontSize: 13,
+                }}
+              >
+                <span>Bonus</span>
+                <span>History</span>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontWeight: "bold",
+                }}
+              >
+                <div>₹ 0.00</div>
+                <div>₹54.59</div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                margin: 12,
+                background: "#fff",
+                borderRadius: 12,
+                padding: 12,
+                height: 400,
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  textAlign: "left",
+                  fontWeight: 600,
+                  marginBottom: 20,
+                }}
+              >
+                Task List
+              </div>
+
+              <div style={{ marginTop: 100, color: "#999" }}>
+                <div style={{ fontSize: 40 }}>📭</div>
+                <div>All Empty</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "promo" && <PromoList />}
+      </div>
     </div>
   );
 }

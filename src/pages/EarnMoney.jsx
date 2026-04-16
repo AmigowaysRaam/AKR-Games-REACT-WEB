@@ -1,301 +1,446 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, RefreshCcw } from "lucide-react";
+import { getEarningDetails, handleResetLinkApi } from "../services/authService";
+import GameLoader from "./LoaderComponet";
 
 export default function InviteFriends() {
   const navigate = useNavigate();
-  const [data] = useState({
-    code: "IB4YZV7M",
-    income: 0,
-    totalInvited: 0,
-    rechargePerPerson: 200,
-    bonuses: [
-      { id: 1, reward: 50, invites: 1, progress: 0 },
-      { id: 2, reward: 300, invites: 5, progress: 0 },
-    ],
-  });
-
+  const [data, SetApiData] = useState(null);
   const copyCode = () => {
-    navigator.clipboard.writeText(data.code);
+    if (!JSON.parse(localStorage.getItem("user"))?.id) {
+      showToast("User not found", "error");
+      navigate('/login');
+      return;
+    }
+    navigator.clipboard.writeText(data?.referral_code);
+    showToast('Copy to Clipboard', "success");
   };
+  const [toast, setToast] = useState({ show: false, msg: "", type: "success" });
+  const showToast = (msg, type = "success") => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => {
+      setToast({ show: false, msg: "", type: "success" });
+    }, 2000);
+  };
+
+
+  const handleShareLink = async () => {
+    const url = `${window.location.origin}?ref=${data.code}`;
+    const shareData = {
+      title: "Join me on AKR Lottery!",
+      text: `Use my invite code ${data?.referral_code}`,
+      url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        showToast("Shared successfully!", "success");
+        return;
+      } catch (err) {
+      }
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(data?.referral_code);
+        showToast("Link copied!", "success");
+        return;
+      } catch (err) {
+
+      }
+    }
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed"; // avoid scroll
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      showToast("Link copied!", "success");
+    } catch (err) {
+      showToast("Failed to copy link", "error");
+    }
+  };
+  const handleResetLink = async () => {
+    if (!JSON.parse(localStorage.getItem("user"))?.id) {
+      showToast("User not found", "error");
+      navigate('/login');
+      return;
+    }
+    try {
+      setLoading(true);
+      const resp = await handleResetLinkApi({
+        userId: JSON.parse(localStorage.getItem("user"))?.id,
+      });
+      if (resp?.success) {
+        showToast(resp?.message, "success");
+      }
+      else {
+        showToast(resp?.message, "error");
+      }
+      fetchEarning();
+    } catch (err) {
+      console.log(err);
+      showToast("Failed to reset referral code", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+  const [loading, setLoading] = useState(false);
+  const fetchEarning = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getEarningDetails({
+        userId: JSON.parse(localStorage.getItem("user"))?.id,
+      });
+      const api = res?.data;
+      SetApiData(api)
+    } catch (err) {
+      console.log(err);
+      showToast("Failed to load data", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchEarning();
+  }, []);
 
   return (
     <div style={container}>
-      {/* HEADER (Fixed properly) */}
       <div style={header}>
         <span onClick={() => navigate(-1)} style={back}>
-          <ChevronLeft />
+          <ChevronLeft
+            className="cursor-pointer" />
         </span>
         <span style={title}>Invite Friends</span>
-        <button onClick={() => navigate('/RulesScreeen')} style={rulesBtn}>Rules</button>
+        <button className="cursor-pointer" onClick={() => navigate('/RulesScreeen')} style={rulesBtn}>Rules</button>
       </div>
-
-      {/* CONTENT */}
-      <div style={content}>
-
-        {/* BANNER */}
-        <div style={banner}>
-          <div style={overlay} />
-          <div style={{
-            position: "relative", zIndex: 2, paddingTop: "45%",
-          }}>
-            <div style={codeWrapper}>
-              <div style={codeLeft}>
-                <span style={codeText}>{data.code}</span>
-              </div>
-
-              <div style={codeRight}>
-                <button onClick={copyCode} style={copyBtn}>
-                  Copy
-                </button>
-              </div>
-            </div>
-
-            {/* STATS */}
-            <div style={statsCard}>
-              <div style={statRow}>
-                <div style={statItem}>
-                  <div style={label}>Cumulative income</div>
-                  <div style={value}>₹{data.income}</div>
-                </div>
-
-                <div style={dividerVertical}></div>
-
-                <div style={statItem}>
-                  <div style={label}>Total Invited</div>
-                  <div style={value}>{data.totalInvited}</div>
-                </div>
-              </div>
-
-              <div style={linksRow}>
-                <span>Invitation record</span>
-                <span>Reward rules</span>
-              </div>
-            </div>
-          </div>
+      {toast?.show && (
+        <div
+          style={{
+            ...toastStyle,
+            background: toast.type === "error" ? "#ef4444" : "#22c55e",
+          }}
+        >
+          {toast?.msg}
         </div>
+      )}
+      {
+        loading ?
+          <GameLoader />
+          :
+          <>
+            <div style={content}>
+              <div style={{
+                banner,
+                backgroundImage: `url(${data?.image})`,
+                position: "relative",
+                padding: 16,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                bottom: 50,
+              }}>
+                <div style={{
+                  position: "relative", zIndex: 2, paddingTop: "45%",
+                }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      background: "#f3f4f6",
+                      borderRadius: "12px",
+                      padding: "10px 12px",
+                      padding: "6px 10px", borderRadius: "10px",
+                      background: "linear-gradient(90deg, rgba(255,215,0,0.9), rgba(255,255,255,0.1))",
+                      backdropFilter: "blur(12px)",
+                      display: "flex", alignItems: "center", gap: "10px"
 
-        {/* BONUS LIST */}
-        <div style={list}>
-          {data.bonuses.map((b) => (
-            <div key={b.id} style={card}>
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: "600",
+                        fontSize: "25px",
+                        letterSpacing: "1px",
+                        color: "#111",
+                        alignSelf: "center"
+                      }}
+                    >
+                      {data?.referral_code || `${' - - - - - - '}`}
+                    </span>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "10px",
+                      // background: "rgba(255,255,255,0.2)"                ,
+                      padding: "6px 10px", borderRadius: "20px"
+                    }}>
+                      {/* <p>{JSON.stringify(data,null,2)}</p> */}
+                      <span
 
-              <div style={cardHeader}>
-                <span>Bonus {b.id}</span>
-                <span style={{ color: "#7c3aed" }}>₹{b.reward}</span>
-              </div>
+                        onClick={() => handleResetLink()}
+                        style={{
+                          fontSize: "12px",
+                          color: data?.referral_code ? "#fff" : "#777",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          background: data?.referral_code ? "#7c3aed" : "#e5e5e5",
+                          padding: "6px 10px",
+                          borderRadius: "20px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px"
+                        }}
+                      >
+                        Reset link <RefreshCcw size={14} />
+                      </span>
+                      <button
+                        onClick={copyCode}
+                        style={{
+                          padding: "6px 16px",
+                          borderRadius: "20px",
+                          border: "none",
+                          color: data?.referral_code ? "#fff" : "#777",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          background: data?.referral_code ? "#7c3aed" : "#e5e5e5",
+                          fontSize: "12px",
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      borderRadius: "16px",
+                      padding: "10px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      maxWidth: "400px",
+                      width: "100%",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "20px auto 0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "5px"
+                      }}
+                    >
+                      <div style={{ flex: 1, textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            color: "#777",
+                            marginBottom: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          💰 <span>Cumulative Income</span>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: "600",
+                            color: "#222"
+                          }}
+                        >
+                          ₹{data?.cumulative_income || 0}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: "1px",
+                          height: "40px",
+                          background: "#e5e5e5"
+                        }}
+                      ></div>
+                      <div style={{ flex: 1, textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontSize: "13px", color: "#777",
+                            marginBottom: "6px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                          }}                        >
+                          👥 <span>Total Invited</span>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: "600",
+                            color: "#222"
+                          }}
+                        >
+                          {data?.total_invited_count || 0}
+                        </div>
+                      </div>
+                    </div>
 
-              <div style={grayRow}>
-                <span>Number of invitees</span>
-                <span>{b.invites}</span>
-              </div>
-
-              <div style={grayRow}>
-                <span>Recharge per people</span>
-                <span style={{ color: "#7c3aed" }}>
-                  ₹{data.rechargePerPerson}
-                </span>
-              </div>
-              <div style={progressRow}>
-                <div>
-                  <span style={highlight}>{b.progress}</span>/{b.invites}
-                  <div style={smallText}>Invitees</div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        borderTop: "1px solid #eee",
+                        paddingTop: "12px",
+                        fontSize: "11px"
+                      }}
+                    >
+                      <span
+                        onClick={() => {
+                          if (!JSON.parse(localStorage.getItem("user"))?.id) {
+                            showToast("User not found", "error");
+                            navigate('/login');
+                            return;
+                          }
+                          navigate('/invitationRecord')
+                        }}
+                        style={{
+                          color: "#4a90e2", cursor: "pointer",
+                          fontWeight: "500", display: "flex",
+                          alignItems: "center",
+                          gap: "5px"
+                        }}
+                      >
+                        📜 Invitation Record
+                      </span>
+                      <span
+                        onClick={() => {
+                          if (!JSON.parse(localStorage.getItem("user"))?.id) {
+                            showToast("User not found", "error");
+                            navigate('/login');
+                            return;
+                          }
+                          navigate('/RulesScreeen')
+                        }}
+                        style={{
+                          color: "#4a90e2",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px"
+                        }}
+                      >
+                        📘 Reward Rules
+                      </span>
+                    </div>
+                  </div>
                 </div>
-
-                <div>
-                  <span style={highlight}>{b.progress}</span>/{b.invites}
-                  <div style={smallText}>Deposits</div>
-                </div>
               </div>
+              <div style={list}>
+                {data?.inviteRules?.map((b, index) => (
+                  <div key={index} style={card}>
+                    <div style={cardHeader}>
+                      <span>{b.title}</span>
+                      <span style={{ color: "#7c3aed" }}>₹{b.bonusAmount}</span>
+                    </div>
+                    <div style={grayRow}>
+                      <span>Number of invitees</span>
+                      <span>{b.noOfPeople}</span>
+                    </div>
+                    <div style={grayRow}>
+                      <span>Recharge per people</span>
+                      <span style={{ color: "#7c3aed" }}>
+                        ₹{b.rechargePerPerson}
+                      </span>
+                    </div>
 
-              <button style={btn}>Go Complete</button>
+                    <div style={progressRow}>
+                      <div>
+                        <span style={highlight}>
+                          {b.inviteProgress?.split("/")?.[0]}
+                        </span>
+                        /{b.noOfPeople}
+                        <div style={smallText}>Invitees</div>
+                      </div>
+
+                      <div>
+                        <span style={highlight}>
+                          {b.depositProgress?.split("/")?.[0]}
+                        </span>
+                        /{b.noOfPeople}
+                        <div style={smallText}>Deposits</div>
+                      </div>
+                    </div>
+                    <button onClick={() => handleShareLink()} style={btn}>
+                      Go Complete
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
+          </>
+      }
     </div>
   );
 }
+
 const container = {
-  maxWidth: 430,
-  margin: "0 auto",
-  height: "100vh",
-  display: "flex",
-  flexDirection: "column",
-  background: "#f5f5f5",
-  overflow: "hidden",
+  maxWidth: 430, margin: "0 auto",
+  height: "100vh", display: "flex", flexDirection: "column", background: "#f5f5f5",
+};
+const content = {
+  flex: 1, overflowY: "auto",
+  paddingBottom: "20%",
 };
 const header = {
   height: 55,
-  background: "#7c3aed",
-  color: "white",
+  background: "#7c3aed", color: "white",
   display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
+  alignItems: "center", justifyContent: "space-between",
   padding: "0 12px",
   flexShrink: 0,
 };
-const content = {
-  flex: 1,
-  overflowY: "auto",
-};
-const back = { fontSize: 22, cursor: "pointer" };
+const back = { fontSize: 15, cursor: "pointer" };
 const title = { fontWeight: "bold" };
 const rulesBtn = {
-  background: "white",
-  border: "none",
-  padding: "4px 10px",
+  background: "white", border: "none", padding: "4px 10px",
   borderRadius: 6,
   color: "#7c3aed",
+}; const banner = {
 };
-
-const banner = {
-  position: "relative",
-  padding: 16,
-  backgroundImage:
-    "url('https://www.singamlottery.com/static/media/invitation-bg.3645bbb7789ffd4ed47d.webp')",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-};
-
 const overlay = {
-  position: "absolute",
-  inset: 0,
-  background: "rgba(0,0,0,0.3)",
-};
-
-const inviteText = {
-  color: "white",
-  fontWeight: "bold",
-  marginBottom: 12,
-
-};
-
-const codeWrapper = {
-  display: "flex",
-  background: "#facc15",
-  borderRadius: 8,
-  overflow: "hidden",
-};
-
-const codeLeft = {
-  flex: 1,
-  background: "#eee",
-  padding: 12,
-  textAlign: "center",
-};
-
-const codeRight = {
-  width: 90,
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
-
-const codeText = {
-  letterSpacing: 4,
-  fontWeight: "bold",
-};
-
-const copyBtn = {
-  background: "#7c3aed",
-  color: "white",
-  border: "none",
-  padding: "6px 14px",
-  borderRadius: 20,
-};
-
-const statsCard = {
-  background: "white",
-  marginTop: 12,
-  borderRadius: 10,
-  padding: 12,
-};
-
-const statRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-};
-
-const statItem = {
-  flex: 1,
-  textAlign: "center",
-};
-
-const dividerVertical = {
-  width: 1,
-  height: 40,
-  background: "#eee",
-};
-
-const label = {
-  fontSize: 12,
-  color: "#666",
-};
-
-const value = {
-  fontWeight: "bold",
-  fontSize: 18,
-};
-
-const linksRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginTop: 10,
-  fontSize: 12,
+  position: "absolute", inset: 0,
+  background: "rgba(0,0,0,0.1)",
 };
 
 const list = {
-  padding: 12,
+  padding: "0 12px",
 };
-
 const card = {
-  background: "white",
-  borderRadius: 12,
-  padding: 12,
-  marginBottom: 12,
+  background: "white", borderRadius: 12, padding: 12, marginBottom: 12,
 };
-
 const cardHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: 10,
-  fontWeight: "bold",
+  display: "flex", justifyContent: "space-between",
+  marginBottom: 10, fontWeight: "bold",
 };
-
 const grayRow = {
   background: "#f1f1f1",
-  padding: 8,
-  borderRadius: 6,
-  display: "flex",
-  justifyContent: "space-between",
+  padding: 8, borderRadius: 6, display: "flex", justifyContent: "space-between",
   marginBottom: 6,
+}; const toastStyle = {
+  position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", color: "#fff",
+  padding: "10px 16px", borderRadius: 8, fontWeight: 500, zIndex: 999,
 };
-
 const progressRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginTop: 10,
+  display: "flex", justifyContent: "space-between", marginTop: 10,
 };
+const highlight = { color: "#7c3aed", fontWeight: "bold", };
 
-const highlight = {
-  color: "#7c3aed",
-  fontWeight: "bold",
-};
-
-const smallText = {
-  fontSize: 11,
-  color: "#777",
-};
-
-const btn = {
-  width: "100%",
-  marginTop: 10,
-  padding: 12,
-  borderRadius: 25,
-  border: "none",
-  background: "linear-gradient(90deg,#7c3aed,#a855f7)",
-  color: "white",
-  fontWeight: "bold",
+const smallText = { fontSize: 10, color: "#777", }; const btn = {
+  width: "100%", marginTop: 10,
+  padding: 12, borderRadius: 25, border: "none", background: "linear-gradient(90deg,#7c3aed,#a855f7)",
+  color: "white", fontWeight: "bold",
 };

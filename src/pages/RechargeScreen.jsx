@@ -3,7 +3,7 @@ import { ChevronLeft, Headphones, RefreshCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RechargeRules from "../components/RechargeRules";
 import { getrechargeDetailsCall, rechargeCall } from "../services/authService";
-
+import GameLoader from "./LoaderComponet";
 export default function RechargeScreen() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("UPI");
@@ -20,24 +20,42 @@ export default function RechargeScreen() {
   const [note, setNote] = useState("");
   const [bonusCards, setBonusCards] = useState([]);
   const [selectedAmountObj, setSelectedAmountObj] = useState(null);
+  const [rechData, setrechData] = useState(null);
   const showToast = (message, type = "error") => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: "", type: "" }), 2500);
   };
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     getRechargDetails();
-  }, [activeTab]);
-  
+  }, [activeTab, amount, selectedBonus]);
+
   const getRechargDetails = async () => {
+    // alert(JSON.stringify(
+    //   {
+    //     user_id: JSON.parse(localStorage.getItem("user"))?.id,
+    //     name: "general",
+    //     method: activeTab === "UPI" ? "UPI" : "CRYPTO",
+    //     amount: amount,
+    //     selectedBonus: bonusCards[selectedBonus]?.key || null
+    //   }
+    // ))
+    // return
+
     try {
+      setLoading(true);
       const res = await getrechargeDetailsCall({
         user_id: JSON.parse(localStorage.getItem("user"))?.id,
-        "name": "general",
-        "method": activeTab == "UPI" ? "UPI" : "CRYPTO",
-        amount: amount || rules.min
+        name: "general",
+        method: activeTab === "UPI" ? "UPI" : "CRYPTO",
+        amount: amount,
+        selectedBonus: bonusCards[selectedBonus]?.key || null
       });
       if (res?.success) {
         const data = res.data;
+
+        setrechData(data);
         setWallet(data.wallet_balance);
         const mappedChannels = data.methods.map((m) => ({
           name: m.name,
@@ -46,15 +64,15 @@ export default function RechargeScreen() {
         }));
         setChannels(mappedChannels);
         setUpiAmounts(data.quick_amounts);
-        // ✅ AUTO SELECT FIRST AMOUNT
-        if (data.quick_amounts?.length > 0) {
-          setAmount(data.quick_amounts[0].amount);
-          setSelectedAmountObj(data.quick_amounts[0]); // ⭐ important
-        }
         setRules(data.rules);
         setMethodText(data.header?.current_method_text || "");
         setNote(data.header?.note || "");
         setBonusCards(data.promotions || []);
+        // alert(data.selected.amount)
+        if (data.selected) {
+          setAmount(data.selected.amount);
+          setSelectedAmountObj(data.selected);
+        }
 
       } else {
         showToast(res?.message || "Error");
@@ -62,6 +80,9 @@ export default function RechargeScreen() {
     } catch (err) {
       console.log(err);
       showToast("Failed to load data");
+    }
+    finally {
+      setLoading(false);
     }
   };
   const handleRechargeClick = () => {
@@ -77,9 +98,9 @@ export default function RechargeScreen() {
     setShowConfirm(true);
   };
   const finalAmount = selectedAmountObj?.total || amount;
-  const bonus = selectedAmountObj?.bonus || 0;
   const handleConfirmRecharge = async () => {
     setShowConfirm(false);
+    setLoading(true);
     try {
       const res = await rechargeCall({
         amount,
@@ -87,19 +108,23 @@ export default function RechargeScreen() {
         channel: channels[selectedChannel]?.name,
         method: activeTab
       });
-      if (res?.status === "success") {
+      if (res?.success) {
         showToast(res?.message || "Success", "success");
+        getRechargDetails();
       } else {
         showToast(res?.message || "Error");
       }
     } catch {
       showToast("Recharge failed");
     }
+    finally {
+      setLoading(false);
+    }
   };
-  const cryptoAmounts = [10, 20, 50, 100, 200, 300, 500, 1000];
+
   return (
-    <div className="max-w-[430px] mx-auto bg-gray-100 min-h-screen pb-24">
-      <div className="flex items-center justify-between px-4 py-5 bg-white shadow-sm">
+    <div className="max-w-[430px] mx-auto bg-gray-100 min-h-screen pb-10">
+      <div className=" flex items-center justify-between px-4 py-5 bg-white shadow-sm">
         <ChevronLeft onClick={() => navigate(-1)} />
         <span className="font-semibold">Recharge</span>
         <Headphones onClick={() => navigate('/CustomerSupport')} />
@@ -173,14 +198,14 @@ export default function RechargeScreen() {
                 }`}
             >
               <img
-                src={card.image}
+                src={card?.image}
                 className="absolute inset-0 w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
               <div className="relative z-10 p-4 text-white flex flex-col justify-between h-full">
                 {
                   card?.value &&
-                  <div className="text-lg font-extrabold leading-none " style={{ fontSize: "25px" }}>
+                  <div className="text-lg font-extrabold leading-none " style={{ fontSize: "20px" }}>
                     {card?.value}
                   </div>
                 }
@@ -213,25 +238,20 @@ export default function RechargeScreen() {
               setAmount("");
               return;
             }
-            // ✅ prevent too many digits (like 999999999)
             if (value.length > 5) return;
-
             const num = Number(value);
-
-            // ❌ block above max
             if (num > rules.max) return;
-
             setAmount(value);
           }}
         />
         <p className="text-xs mt-2">Min ₹{rules.min} & Max ₹{rules.max}</p>
       </div>
-      {toast.message && (
+      {toast?.message && (
         <div
-          className={`fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-whitez-50 ${toast.type === "success" ? "bg-green-500" : "bg-red-500"
+          className={`fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-white ${toast.type === "success" ? "bg-green-500" : "bg-red-500 z-555"
             }`}
         >
-          {toast.message}
+          {toast?.message}
         </div>
       )}
       <div className="grid grid-cols-4 gap-3 px-3 mt-3">
@@ -248,10 +268,9 @@ export default function RechargeScreen() {
                 : "bg-gray-200"
               }`}
           >
-            {/* 🔥 BLINKING BONUS TAG */}
             {activeTab === "UPI" && amt?.bonus && (
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-                <span className="bonus-blink text-white text-[10px] px-2 py-[2px] rounded">
+              <div className="absolute  left-1/2 -translate-x-1/2 bottom-9">
+                <span className="bonus-blink text-white text-[8px] px-1 py-[2px] rounded">
                   {amt.bonus_text}
                 </span>
               </div>
@@ -262,6 +281,9 @@ export default function RechargeScreen() {
           </div>
         ))}
       </div>
+      {loading && (
+        <GameLoader />
+      )}
       <div className="mx-3 mt-4 bg-white p-4 rounded-xl">
         <p className="mb-2 font-semibold">Recharge channel</p>
         <div className="grid grid-cols-3 gap-3">
@@ -281,7 +303,7 @@ export default function RechargeScreen() {
       </div>
       {showConfirm && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center">
-          <div className="bg-white p-5 rounded-xl w-[90%]">
+          <div className="bg-white p-5 rounded-xl" style={{ width: "400px" }}>
             <h2 className="text-center font-bold mb-3">Confirm Recharge</h2>
 
             <div className="space-y-2 text-sm">
@@ -296,7 +318,7 @@ export default function RechargeScreen() {
 
               <div className="flex justify-between font-bold text-green-600">
                 <span>Total</span>
-                <span>₹{finalAmount}</span>
+                <span>₹{rechData?.total}</span>
               </div>
             </div>
 
@@ -316,12 +338,15 @@ export default function RechargeScreen() {
           onClick={handleRechargeClick}
           className="w-full py-3 bg-purple-600 text-white rounded-full"
         >
-          <div className="absolute -top-2  left-1/2 -translate-x-1/2">
-            <span className="bonus-blink text-white text-[20px] px-5 py-[1px] rounded-xl">
-              {selectedAmountObj?.bonus_text}
-            </span>
-          </div>
-          Recharge ₹{amount}
+          {
+            rechData?.bonus_text &&
+            <div className="absolute -top-2  left-1/2 -translate-x-1/2">
+              <span className="bonus-blink text-white text-[20px] px-5 py-[1px] rounded-xl">
+                {rechData?.bonus_text}
+              </span>
+            </div>
+          }
+          Recharge ₹{rechData?.total}
         </button>
       </div>
       <RechargeRules />

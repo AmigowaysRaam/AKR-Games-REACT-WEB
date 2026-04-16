@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getTransactionHist } from "../services/authService";
+import GameLoader from "./LoaderComponet";
 
 export default function MyTransactions() {
 
@@ -62,11 +63,11 @@ export default function MyTransactions() {
       setLoading(true);
       setError("");
       const res = await getTransactionHist({
-        userId: uid,
+        user_id: uid,
         month: selectedMonth,
         year: selectedYear,
       });
-      const apiData = res?.data;
+      const apiData = res;
       if (!apiData) {
         throw new Error("Invalid API response");
       }
@@ -121,15 +122,10 @@ export default function MyTransactions() {
         <ChevronLeft size={22} onClick={() => navigate(-1)} />
         <span>My Transactions</span>
       </div>
-
       {/* LOADER */}
       {loading && (
-        <div style={styles.centerBox}>
-          <div style={styles.loader}></div>
-          <p>Loading transactions...</p>
-        </div>
+        <GameLoader />
       )}
-
       {/* ERROR */}
       {!loading && error && (
         <div style={styles.centerBox}>
@@ -161,6 +157,7 @@ export default function MyTransactions() {
                     ...styles.tab,
                     background: activeTab === tab ? "#7c3aed" : "#eee",
                     color: activeTab === tab ? "#fff" : "#555",
+                    fontSize: activeTab === tab ? 18 : 14,
                   }}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -174,13 +171,11 @@ export default function MyTransactions() {
             <div>Total Wallet</div>
             <h2>₹ {histdata.wallet}</h2>
           </div>
-
           {/* Date */}
           <div style={styles.dateBox} onClick={() => setShowDatePicker(true)}>
             <Calendar size={18} />
             <span>{formattedDate}</span>
           </div>
-
           {/* Transactions */}
           <div style={styles.list}>
             {filteredTransactions.length === 0 ? (
@@ -188,10 +183,14 @@ export default function MyTransactions() {
                 No Data Found
               </div>
             ) : (
-              filteredTransactions.map((item, i) => (
+              filteredTransactions?.map((item, i) => (
                 <div key={i} style={styles.card}>
                   <div style={styles.rowBetween}>
-                    <div style={styles.type}>{item.type}</div>
+                    <div className="text-uppercase" style={{
+                      textTransform: "capitalize",
+                      fontWeight: "bold"
+                    }}
+                    >{item.type}</div>
                     <div
                       style={{
                         ...styles.amount,
@@ -200,28 +199,26 @@ export default function MyTransactions() {
                           : "red",
                       }}
                     >
-                      {item.amount}
+                      {item?.amount}
                     </div>
                   </div>
-
                   <div style={styles.rowBetween}>
                     <span style={styles.label}>Wallet</span>
                     <span>Primary</span>
                   </div>
+                  {/* <p>
+                    {JSON.stringify(item)
+                    }
+                  </p> */}
 
                   <div style={styles.rowBetween}>
                     <span style={styles.label}>Balance</span>
-                    <span>{item.balance}</span>
+                    <span>{item?.balance}</span>
                   </div>
 
                   <div style={styles.rowBetween}>
                     <span style={styles.label}>Time</span>
                     <span>{item.time}</span>
-                  </div>
-
-                  <div style={styles.rowBetween}>
-                    <span style={styles.label}>Order ID</span>
-                    <span>{item.order}</span>
                   </div>
                 </div>
               ))
@@ -229,8 +226,6 @@ export default function MyTransactions() {
           </div>
         </>
       )}
-
-      {/* DATE MODAL */}
       {showDatePicker && (
         <div
           style={styles.modalOverlay}
@@ -278,8 +273,6 @@ export default function MyTransactions() {
     </div>
   );
 }
-
-/* ✅ STYLES */
 const styles = {
   container: {
     maxWidth: 430, margin: "0 auto", background: "#f6f7fb",
@@ -291,7 +284,7 @@ const styles = {
     display: "flex", gap: 8,
     padding: 10, overflowX: "auto", cursor: "grab",
   }, tab: {
-    padding: "6px 12px", borderRadius: 20, fontSize: 13,
+    padding: "3px 15px", borderRadius: 20, fontSize: 13,
     whiteSpace: "nowrap",
   }, walletBox: {
     textAlign: "center",
@@ -304,42 +297,34 @@ const styles = {
   list: { padding: 10 },
   card: {
     background: "#fff", borderRadius: 12, padding: 14,
-    marginBottom: 10,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+    marginBottom: 10, boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
   }, rowBetween: {
-    display: "flex",
-    justifyContent: "space-between",
+    display: "flex", justifyContent: "space-between",
     marginTop: 6,
-  }, label: { color: "#888", fontSize: 12 },
-  type: { fontWeight: "bold" }, amount: { fontWeight: "bold" },
+  }, label: { color: "#888", fontSize: 12 }, amount: { fontWeight: "bold" },
   centerBox: {
     textAlign: "center", padding: 40,
   }, loader: {
     width: 40, height: 40, border: "4px solid #ddd",
     borderTop: "4px solid #7c3aed", borderRadius: "50%", margin: "0 auto 10px", animation: "spin 1s linear infinite",
   },
-
   retryBtn: {
-    marginTop: 10, padding: "10x 20px",
-    borderRadius: 20, border: "none", background: "#7c3aed",
-    color: "#fff",
-    cursor: "pointer",
-  },
-  modalOverlay: {
+    marginTop: 10, padding: "10x 20px", borderRadius: 20, border: "none", background: "#7c3aed",
+    color: "#fff", cursor: "pointer",
+    padding: "8px 40px",
+  }, modalOverlay: {
     position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
     display: "flex", justifyContent: "center", alignItems: "flex-end",
     zIndex: 1000,
   }, modalContent: {
     width: "100%", maxWidth: 430, background: "#fff",
     borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20, animation: "slideUp 0.3s ease",
+    borderTopRightRadius: 20, padding: 20, animation: "slideUp 0.3s ease",
   }, dragBar: {
     width: 40, height: 5,
     background: "#ccc", borderRadius: 10, margin: "0 auto 12px",
   }, modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
+    display: "flex", justifyContent: "space-between",
     marginBottom: 20, fontWeight: "bold",
   }, pickerRow: {
     display: "flex",
@@ -347,23 +332,17 @@ const styles = {
   }, select: {
     flex: 1, padding: 14,
     borderRadius: 12, border: "1px solid #ddd",
-  },
-  confirmBtn: {
+  }, confirmBtn: {
     width: "100%", padding: 14, borderRadius: 30, border: "none",
     background: "linear-gradient(90deg, #9333ea, #d946ef)",
     color: "#fff", fontWeight: "bold",
   },
-};
-/* ✅ ANIMATIONS */
-const styleSheet = document.createElement("style");
-styleSheet.innerHTML = `
+};/* ✅ ANIMATIONS */
+const styleSheet = document.createElement("style"); styleSheet.innerHTML = `
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }  100% { transform: rotate(360deg); }
 }
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+@keyframes slideUp {  from { transform: translateY(100%); }  to { transform: translateY(0); }
 }
 `;
 document.head.appendChild(styleSheet);

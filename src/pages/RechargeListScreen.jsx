@@ -2,23 +2,18 @@ import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { getRechargeList } from "../services/authService";
-
+import GameLoader from "./LoaderComponet";
 export default function RechargeListScreen() {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
-
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [listData, setListData] = useState([]);
-
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(0);
-
-  // 👉 drag states
   const isDown = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
-
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedWallet = localStorage.getItem("wallet");
@@ -30,15 +25,15 @@ export default function RechargeListScreen() {
       setWallet(storedWallet);
     }
   }, []);
-
-  // ✅ API CALL
   useEffect(() => {
     const fetchRechargeList = async () => {
       try {
         setLoading(true);
-        const res = await getRechargeList();
-        if (res?.status && Array.isArray(res?.plans)) {
-          setListData(res.plans);
+        const res = await getRechargeList({
+          userId: user?.id,
+        });
+        if (res?.success && Array.isArray(res?.data)) {
+          setListData(res?.data);
         } else {
           setListData([]);
         }
@@ -49,16 +44,13 @@ export default function RechargeListScreen() {
         setLoading(false);
       }
     };
-
     fetchRechargeList();
   }, []);
 
-  // ✅ ACTIVE DATA
   const vip =
     listData.length > 0
       ? listData[activeIndex] || listData[0]
       : null;
-
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const container = scrollRef.current;
@@ -69,8 +61,6 @@ export default function RechargeListScreen() {
       setActiveIndex(newIndex);
     }
   };
-
-  // ✅ MOUSE DRAG LOGIC (NEW)
   const handleMouseDown = (e) => {
     isDown.current = true;
     scrollRef.current.classList.add("cursor-grabbing");
@@ -98,25 +88,18 @@ export default function RechargeListScreen() {
 
   return (
     <div className="container">
-      {/* HEADER */}
       <div className="header">
-        <ChevronLeft size={22} onClick={() => navigate(-1)} />
+        <ChevronLeft size={22} className=" cursor-pointer" onClick={() => navigate(-1)} />
         <span className="title">VIP</span>
-
         <div className="balance">
           <span>Balance</span>
           <b>{wallet}</b>
           <div className="walletIcon" />
         </div>
       </div>
-
-      {/* LOADER */}
       {loading && (
-        <div className="loaderOverlay">
-          <div className="loader"></div>
-        </div>
+        <GameLoader />
       )}
-
       <div className="contentWrapper">
         <div
           ref={scrollRef}
@@ -136,14 +119,14 @@ export default function RechargeListScreen() {
                 }}
               >
                 <div className="overlay" />
-                <div className="cardContent">
+                <div className="cardContent ">
                   <div className="topRow">
                     <img src={item?.icon} className="vipIcon" />
                     <button
-                      className="rechargeBtn"
+                      className="rechargeBtn cursor-pointer"
                       onClick={() => {
                         user?.id ? navigate("/payRecharge") :
-                        navigate("/login")
+                          navigate("/Login")
                       }}
                     >
                       Recharge
@@ -232,148 +215,78 @@ export default function RechargeListScreen() {
           </div>
         )}
       </div>
-
-      {/* STYLES */}
       <style>{`
         .container {
           max-width: 430px;
           margin: 0 auto;
           background: #f5f5f5;
-          height: 100vh;
-        }
+          height: 100vh;        }
 
         .header {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px;
-          background: #fff;
-          position: sticky;
-          top: 0;
-        }
+          align-items: center;          justify-content: space-between;
+          padding: 12px;          background: #fff;
+          position: sticky;          top: 0;        }
 
         .slider {
-          display: flex;
-          overflow-x: auto;
-          padding: 10px;
-          scroll-snap-type: x mandatory;
+          display: flex;          overflow-x: auto;
+          padding: 10px;          scroll-snap-type: x mandatory;
+        }        .slide {          min-width: 90%;
+          margin-right: 10px;          scroll-snap-align: center;
         }
-
-        .slide {
-          min-width: 90%;
-          margin-right: 10px;
-          scroll-snap-align: center;
-        }
-
-        .card {
-          height: 190px;
-          border-radius: 18px;
-          padding: 15px;
-          background-size: cover;
-          background-position: center;
-          position: relative;
-          overflow: hidden;
-          border: 1px solid #cbd5e1;
-          transition: 0.3s;
+        .card {          height: 190px;          border-radius: 18px;
+          padding: 15px;          background-size: cover;
+          background-position: center;          position: relative;
+          overflow: hidden;          border: 1px solid #cbd5e1;          transition: 0.3s;
           transform: scale(0.95);
-        }
-
-        .card.active {
-          transform: scale(1);
-        }
-
-        .overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(255,255,255,0.85),
-            rgba(240,248,255,0.6)
+        }        .card.active {          transform: scale(1);
+        }        .overlay {          position: absolute;
+          inset: 0;          background: linear-gradient(
+            135deg,            rgba(255,255,255,0.85),            rgba(240,248,255,0.6)
           );
-          border-radius: 18px;
-        }
-
-        .cardContent {
-          position: relative;
-          z-index: 2;
-        }
-
-        .topRow {
+          border-radius: 18px;        }
+        .cardContent {          position: relative;          z-index: 2;
+        }        .topRow {
+          display: flex;          justify-content: space-between;
+        }        .vipIcon {
+          width: 60px;        }
+        .rechargeBtn {          background: linear-gradient(135deg,#9333ea,#7e22ce);
+          color: white;          border: none;
+          padding: 4px 12px;          font-size: 12px;
+          border-radius: 16px;          height: 28px;
           display: flex;
-          justify-content: space-between;
+          align-items: center;          justify-content: center;
         }
-
-        .vipIcon {
-          width: 60px;
-        }
-
-        .rechargeBtn {
-          background: linear-gradient(135deg,#9333ea,#7e22ce);
-          color: white;
-          border: none;
-          padding: 4px 12px;
-          font-size: 12px;
-          border-radius: 16px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .progressBar {
-          height: 5px;
-          background: #94a3b8;
-          border-radius: 10px;
+        .progressBar {          height: 5px;
+          background: #94a3b8;          border-radius: 10px;
           margin-top: 6px;
+        }        .progressFill {          height: 100%;          background: #64748b;
         }
-
-        .progressFill {
-          height: 100%;
-          background: #64748b;
-        }
-
         .highlight {
-          color: #f97316;
-          font-weight: 600;
-        }
-
-        .details {
+          color: #f97316;          font-weight: 600;
+        }        .details {
           margin: 12px;
-          background: #fff;
-          border-radius: 16px;
-          padding: 14px;
-        }
-
+          background: #fff;          border-radius: 16px;
+          padding: 14px;        }
         .loaderOverlay {
           position: fixed;
           inset: 0;
-          background: rgba(255,255,255,0.6);
-          display: flex;
+          background: rgba(255,255,255,0.6);          display: flex;
           align-items: center;
-          justify-content: center;
-        }
+          justify-content: center;        }
 .rewardRow {
-  display: flex;
-}
-
-.rewardItem {
+  display: flex;}.rewardItem {
   padding: 0 10px; /* horizontal padding for EACH item */
-}
-        .loader {
-          width: 35px;
-          height: 35px;
-          border: 4px solid #ddd;
-          border-top: 4px solid #7e22ce;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
+}        .loader {
+          width: 35px;          height: 35px;          border: 4px solid #ddd;
+          border-top: 4px solid #7e22ce;          border-radius: 50%;
+          animation: spin 1s linear infinite;        }
 
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
-  );
+    </div>);
 }
 
 function VipRow({ title, content }) {

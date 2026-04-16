@@ -1,5 +1,7 @@
-import React, { useRef } from "react";
+import { Map, MapIcon, MapPin } from "lucide-react";
+import React, { useEffect, useRef, useMemo } from "react";
 
+/* ---------------- MATCH CARD (UNCHANGED) ---------------- */
 function MatchCard({ match }) {
   const isLive = match.status === "LIVE";
 
@@ -27,23 +29,18 @@ function MatchCard({ match }) {
             </>
           ) : (
             <span className="text-gray-500 text-xs font-bold">
-              {match.time}
             </span>
           )}
         </div>
-
-        <span className="text-black text-xs truncate max-w-[100px]">
-          {match.league}
-        </span>
-
-        <span className="text-black text-xs">
-          🔥 {match.popularity}%
+        <MapPin size={"6%"} />
+        <span className="block w-full text-center text-black text-xs truncate">
+          {match.seriesName}
         </span>
       </div>
-
-      {/* TEAMS */}
+      <span className="block  w-full text-center text-gray-500 text-[10px] font-bold">
+        {match?.time}
+      </span>
       <div className="px-3 py-3 space-y-2.5">
-        {/* TEAM 1 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl">{match.team1?.emoji}</span>
@@ -110,14 +107,52 @@ function MatchCard({ match }) {
   );
 }
 
+/* ---------------- MAIN SECTION ---------------- */
 export default function HotMatchesSection({ matches }) {
   const scrollRef = useRef(null);
 
-  let isDown = false;
-  let startX;
-  let scrollLeft;
+  let isDown = false;  let startX;  let scrollLeft;
+  useEffect(() => {
+    console.log(matches, "matches in hot matches section");
+  }, []);
+  const formattedMatches = useMemo(() => {
+    if (!matches || matches.length === 0) return [];
 
-  // Mouse events for drag scroll
+    return matches.map((item) => {
+      const m = item.matchData?.matchInfo || item;
+
+      return {
+        id: item.id || m.matchId,
+
+        seriesName: m.seriesName,
+
+        time: item.status || m.status, // show API status text
+
+        status:
+          m.state === "Live" || m.state === "In Progress"
+            ? "LIVE"
+            : "UPCOMING",
+
+        team1: {
+          name: m.team1?.teamName,
+          emoji: "", // no static emoji
+          score: item.scorecard?.team1Score,
+          overs: item.scorecard?.team1Overs,
+        },
+
+        team2: {
+          name: m.team2?.teamName,
+          emoji: "",
+          score: item.scorecard?.team2Score,
+          overs: item.scorecard?.team2Overs,
+        },
+
+        outcomes: item.outcomes, // only if API gives
+      };
+    });
+  }, [matches]);
+
+  /* SCROLL (UNCHANGED) */
   const handleMouseDown = (e) => {
     isDown = true;
     scrollRef.current.classList.add("cursor-grabbing");
@@ -139,17 +174,9 @@ export default function HotMatchesSection({ matches }) {
     if (!isDown) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // scroll speed
+    const walk = (x - startX) * 1.5;
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
-
-  if (!matches || matches.length === 0) {
-    return (
-      <div className="text-center text-gray-400 py-10">
-        No live matches available
-      </div>
-    );
-  }
 
   return (
     <div className="py-2">
@@ -161,7 +188,7 @@ export default function HotMatchesSection({ matches }) {
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
       >
-        {matches.map((m) => (
+        {formattedMatches.map((m) => (
           <MatchCard key={m.id} match={m} />
         ))}
       </div>

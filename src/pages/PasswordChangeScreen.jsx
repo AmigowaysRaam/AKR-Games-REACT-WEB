@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { changepassword, getOtpLogin } from "../services/authService";
 export default function PasswordSetScreen() {
   const navigate = useNavigate();
-  const [oldPassword, setOldPassword] = useState(""); // ✅ NEW
+  const [oldPassword, setOldPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -118,7 +118,7 @@ export default function PasswordSetScreen() {
       {/* HEADER */}
       <div style={styles.header}>
         <span onClick={() => navigate(-1)} style={styles.back}>
-          <ChevronLeft size={25} />
+          <ChevronLeft className="cursor-pointer" size={25} />
         </span>
         <span style={styles.headerTitle}>Change Password</span>
       </div>
@@ -126,6 +126,7 @@ export default function PasswordSetScreen() {
       <div style={styles.form}>
         {/* OLD PASSWORD */}
         <div>
+          <p style={styles.label}>Enter old password</p>
           <div style={styles.inputBox}>
             <input
               type={showOldPass ? "text" : "password"}
@@ -148,6 +149,7 @@ export default function PasswordSetScreen() {
 
         {/* NEW PASSWORD */}
         <div>
+          <p style={styles.label}>Enter New password</p>
           <div style={styles.inputBox}>
             <input
               maxLength={15}
@@ -166,9 +168,8 @@ export default function PasswordSetScreen() {
           </div>
           {errors.password && <p style={styles.error}>{errors.password}</p>}
         </div>
-
-        {/* CONFIRM PASSWORD */}
         <div>
+          <p style={styles.label}>Confirm password</p>
           <div style={styles.inputBox}>
             <input
               maxLength={15}
@@ -192,6 +193,7 @@ export default function PasswordSetScreen() {
 
         {/* OTP */}
         <div>
+          <p style={styles.label}>Enter OTP</p>
           <div style={styles.otpRow}>
             <input
               maxLength={4}
@@ -269,7 +271,11 @@ const styles = {
     background: "#fff",
     position: "relative",
   },
-
+  label: {
+    color: "#555",
+    fontSize: 13,
+    marginBottom: 1,
+  },
   back: {
     cursor: "pointer",
     zIndex: 1,
@@ -290,6 +296,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     borderBottom: "1px solid #ddd",
+    marginBottom: 6,
+
   },
 
   input: {

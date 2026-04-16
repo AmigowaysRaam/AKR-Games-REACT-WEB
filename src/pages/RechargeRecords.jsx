@@ -5,6 +5,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getRechargeHist } from "../services/authService";
+import GameLoader from "./LoaderComponet";
 export default function RechargeRecords() {
   const navigate = useNavigate();
   const [openId, setOpenId] = useState(null);
@@ -35,8 +36,6 @@ export default function RechargeRecords() {
       setLoading(false);
     }
   }, []);
-
-  // ✅ API CALL
   const fetchHistory = async (userId) => {
     try {
       setLoading(true);
@@ -88,9 +87,8 @@ export default function RechargeRecords() {
 
         {/* 🔄 LOADER */}
         {loading ? (
-          <div className="text-center py-10 text-gray-500">
-            Loading...
-          </div>
+          <GameLoader />
+
         ) : histdata.length === 0 ? (
           /* ❌ EMPTY STATE */
           <div className="text-center py-10 text-gray-400">
@@ -151,8 +149,8 @@ export default function RechargeRecords() {
               {/* DETAILS */}
               <div
                 className={`px-4 transition-all duration-300 ${openId === item.id
-                    ? "max-h-40 pb-4 opacity-100"
-                    : "max-h-0 overflow-hidden opacity-0"
+                  ? "max-h-40 pb-4 opacity-100"
+                  : "max-h-0 overflow-hidden opacity-0"
                   }`}
               >
                 <div className="border-t pt-3 space-y-2 text-sm text-gray-600">

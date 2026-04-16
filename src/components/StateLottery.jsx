@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 export default function StateLottery({ items = [] }) {
   const navigate = useNavigate();
   useEffect(() => {
-    console.log("ids->", items)
+    console.log("ids->",items);
   }, [items]);
   if (!items.length) return null;
   const times = [
@@ -21,7 +21,8 @@ export default function StateLottery({ items = [] }) {
             onClick={() => navigate(`/state-lottery/${item.nav}`)} // ✅ FIX HERE
             className="rounded-xl text-white p-2 py-8 shadow-md relative overflow-hidden cursor-pointer"
             style={{
-              background: `linear-gradient(135deg, ${item.colorCode?.join(",")})`,
+              // background: `linear-gradient(135deg, ${item.color_code?.join(",")})`,
+              background:item.color_code
             }}
           >
             <div className="flex justify-center mb-1">

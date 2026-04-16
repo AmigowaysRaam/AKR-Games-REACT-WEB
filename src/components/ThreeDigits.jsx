@@ -26,7 +26,7 @@ export default function ThreeDigits({ items = [] }) {
   return (
     <div className="px-3 py-3">
       {/* <h2 className="text-lg font-semibold mb-3">🎲 3 Digit Game</h2> */}
-      <div className="grid grid-cols-2 gap-3" >
+      <div className="grid grid-cols-2 gap-3  cursor-pointer" >
         {items.map((item, index) => {
           const time = timers[index] || 0;
           const minutes = String(Math.floor(time / 60)).padStart(2, "0");

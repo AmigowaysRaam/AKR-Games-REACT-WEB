@@ -1,131 +1,8 @@
 import { ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useState ,useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-const LOTTERY_DATA = [
-  {
-    id: "karunya",
-    name: "KARUNYA",
-    nav: "karunya",
-    number: "KN-618",
-    drawTime: "11-04-2026 01:30 PM",
-    lastJackpot: ["K", "A", "8", "3", "6", "0", "1", "7"],
-    tickets: ["KA456789","KA456789"],
-    prize: "80 Lakhs",
-    bgColor: "from-orange-500 to-red-500",
-    price: 50,
-    img:'https://cdn2.cloudfrontstatic.com/manager/3b38b10e93364fb28afb0ddd82395abe.webp'
-  },
-  {
-    id: "online-only",
-    name: "ONLINE-ONLY",
-    nav: "online-only",
-    number: "OA-1441",
-    drawTime: "07-04-2026 08:00 PM",
-    lastJackpot: ["O", "M", "7", "1", "0", "2", "3", "8"],
-    tickets: ["OV210517", "OR430360", "OU862308", "OR888079", "OP832236", "OZ348931"],
-    prize: "1.2 Crores",
-    bgColor: "from-green-500 to-teal-600",
-    price: 50,
-    img: 'https://cdn2.cloudfrontstatic.com/manager/2074adc38db24ca4a676d0c43554c721.webp'
-  },
-  {
-    id: "samrudh",
-    name: "SAMRUDHI",
-    nav: "samrudhi",
-    number: "SA-1441",
-    drawTime: "07-04-2026 08:00 PM",
-    lastJackpot: ["O", "M", "7", "1", "0", "2", "3", "8"],
-    tickets: ["OV210517", "OR430360", "OU862308", "OR888079", "OP832236", "OZ348931"],
-    prize: "1.2 Crores",
-    bgColor: "from-green-500 to-teal-600",
-    price: 50,
-     img: 'https://cdn2.cloudfrontstatic.com/manager/94b3640dd9f346f6b3daed0dfbfb99f8.webp'
-  },
-  {
-    id: "online-only",
-    name: "ONLINE-ONLY",
-    nav: "online-only",
-    number: "OA-1441",
-    drawTime: "07-04-2026 08:00 PM",
-    lastJackpot: ["O", "M", "7", "1", "0", "2", "3", "8"],
-    tickets: ["OV210517", "OR430360", "OU862308", "OR888079", "OP832236", "OZ348931"],
-    prize: "1.2 Crores",
-    bgColor: "from-green-500 to-teal-600",
-    price: 50,
-    img: 'https://cdn2.cloudfrontstatic.com/manager/2074adc38db24ca4a676d0c43554c721.webp'
-  },
-  {
-    id: "bhagyadhara",
-    name: "BHAGYADHARA",
-    nav: "bhagyadhara",
-    number: "BH-618",
-    drawTime: "11-04-2026 01:30 PM",
-    lastJackpot: ["B", "H", "8", "3", "6", "0", "1", "7"],
-    tickets: ["BH456789"],
-    prize: "80 Lakhs",
-    bgColor: "from-orange-500 to-red-500",
-    price: 50,
-     img: 'https://cdn2.cloudfrontstatic.com/manager/f4a9a49106da40c8be0e5ef2848498d8.webp'
-  },
-  {
-    id: "sthree-sakthi",
-    name: "STHREE-SAKTHI",
-    nav: "sthree-sakthi",
-    number: "SS-514",
-    drawTime: "07-04-2026 03:00 PM",
-    lastJackpot: ["S", "P", "3", "0", "7", "5", "0", "8"],
-    tickets: ["SH945178", "SB678245", "SE422160", "SM596096", "SD816737"],
-    prize: "75 Lakhs",
-    bgColor: "from-pink-500 to-purple-600",
-    price: 50,
-    img: 'https://cdn2.cloudfrontstatic.com/manager/e823528c97b046d99c14bdf47c4c39d6.webp'
-  },
-  {
-    id: "dhanalakshmi",
-    name: "DHANALAKSHMI",
-    nav: "dhanalakshmi",
-    number: "DL-47",
-    drawTime: "08-04-2026 03:00 PM",
-    lastJackpot: ["D", "L", "4", "5", "2", "1", "9", "3"],
-    tickets: ["DH123456", "DL789012"],
-    prize: "1 Crore",
-    bgColor: "from-blue-500 to-indigo-600",
-    price: 50,
-    img: 'https://cdn2.cloudfrontstatic.com/manager/f2f8289f43b8421889671fc3d83a5aaa.webp'
-  },
-  {
-    id: "karunya-plus",
-    name: "KARUNYA PLUS",
-    nav: "karunya-plus",
-    number: "KN-618",
-    drawTime: "11-04-2026 01:30 PM",
-    lastJackpot: ["K", "P", "8", "3", "6", "0", "1", "7"],
-    tickets: ["KP456789"],
-    prize: "80 Lakhs",
-    bgColor: "from-orange-500 to-red-500",
-    price: 50,
-    img: 'https://cdn2.cloudfrontstatic.com/manager/3b089a01b87c4c2a90df0c6412060c90.webp'
-  },
-  {
-    id: "suvarana-keralam",
-    name: "SUVARANA KERALAM",
-    nav: "suvarana keralam",
-    number: "SK-618",
-    drawTime: "11-04-2026 01:30 PM",
-    lastJackpot: ["S", "K", "8", "3", "6", "0", "1", "7"],
-    tickets: ["SK456789"],
-    prize: "80 Lakhs",
-    bgColor: "from-orange-500 to-red-500",
-    price: 50,
-    img: 'https://cdn2.cloudfrontstatic.com/manager/c9d5d47a575d4dd997bf16e17997ad55.webp'
-  },
-
-
-];
-
-
-
+import { getkeralaLottery, generateTickets,deleteTicket,createBet,getBettingList} from "../services/gameSevice";
+import { getWalletSummary,homeApi } from "../services/authService";
 
 const RESULT_HISTORY = [
   { id: "OA-1440", name: "ONLINE-ONLY", date: "06-04-2026 08:00 PM" },
@@ -164,28 +41,115 @@ function TabButton({ label, active, onClick }) {
     </button>
   );
 }
+function BettingTab({ lottery, tickets, setTickets }) {
 
-function BettingTab({ lottery, onRemoveTicket }) {
-  const [tickets, setTickets] = useState(lottery.tickets);
   const [newTicket, setNewTicket] = useState("");
   const [showInput, setShowInput] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({
+  show: false,
+  message: "",
+  type: "success",
+});
+const showToast = (message, type = "success") => {
+  setToast({ show: true, message, type });
 
-  const remove = (i) => setTickets((t) => t.filter((_, idx) => idx !== i));
+  setTimeout(() => {
+    setToast({ show: false, message: "", type: "success" });
+  }, 2500);
+};
 
-  const add = () => {
-    if (newTicket.trim()) {
-      setTickets((t) => [...t, newTicket.trim().toUpperCase()]);
-      setNewTicket("");
-      setShowInput(false);
+const handleGenerate = async (type, qty = 0, customTickets = null) => {
+  try {
+    setLoading(true);
+
+    let payload = {};
+
+    if (type === "custom") {
+      payload = {
+        type: "custom",
+        number: customTickets || tickets,
+        lotteryId: lottery.id, // ✅ FIX
+      };
+    } else {
+      payload = {
+        type: "quantity",
+        quantity: qty,
+        lotteryId: lottery.id, // ✅ FIX
+      };
     }
-  };
+
+    console.log("GENERATE PAYLOAD:", payload);
+
+    const res = await generateTickets(payload);
+
+    console.log("GENERATE RESPONSE:", res);
+
+    if (res?.success) {
+      const formatted = (res.data || []).map((item) => ({
+        id: item.id,
+        ticket: item.ticket,
+      }));
+
+      setTickets((prev) => [...prev, ...formatted]);
+    } else {
+      showToast(res?.message || "Failed to generate tickets", "error");
+    }
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+const remove = async (i) => {
+  try {
+    const ticket = tickets[i];
+
+    if (ticket.id) {
+      await deleteTicket({ ticketId: ticket.id });
+    }
+
+    setTickets((prev) => prev.filter((_, idx) => idx !== i));
+  } catch (err) {
+    console.error("Delete failed", err);
+  }
+};
+
+const add = () => {
+  if (newTicket.length !== 6) {
+   showToast("Enter exactly 6 digits", "error");
+    return;
+  }
+
+  const fullTicket = `${lottery.code}${newTicket}`;
+
+  setTickets((prev) => [
+    ...prev,
+    { ticket: fullTicket }
+  ]);
+
+  setNewTicket("");
+  setShowInput(false);
+};
 
   return (
     <div className="flex flex-col gap-1 pt-4">
+        {toast.show && (
+  <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50">
+    <div
+      className={`px-4 py-2 rounded-full text-white text-sm
+      ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
+    >
+      {toast.message}
+    </div>
+  </div>
+)}
+    
       <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="font-bold text-gray-800 text-medium">
-            Shopping Cart ({tickets.length})
+            Shopping Cart ({tickets?.length || 0})
           </span>
           <button
             onClick={() => setTickets([])}
@@ -200,12 +164,12 @@ function BettingTab({ lottery, onRemoveTicket }) {
           </button>
         </div>
         <div className="flex flex-wrap gap-4 mt-8">
-          {tickets.map((t, i) => (
+          {(tickets || []).map(((t, i) => (
             <div
               key={i}
               className="flex items-center gap-2 bg-white border border-gray-400 rounded-lg px-2 py-1 text-sm font-medium text-gray-700"
             >
-              {t}
+              {t.ticket}
               <button
                 onClick={() => remove(i)}
                 className="ml-1 text-gray-400 hover:text-red-500 w-4 h-4 flex items-center justify-center rounded-full"
@@ -213,27 +177,40 @@ function BettingTab({ lottery, onRemoveTicket }) {
                 ✕
               </button>
             </div>
-          ))}
+          )))}
           {showInput ? (
             <div className="flex items-center gap-1">
-              <input
-                autoFocus
-                value={newTicket}
-                onChange={(e) => setNewTicket(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && add()}
-                placeholder="Ticket no."
-                className="border border-purple-300 rounded-full px-3 py-1 text-xs w-28 outline-none focus:border-purple-500"
-              />
-              <button
-                onClick={add}
-                className="text-xs bg-purple-600 text-white px-3 py-1 rounded-full hover:bg-purple-700"
-              >
-                Add
-              </button>
-            </div>
+  <span className="bg-gray-200 px-2 py-1 rounded-full text-xs font-semibold">
+    {lottery.code}
+  </span>
+
+  <input
+    autoFocus
+    value={newTicket}
+    maxLength={6} // ✅ only 6 digits
+    onChange={(e) => {
+      const val = e.target.value;
+
+      // allow only digits
+      if (/^[0-9]*$/.test(val)) {
+        setNewTicket(val);
+      }
+    }}
+    onKeyDown={(e) => e.key === "Enter" && add()}
+    placeholder="123456"
+    className="border border-purple-300 rounded-full px-3 py-1 text-xs w-20 outline-none focus:border-purple-500"
+  />
+
+  <button
+    onClick={add}
+    className="text-xs bg-purple-600 text-white px-3 py-1 rounded-full"
+  >
+    Add
+  </button>
+</div>
           ) : (
             <button
-              onClick={() => setShowInput(true)}
+              onClick={() => handleGenerate("quantity", 1)}
               className="flex items-center gap-1 border border-purple-400 rounded-full px-3 py-1 text-xs font-medium text-purple-600 hover:bg-purple-50 transition-colors"
             >
               + Add
@@ -242,36 +219,37 @@ function BettingTab({ lottery, onRemoveTicket }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        {["10 Quick Picks", "25 Quick Picks", "Customize Your Tickets"].map((label) => (
-          <button
-            key={label}
-            className="border border-gray-200 rounded-xl py-3 text-xs text-center text-gray-700 hover:border-purple-400 hover:text-purple-600 transition-colors leading-snug"
-          >
-            {label.includes("Customize") ? (
-              <span className="flex items-center justify-center gap-1">
-                {label} <span className="text-gray-400">›</span>
-              </span>
-            ) : (
-              <>
-                <div className="font-semibold text-sm">{label.split(" ")[0]}</div>
-                <div>Quick Picks</div>
-              </>
-            )}
-          </button>
-        ))}
-      </div>
-      <div className=" absolute bottom-29 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 flex items-center justify-between z-20">
-        <div>
-          <div className="text-xl font-bold text-gray-900">
-            ₹{(tickets.length * lottery.price).toFixed(2)}
-          </div>
-          <div className="text-xs text-gray-500">{tickets.length} Tickets</div>
-        </div>
-        <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-full transition-colors text-sm">
-          Pay Now
-        </button>
-      </div>
+<div className="grid grid-cols-3 gap-2 mt-4">
+  {[
+    { label: "10 Quick Picks", type: "quantity", value: 10 },
+    { label: "25 Quick Picks", type: "quantity", value: 25 },
+    { label: "Customize Your Tickets", type: "custom" }
+  ].map((item) => (
+    <button
+      key={item.label}
+      onClick={() => {
+        if (item.type === "quantity") {
+          handleGenerate("quantity", item.value);
+        } else {
+          setShowInput(true);
+        }
+      }}
+      className="border border-gray-200 rounded-xl py-3 text-xs text-center text-gray-700 hover:border-purple-400 hover:text-purple-600 transition-colors leading-snug"
+    >
+      {item.type === "custom" ? (
+        <span className="flex items-center justify-center gap-1">
+          {item.label} <span className="text-gray-400">›</span>
+        </span>
+      ) : (
+        <>
+          <div className="font-semibold text-sm">{item.value}</div>
+          <div>Quick Picks</div>
+        </>
+      )}
+    </button>
+  ))}
+</div>
+
     </div>
   );
 }
@@ -297,10 +275,166 @@ function ResultHistoryTab() {
   );
 }
 
-function MyOrderTab() {
+function MyOrderTab({ lottery }) {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [lottery]);
+
+  const fetchOrders = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      const res = await getBettingList({
+        userId: user?.id,
+        lotteryDigit: lottery?.lotteryDigit,
+      });
+
+      if (res?.success) {
+        setOrders(res.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ STATUS UI HELPER
+  const getStatusUI = (order) => {
+    if (order.status === "SUCCESS") {
+      return (
+        <span className="text-green-600 font-semibold">
+          Win ₹{order.winAmount || 0}
+        </span>
+      );
+    }
+
+    if (order.status === "FAILED") {
+      return <span className="text-red-500 font-semibold">Lost</span>;
+    }
+
+    return (
+      <span className="text-yellow-500 font-semibold">
+        Result Awaited
+      </span>
+    );
+  };
+
+  if (loading) {
+    return <div className="pt-4 text-center text-gray-400">Loading...</div>;
+  }
+
+  if (!orders.length) {
+    return (
+      <div className="pt-4 text-center text-gray-400 text-sm py-12">
+        No orders yet.
+      </div>
+    );
+  }
+
   return (
-    <div className="pt-4 text-center text-gray-400 text-sm py-12">
-      No orders yet.
+    <div className="pt-4 flex flex-col gap-4">
+      {orders.map((order, i) => (
+        <div key={i} className="bg-white rounded-xl shadow-sm border">
+
+          {/* 🔝 STATUS HEADER */}
+          <div className="flex justify-between items-center px-3 py-2 border-b bg-gray-50 rounded-t-xl">
+            {getStatusUI(order)}
+
+            <span className="text-xs text-gray-500">
+              ID {order.id}
+            </span>
+          </div>
+
+          {/* 🎯 WINNING NUMBER */}
+          {order.winningNumber && (
+            <div className="px-3 py-2 text-xs text-green-600 font-semibold border-b">
+              Winning Number: {order.winningNumber}
+            </div>
+          )}
+
+          {/* 🧾 ORDER HEADER */}
+          <div className="flex justify-between items-center px-3 py-3">
+            <div>
+              <div className="font-semibold text-gray-800 text-sm">
+                {order.number}
+              </div>
+
+              <div className="text-xs text-gray-500">
+                {order.status === "PENDING"
+                  ? `Draw Time ${order.drawTime || order.created_at}`
+                  : `Played on ${order.created_at}`}
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-xs text-gray-400">Total</div>
+              <div className="font-semibold text-gray-800">
+                ₹{order.amount}
+              </div>
+            </div>
+          </div>
+
+          {/* 🎟️ TITLE */}
+          <div className="border-t px-3 py-2 bg-gray-50 text-xs text-gray-500 font-medium">
+            Your Tickets
+          </div>
+
+          {/* 📊 TABLE HEADER */}
+          <div className="grid grid-cols-3 px-3 py-2 text-xs text-gray-500">
+            <span>NUMBER</span>
+            <span>PRICE</span>
+            <span className="text-right">RESULT</span>
+          </div>
+
+          {/* 🎫 TICKETS */}
+          {(order.tickets || []).map((ticket, idx) => {
+            const isWinner =
+              order.winningTicket && ticket === order.winningTicket;
+
+            return (
+              <div
+                key={idx}
+                className="grid grid-cols-3 px-3 py-2 text-sm border-t items-center"
+              >
+                {/* NUMBER */}
+                <span
+                  className={`font-medium ${
+                    isWinner
+                      ? "text-green-600 font-bold"
+                      : "text-gray-800"
+                  }`}
+                >
+                  {ticket}
+                </span>
+
+                {/* PRICE */}
+                <span className="text-gray-600">
+                  ₹{order.amount / (order.tickets?.length || 1)}
+                </span>
+
+                {/* RESULT */}
+                <span className="text-right">
+                  {order.status === "SUCCESS" ? (
+                    <span className="text-green-600 font-semibold">
+                      ₹{order.winAmount || 0}
+                    </span>
+                  ) : order.status === "FAILED" ? (
+                    <span className="text-gray-400">--</span>
+                  ) : (
+                    <span className="text-yellow-500 text-xs">
+                      {order.drawTime || order.created_at}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
@@ -308,8 +442,93 @@ function MyOrderTab() {
 export function KeralaLotteryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const lottery = LOTTERY_DATA.find((l) => l.id === id);
+ const [lottery, setLottery] = useState(null);
+const [loadingLottery, setLoadingLottery] = useState(true);
+const [loadingWallet, setLoadingWallet] = useState(true);
+const [toast, setToast] = useState({
+  show: false,
+  message: "",
+  type: "success",
+});
+const showToast = (message, type = "success") => {
+  setToast({ show: true, message, type });
+
+  setTimeout(() => {
+    setToast({ show: false, message: "", type: "success" });
+  }, 2500);
+};
+const [balance, setBalance] = useState({
+  totalWallet: 0
+});
   const [tab, setTab] = useState("betting");
+
+const [tickets, setTickets] = useState([]);
+
+useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      fetchWallet(parsedUser.id);
+    } else {
+      setLoadingLottery(false);
+    }
+  }, []);
+const fetchWallet = async (uid) => {
+  try {
+    const res = await getWalletSummary({ id: uid });
+    const api = res?.data;
+
+    setBalance({
+      totalWallet: Number(api?.totalWallet || 0)
+    });
+
+  } catch (err) {
+    console.log("API Error:", err);
+  } finally {
+    setLoadingWallet(false);
+  }
+};
+
+useEffect(() => {
+  const fetchLottery = async () => {
+    try {
+      const res = await getkeralaLottery({ gameId: id });
+
+      console.log("API FULL:", res);
+
+      if (res?.success && res?.data?.length > 0) {
+        const item = res.data[0];
+
+        setLottery({
+           id: item.id,           // ✅ lotteryId
+           gameId: item.gameId,   // ✅ keep separately
+          name: item.name,
+          code: item.code,
+          number: item.lotteryDigit?.split(""),
+          drawTime: `${item.drawDate} ${item.drawTime}`,
+          price: item.price,
+          prize: item.jackpot,
+          tickets: [],
+          lastJackpot: [],
+          lotteryDigit: item.lotteryDigit,
+          bgColor: "from-orange-500 to-red-500",
+          img: item.game?.image || "https://via.placeholder.com/150",
+        });
+
+      } else {
+        setLottery(null);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setLottery(null);
+    } finally {
+      setLoadingLottery(false);
+    }
+  };
+
+  if (id) fetchLottery();
+}, [id]);
 
   if (!lottery) {
     return (
@@ -319,15 +538,67 @@ export function KeralaLotteryDetail() {
       </div>
     );
   }
+
+if (loadingLottery) {
+  return <div className="p-4 text-center">Loading...</div>;
+}
+const handlePayNow = async () => {
+  try {
+    if (!tickets.length) {
+      showToast("Please add tickets", "error");
+      return;
+    }
+
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+
+   const payload = {
+  userId: storedUser?.id,
+  lotteryId: lottery.id,
+  tickets: tickets.map((t) => t.ticket),
+  amount: tickets.length * lottery.price,
+};
+    console.log("PAYLOAD:", payload);
+
+    const res = await createBet(payload);
+
+    if (res?.success) {
+     showToast("Bet placed successfully ✅", "success");
+
+      // ✅ clear tickets after success
+      setTickets([]);
+
+      // optional: refresh wallet
+      fetchWallet(storedUser.id);
+    } else {
+     showToast(res?.message || "Payment failed ❌", "error");
+      console.log("bet",res?.message)
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast("Something went wrong");
+  }
+};
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      {toast.show && (
+  <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50">
+    <div
+      className={`px-4 py-2 rounded-full text-white text-sm
+      ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
+    >
+      {toast.message}
+    </div>
+  </div>
+)}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
         <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-800 text-xl"><ChevronLeft/></button>
-        <span className="font-semibold text-gray-800">Kerala State Lottery</span>
+        <p className="font-semibold text-gray-800">Kerala State Lottery</p>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">Balance</span>
+          <span className="text-medium font-semibold text-black-400"> ₹{balance.totalWallet || 0}</span>
           <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">💰</div>
-        </div>
+        </div>  
       </div>
 
       <div className="px-4 py-4 bg-white border-b border-gray-100">
@@ -342,7 +613,7 @@ export function KeralaLotteryDetail() {
 </div>
             <div>
               <div className="font-bold text-gray-900 text-base">{lottery.name}</div>
-              <div className="text-xs text-gray-500">NO.{lottery.number}</div>
+              <div className="text-xs text-gray-500">{lottery.number}</div>
             </div>
           </div>
           <div className="text-right">
@@ -364,16 +635,36 @@ export function KeralaLotteryDetail() {
       <div className="bg-white border-b border-gray-100 px-4 mt-5">
         <div className="flex">
           {["betting", "result history", "my order"].map((t) => (
-            <TabButton key={t} label={t.charAt(0).toUpperCase() + t.slice(1)} active={tab === t} onClick={() => setTab(t)} />
+            <TabButton key={t.ticket} label={t.charAt(0).toUpperCase() + t.slice(1)} active={tab === t} onClick={() => setTab(t)} />
           ))}
         </div>
       </div>
 
-      <div className="px-4 pb-6 flex-1 bg-white">
-        {tab === "betting" && <BettingTab lottery={lottery} />}
+      <div className="px-4 flex-1 overflow-y-auto bg-white">
+        {tab === "betting" && (
+  <BettingTab
+    lottery={lottery}
+    tickets={tickets}
+    setTickets={setTickets}
+  />
+)}
         {tab === "result history" && <ResultHistoryTab />}
-        {tab === "my order" && <MyOrderTab />}
+        {tab === "my order" && <MyOrderTab  lottery={lottery}/>}
       </div>
+      <div className="bg-white border-t border-gray-100 px-4 py-3 flex items-center justify-between">
+  <div>
+    <div className="text-xl font-bold text-gray-900">
+      ₹{((tickets?.length || 0) * (lottery?.price || 0)).toFixed(2)}
+    </div>
+    <div className="text-xs text-gray-500">{tickets?.length || 0} Tickets</div>
+  </div>
+<button
+  onClick={handlePayNow}
+  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-full transition-colors text-sm"
+>
+  Pay Now
+</button>
+</div>
     </div>
   );
 }
@@ -402,18 +693,107 @@ function LotteryCard({ lottery }) {
 }
 
 export function KeralaLotteryList() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchHome = async () => {
+      try {
+        const res = await homeApi(); // ✅ using service
+
+        if (res?.success) {
+          const categories = res.data?.categories || [];
+
+          // ✅ find Lottery category
+          const lotteryCategory = categories.find(
+            (c) => c.name === "Lottery"
+          );
+
+          // ✅ find Kerala Lottery tab
+          const keralaTab = lotteryCategory?.tabs?.find(
+            (t) => t.key === "keralalottery"
+          );
+
+          const apiItems = keralaTab?.items || [];
+
+          // ✅ format UI data
+          const formatted = apiItems.map((item) => ({
+            id: item.id, // ✅ IMPORTANT (gameId)
+            name: item.name,
+            number: item.nav || item.name,
+            price: item.price,
+            drawTime: item.start_date
+              ? new Date(item.start_date).toLocaleString()
+              : "Coming Soon",
+            img: item.img,
+          }));
+
+          setItems(formatted);
+        }
+      } catch (err) {
+        console.error("Home API error", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHome();
+  }, []);
+
+  if (loading) {
+    return <div className="p-4 text-center">Loading lotteries...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-3 h-5 bg-green-500 rounded-sm" />
-        <h2 className="font-bold text-gray-800 text-lg">Kerala State Lottery</h2>
+        <h2 className="font-bold text-gray-800 text-lg">
+          Kerala State Lottery
+        </h2>
       </div>
+
       <div className="grid grid-cols-2 gap-3">
-        {LOTTERY_DATA.map((l) => (
-          <LotteryCard key={l.id} lottery={l} />
+        {items.map((item) => (
+          <div
+            key={item.id}
+            onClick={() => navigate(`/kerala-lottery/${item.id}`)} // ✅ gameId
+            className="rounded-sm overflow-hidden bg-white shadow-sm cursor-pointer"
+          >
+            {/* IMAGE */}
+            <div
+              className="h-[140px]"
+              style={{
+                backgroundImage: `url(${item.img})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+
+            {/* CONTENT */}
+            <div className="px-2 py-2 flex justify-between items-center text-xs">
+              <div>
+                <p className="font-semibold text-gray-800">{item.name}</p>
+                <p className="text-[10px] text-gray-500">
+                  {item.number}
+                </p>
+              </div>
+
+              <div className="text-right text-gray-500">
+                <p>₹{item.price || "50"}</p>
+                <p className="text-[10px]">
+                  {item.drawTime}
+                </p>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
-      <p className="text-xs text-gray-400 text-center mt-6">Tap any lottery to view details & buy tickets</p>
+
+      <p className="text-xs text-gray-400 text-center mt-6">
+        Tap any lottery to view details & buy tickets
+      </p>
     </div>
   );
 }

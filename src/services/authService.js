@@ -1,6 +1,4 @@
 import API from "../api/api";
-
-// ✅ LOGIN
 export const loginUser = async (phone, password, activeTab, otp, countryCode) => {
   try {
     const response = await API.post("?url=login", {
@@ -17,8 +15,6 @@ export const loginUser = async (phone, password, activeTab, otp, countryCode) =>
     throw error;
   }
 };
-
-// ✅ REGISTER
 export const getRegister = async (data) => {
   try {
     console?.log(data, "data in service");
@@ -52,8 +48,6 @@ export const getOtpLogin = async (phone, countryCode, flag) => {
     throw error;
   }
 };
-
-// verifyOtp
 export const verifyOtp = async (data) => {
   try {
     const response = await API.post("?url=verify-otp", data);
@@ -63,7 +57,6 @@ export const verifyOtp = async (data) => {
     throw error;
   }
 };
-// 
 export const resetPassword = async (data) => {
   try {
     const response = await API.post("?url=reset-password", data);
@@ -73,8 +66,6 @@ export const resetPassword = async (data) => {
     throw error;
   }
 };
-
-// Change passcode
 export const changepassword = async (data) => {
   try {
     const response = await API.post("?url=change-password", data);
@@ -84,19 +75,25 @@ export const changepassword = async (data) => {
     throw error;
   }
 };
-
-// ✅ LOGOUT
 export const logoutUser = () => {
   localStorage.removeItem("token");
 };
-// ✅ AUTH CHECK
 export const isAuthenticated = () => {
   return !!localStorage.getItem("token");
 };
-
 export const homeApi = async () => {
   try {
-    const response = await API.post("?url=home");
+    const response = await API.post("?url=home-api");
+    console.log(response, "home data in service");
+    return response.data;
+  } catch (error) {
+    console.error("Home API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const getTopBarList = async () => {
+  try {
+    const response = await API.post("?url=header-menu");
     console.log(response.data, "home data in service");
     return response.data;
   } catch (error) {
@@ -117,7 +114,17 @@ export const checkMaintaince = async (data) => {
   }
 };
 
-// rechargeCall
+export const fetchUser = async (data) => {
+  try {
+    const response = await API.post("?url=get-profile", data);
+    return response.data;
+  } catch (error) {
+    console.error("Home API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 export const rechargeCall = async (data) => {
   try {
     const response = await API.post("?url=create-recharge", data);
@@ -127,12 +134,99 @@ export const rechargeCall = async (data) => {
     throw error;
   }
 };
-
-
-// getrechargeDetailsCall
 export const getrechargeDetailsCall = async (data) => {
   try {
     const response = await API.post("?url=recharge-details-full", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// getRulesDataINvite
+export const getRulesDataINvite = async (data) => {
+  try {
+    const response = await API.post("?url=referral-rules", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const getEarningDetails = async (data) => {
+  try {
+    const response = await API.post("?url=earning-detail", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// reset-referral-code
+export const handleResetLinkApi = async (data) => {
+  try {
+    const response = await API.post("?url=reset-referral-code", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getLangList = async (data) => {
+  try {
+    const response = await API.post("?url=languages", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getJackPotData = async (data) => {
+  try {
+    const response = await API.post("?url=jackpot-summary", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getBottomMenu = async (data) => {
+  try {
+    const response = await API.post("?url=footer-menu", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getSpinDetails = async (data) => {
+  try {
+    const response = await API.post("?url=spin", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// getSpinResultData
+export const getSpinResultData = async (data) => {
+  try {
+    const response = await API.post("?url=spinplay", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// 
+export const getBuySpin = async (data) => {
+  try {
+    const response = await API.post("?url=spinbuy", data);
     return response.data;
   } catch (error) {
     console.error("create-recharge API Error:", error.response?.data || error.message);
@@ -144,6 +238,16 @@ export const getrechargeDetailsCall = async (data) => {
 export const addBankAccont = async (data) => {
   try {
     const response = await API.post("?url=add-bank-account", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const updateBankAccont = async (data) => {
+  try {
+    const response = await API.post("?url=update-bank-account", data);
     return response.data;
   } catch (error) {
     console.error("create-recharge API Error:", error.response?.data || error.message);
@@ -171,8 +275,36 @@ export const getWithdrawApi = async (data) => {
   }
 };
 
+export const withdrawCreate = async (data) => {
+  try {
+    const response = await API.post("?url=withdraw-request", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 
+export const getWithdraWList = async (data) => {
+  try {
+    const response = await API.get("?url=withdraw-history", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 
+// getCodeRedeem
+export const getCodeRedeem = async (data) => {
+  try {
+    const response = await API.post("?url=giftredeem", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 // getSideBarMenu
 export const getSideBarMenu = async (data) => {
   try {
@@ -183,13 +315,30 @@ export const getSideBarMenu = async (data) => {
     throw error;
   }
 };
-
-
-
-
+// getNotificationList
+export const getNotificationList = async (data) => {
+  try {
+    const response = await API.post("?url=notifications", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 export const getRechargeHist = async (data) => {
   try {
     const response = await API.post("?url=recharge-history", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// getPromoList
+export const getPromoList = async (data) => {
+  try {
+    const response = await API.post("?url=promotion-list", data);
     return response.data;
   } catch (error) {
     console.error("create-recharge API Error:", error.response?.data || error.message);
@@ -224,14 +373,22 @@ export const getWalletSummary = async (data) => {
     throw error;
   }
 };
-
-
-export const getRechargeList = async () => {
+export const getRechargeList = async (data) => {
   try {
-    const response = await API.post("?url=get-vipranks");
+    const response = await API.post("?url=vip-list", { data });
     return response.data;
   } catch (error) {
     console.error("Recharge Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// getBankAccountList
+export const getBankAccountList = async (data) => {
+  try {
+    const response = await API.post("?url=get-bank-accounts", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
     throw error;
   }
 };

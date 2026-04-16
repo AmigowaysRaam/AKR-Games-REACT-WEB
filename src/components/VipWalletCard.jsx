@@ -13,6 +13,7 @@ export default function VipWalletCard() {
 return (
   <div className="px-4 mt-54">
     <div
+    onClick={()=>navigate('/recharge')}
       className="rounded-2xl overflow-hidden shadow-lg px-4 pt-4 pb-5"
       style={{
         backgroundImage: `url(${imageBg})`,
@@ -42,7 +43,7 @@ return (
           <span className="text-orange-500 font-bold">₹100</span> more
         </p>
 
-        <button className="px-4 py-1 text-xs rounded-full text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow">
+        <button className="px-4 py-1 text-xs rounded-full text-white bg-gradient-to-r from-purple-500 to-indigo-500 shadow">
           Recharge
         </button>
       </div>

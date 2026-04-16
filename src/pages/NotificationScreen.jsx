@@ -1,28 +1,47 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getNotificationList } from "../services/authService";
 
 export default function NotificationScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("announcements");
-  const announcements = [];
-  const systemMessages = [
-    {
-      id: 1,
-      title: "Welcome!",
-      desc: "Your account has been successfully created.",
-      date: "2026-03-27",
-    },
-    {
-      id: 2,
-      title: "Update",
-      desc: "New features have been added.",
-      date: "2026-03-26",
-    },
-  ];
 
-  const data =
-    activeTab === "announcements" ? announcements : systemMessages;
+  const [activeTab, setActiveTab] = useState("announcement"); // ✅ match API
+  const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+
+  // ✅ Load user + fetch API
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      fetchNotifications(parsedUser.id);
+    }
+  }, [activeTab]);
+
+  const fetchNotifications = async (userId) => {
+    try {
+      const res = await getNotificationList({
+        id: userId,
+        type: activeTab, // ✅ send type to API
+      });
+      if (res?.success) {
+        setNotifications(res.data || []);
+      }
+    } catch (err) {
+      console.log("API Error:", err);
+    }
+  };
+
+  // ✅ Filter based on tab
+  const filteredData = notifications.filter((item) => {
+    if (activeTab === "announcement") {
+      return item.type === "announcement";
+    } else {
+      return item.type === "system";
+    }
+  });
 
   return (
     <div style={styles.container}>
@@ -31,7 +50,7 @@ export default function NotificationScreen() {
         <ChevronLeft
           size={22}
           onClick={() => navigate(-1)}
-          style={{ zIndex: 1 }}
+          style={{ zIndex: 1, cursor: "pointer" }}
         />
         <span style={styles.headerTitle}>Notification</span>
       </div>
@@ -42,13 +61,13 @@ export default function NotificationScreen() {
           style={{
             ...styles.tab,
             borderBottom:
-              activeTab === "announcements"
+              activeTab === "announcement"
                 ? "2px solid purple"
                 : "none",
             color:
-              activeTab === "announcements" ? "#000" : "#777",
+              activeTab === "announcement" ? "#000" : "#777",
           }}
-          onClick={() => setActiveTab("announcements")}
+          onClick={() => setActiveTab("announcement")}
         >
           Announcements
         </div>
@@ -70,7 +89,7 @@ export default function NotificationScreen() {
 
       {/* CONTENT */}
       <div style={{ paddingTop: 40 }}>
-        {data.length === 0 ? (
+        {filteredData.length === 0 ? (
           <div style={styles.emptyContainer}>
             <img
               src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
@@ -80,18 +99,19 @@ export default function NotificationScreen() {
             <p style={styles.emptyText}>No Data</p>
           </div>
         ) : (
-          data.map((item) => (
+          filteredData.map((item) => (
             <div key={item.id} style={styles.card}>
               <div style={styles.rowBetween}>
                 <span style={{ fontWeight: "bold" }}>
                   {item.title}
                 </span>
                 <span style={{ fontSize: 12, color: "#999" }}>
-                  {item.date}
+                  {item.time}
                 </span>
               </div>
+
               <p style={{ marginTop: 8, color: "#555" }}>
-                {item.desc}
+                {item.message}
               </p>
             </div>
           ))
@@ -133,36 +153,16 @@ const styles = {
   },
 
   tab: {
-    flex: 1,
-    textAlign: "center",
-    padding: 12,
-    cursor: "pointer",
-    fontSize: 14,
-    fontWeight: 500,
+    flex: 1,    textAlign: "center",
+    padding: 12,    cursor: "pointer",    fontSize: 14,
+    fontWeight: 500,  },  emptyContainer: {
+    textAlign: "center",    marginTop: 80,    color: "#888",
   },
-
-  emptyContainer: {
-    textAlign: "center",
-    marginTop: 80,
-    color: "#888",
-  },
-  emptyImage: {
-    width: 100,
-    opacity: 0.7,
-    position: "absolute",
+  emptyImage: {    width: 100,    opacity: 0.7,    position: "absolute",
     left: "40%",
-    bottom: "65%"
-  },
-  emptyText: {
-    marginTop: 10,
-    fontSize: 14,
-  },
-  card: {
-    background: "#fff",
-    margin: "10px 16px",
-    padding: 16,
-    borderRadius: 12,
-  },
+    bottom: "65%",  },  emptyText: {    marginTop: 10,    fontSize: 14,
+  },  card: {    background: "#fff",    margin: "10px 16px",
+    padding: 16,    borderRadius: 12,  },
 
   rowBetween: {
     display: "flex",
