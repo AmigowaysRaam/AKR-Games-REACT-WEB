@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ImageMinus, ImagePlus, LogOutIcon, X } from "lucide-react";
+import { ChevronLeft, ImagePlus, LogOutIcon, X } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import BankList from "./BankDetails";
 
@@ -40,7 +40,8 @@ export default function PlayerProfileScreen() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("wallet");
-
+    localStorage.clear();
+    sessionStorage.clear();
     showToast("Logged out successfully");
 
     setTimeout(() => {
@@ -325,17 +326,19 @@ const backBtn = { position: "absolute", left: 10, top: 10, border: "none", backg
 const profileBox = { textAlign: "center", padding: 20 };
 const avatarWrapper = {
   position: "relative", width: 120, height: 120,
-  margin: "0 auto",borderWidth: 2, borderColor: "#7c3aed", borderStyle: "solid", borderRadius: "50%",
+  margin: "0 auto", borderWidth: 2, borderColor: "#7c3aed", borderStyle: "solid", borderRadius: "50%",
 }; const avatarBox = {
-  width: "100%", height: "100%",
-  borderRadius: "50%", overflow: "hidden", background: "#e5e7eb",
+  width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: "#e5e7eb",
 }; const avatarImg = {
   width: "100%", height: "100%", objectFit: "cover",
 }; const addIconWrapper = { position: "absolute", bottom: 0, right: 0, width: 32, height: 32, borderRadius: "50%", background: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: "3px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.2)", }; const usernameRow = { marginTop: 10, display: "flex", justifyContent: "center", gap: 6 };
 const badge = { background: "#d9e6ff", padding: "2px 6px", borderRadius: 6 };
 const card = { background: "#fff", margin: 14, borderRadius: 12, padding: 14 };
-const row = { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #eee" };
-const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 50 };
+const row = { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #eee" }; const overlay = {
+  position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
+  backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+  zIndex: 50,
+};
 const modal = { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#fff", padding: 20, borderRadius: 16, width: "400px", zIndex: 60 };
 const modalHeader = { display: "flex", justifyContent: "space-between", marginBottom: 10 };
 const input = { width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd", marginBottom: 12 };

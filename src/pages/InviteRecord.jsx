@@ -1,17 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Headphones } from "lucide-react";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import { getInviteRecords } from "../services/authService";
+import GameLoader from "./LoaderComponet";
 
 export default function InviteRecord() {
   const navigate = useNavigate();
 
   const [showTimeSheet, setShowTimeSheet] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-
   const [selectedTime, setSelectedTime] = useState("Today");
+  const [apiDataRec, setapiDataRec] = useState(null);
+
+  const [loading, setloading] = useState(false);
+
 
   const [dateRange, setDateRange] = useState([
     {
@@ -23,12 +28,47 @@ export default function InviteRecord() {
 
   const timeOptions = ["Today", "Yesterday", "7 Days", "15 Days"];
 
-  const handleApplyFilter = () => {
-    setSelectedTime(
-      `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
-    );
-    setShowCalendar(false);
+  // ✅ Format date to YYYY-MM-DD
+  const formatDate = (date) => {
+    return date.toISOString().split("T")[0];
   };
+
+  const handleApplyFilter = () => {
+    const start = formatDate(dateRange[0].startDate);
+    const end = formatDate(dateRange[0].endDate);
+
+    setSelectedTime(`${start} - ${end}`);
+    setShowCalendar(false);
+    fetchbonusData(start, end);
+  };
+
+  const fetchbonusData = async (startDate, endDate) => {
+    try {
+      setloading(true);
+      const payload = {
+        from_date: startDate || null,
+        to_date: endDate || null,
+      };
+      const res = await getInviteRecords(payload);
+      if (res?.success) {
+        setapiDataRec(res);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    finally {
+      setloading(false);
+    }
+  };
+
+  // ✅ Initial load (no filter)
+  useEffect(() => {
+    fetchbonusData();
+  }, []);
+
+  if (loading) {
+    return <GameLoader />
+  }
 
   return (
     <div style={styles.container}>
@@ -38,71 +78,60 @@ export default function InviteRecord() {
           <ChevronLeft />
         </button>
         Invitation record
-        <Headphones style={styles.iconRight} size={18}  onClick={() => navigate('/CustomerSupport')} />
+        <Headphones
+          style={styles.iconRight}
+          size={18}
+          onClick={() => navigate("/CustomerSupport")}
+        />
       </div>
-
-      {/* Filters */}
       <div style={styles.filters}>
-        <button style={styles.filterBtn}>Recharge ▾</button>
-
-        {/* 🔥 Filter opens calendar */}
-        <button
-          style={styles.filterBtn}
-          onClick={() => setShowCalendar(true)}
-        >
-          Filter ▾
-        </button>
-
-        <button
-          style={styles.filterBtn}
-          onClick={() => setShowTimeSheet(true)}
-        >
+        <button style={styles.filterBtn} onClick={() => setShowCalendar(true)}>
           {selectedTime} ▾
         </button>
       </div>
-
-      {/* Empty State */}
-      <div style={styles.emptyContainer}>
-        <div style={styles.emptyIcon}>📭</div>
-        <p style={styles.emptyText}>
-          No matching invitation record
-        </p>
-
-        <button style={styles.inviteBtn}>Invite</button>
-      </div>
-
-      {/* ⏱ TIME SHEET */}
-      {showTimeSheet && (
-        <div style={styles.overlay} onClick={() => setShowTimeSheet(false)}>
-          <div
-            style={styles.sheet}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={styles.sheetHeader}>
-              Select a time
-              <span
-                style={styles.close}
-                onClick={() => setShowTimeSheet(false)}
-              >
-                ✕
-              </span>
-            </div>
-
-            {timeOptions.map((item) => (
-              <div
-                key={item}
-                style={styles.sheetItem}
-                onClick={() => {
-                  setSelectedTime(item);
-                  setShowTimeSheet(false);
-                }}
-              >
-                {item}
+      {apiDataRec?.data?.length > 0 ? (
+        <div style={{ padding: 12 }}>
+          {apiDataRec.data.map((item) => (
+            <div key={item.id} style={styles.card}>
+              <div style={styles.cardHeader}>
+                <div>
+                  <div style={styles?.phone}>{item.username}</div>
+                  <div style={styles?.email}>{item.phone}</div>
+                </div>
+                {/* <div
+                  style={{
+                    ...styles.statusBadge,
+                    background: item.is_verified ? "#dcfce7" : "#fee2e2",
+                    color: item.is_verified ? "#16a34a" : "#dc2626",
+                  }}
+                >
+                  {item.is_verified ? "Verified" : "Pending"}
+                </div> */}
               </div>
-            ))}
-          </div>
+              <div style={styles.divider} />
+              <div style={styles.cardBody}>
+                <div>
+                  <div style={styles.labelSmall}>email</div>
+                  <div style={styles.wallet}>{item?.email}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={styles.labelSmall}>Joined</div>
+                  <div style={styles.date}>
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={styles.emptyContainer}>
+          <div style={styles.emptyIcon}>📭</div>
+          <p style={styles.emptyText}>No matching invitation record</p>
         </div>
       )}
+
+      {/* Calendar */}
       {showCalendar && (
         <div style={styles.overlay} onClick={() => setShowCalendar(false)}>
           <div
@@ -120,18 +149,13 @@ export default function InviteRecord() {
             </div>
 
             <DateRange
-              editableDateInputs={true}
-              onChange={(item) =>
-                setDateRange([item.selection])
-              }
+              editableDateInputs
+              onChange={(item) => setDateRange([item.selection])}
               moveRangeOnFirstSelection={false}
               ranges={dateRange}
             />
 
-            <button
-              style={styles.applyBtn}
-              onClick={handleApplyFilter}
-            >
+            <button style={styles.applyBtn} onClick={handleApplyFilter}>
               Apply Filter
             </button>
           </div>
@@ -141,6 +165,7 @@ export default function InviteRecord() {
   );
 }
 
+/* ================== STYLES ================== */
 const styles = {
   container: {
     maxWidth: 430,
@@ -190,11 +215,77 @@ const styles = {
     cursor: "pointer",
   },
 
-  emptyContainer: {
-    textAlign: "center",
-    marginTop: 80,
+  card: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+    boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
   },
 
+  cardHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    background: "#7c3aed",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 600,
+  },
+
+  phone: {
+    fontSize: 14,
+    fontWeight: 600,
+  },
+
+  email: {
+    fontSize: 12,
+    color: "#777",
+  },
+
+  statusBadge: {
+    fontSize: 11,
+    padding: "4px 8px",
+    borderRadius: 20,
+    fontWeight: 500,
+  },
+
+  divider: {
+    height: 1,
+    background: "#eee",
+    margin: "10px 0",
+  },
+
+  cardBody: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  labelSmall: {
+    fontSize: 11,
+    color: "#888",
+  },
+
+  wallet: {
+    color: "#16a34a",
+    fontWeight: 700,
+    fontSize: 15,
+  },
+
+  date: {
+    fontSize: 12,
+    fontWeight: 500,
+  },
   emptyIcon: {
     fontSize: 60,
     marginBottom: 10,
@@ -202,16 +293,6 @@ const styles = {
 
   emptyText: {
     color: "#888",
-    marginBottom: 20,
-  },
-
-  inviteBtn: {
-    background: "linear-gradient(90deg,#7c3aed,#a855f7)",
-    border: "none",
-    color: "#fff",
-    padding: "12px 40px",
-    borderRadius: 25,
-    fontWeight: 600,
   },
 
   overlay: {
@@ -222,22 +303,15 @@ const styles = {
     alignItems: "flex-end",
   },
 
-  sheet: {
-    background: "#fff",
-    borderTopLeftRadius: 16, borderTopRightRadius: 16,
-    padding: 16,
-    width: "100%", maxWidth: 430, display: "flex",
-    margin: "0 auto",
-    flexDirection: "column",
-  }, calendarSheet: {
+  calendarSheet: {
     background: "#fff",
     width: "100%",
-    maxWidth: 430, margin: "0 auto", bordErTopLeftRadius: 16,
+    maxWidth: 430,
+    margin: "0 auto",
+    borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16,
     height: "65vh",
-    display: "flex",
-    flexDirection: "column",
   },
 
   sheetHeader: {
@@ -249,12 +323,6 @@ const styles = {
   close: {
     position: "absolute",
     right: 0,
-    cursor: "pointer",
-  },
-
-  sheetItem: {
-    padding: "12px 0",
-    borderBottom: "1px solid #eee",
     cursor: "pointer",
   },
 

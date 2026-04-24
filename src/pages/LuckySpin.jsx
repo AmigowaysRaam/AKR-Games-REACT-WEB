@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getSpinDetails, getBuySpin, getSpinResultData } from "../services/authService";
 import luckywheel from "../assets/luckywheel.png"
+import WinToast from "./WinToastScreen";
 
 export default function LuckySpinModal({ show, onClose }) {
     const [apiData, setApiData] = useState(null);
@@ -8,6 +9,7 @@ export default function LuckySpinModal({ show, onClose }) {
     const [buyLoading, setBuyLoading] = useState(null);
     const spinAudioRef = useRef(null);
     const resultAudioRef = useRef(null);
+
     useEffect(() => {
         spinAudioRef.current = new Audio("/sounds/spinwheel.mp3");
         spinAudioRef.current.loop = true; // 🔥 continuous spinning sound
@@ -16,9 +18,9 @@ export default function LuckySpinModal({ show, onClose }) {
     // resultAudio.mp3
     const [winToast, setWinToast] = useState({
         show: false,
-        amount: 0,
+        amount: [],
+        totalamount: 0,
     });
-
     useEffect(() => {
         if (show) {
             document.body.style.overflow = "hidden";
@@ -65,19 +67,20 @@ export default function LuckySpinModal({ show, onClose }) {
         activeTab: "winners", rewards: [], bigWinners: [],
         mySpins: [],
     });
-    const getResuktData = async () => {
+    const getResuktData = async (count) => {
         try {
             const res = await getSpinResultData({
                 user_id: JSON.parse(localStorage.getItem("user"))?.id,
+                spin_count: count == "BULK" ? 30 : 1,
             });
-
             if (res?.success) {
-                const winAmount = Number(res.result?.win || 0);
+                const winAmount = res.results;
                 setApiData((prev) => ({
                     ...prev,
                     wallet_balance: res.wallet,
                     free_spins: res.free_spins,
                     spin_balance: res.spins_left,
+
                 }));
                 setSpinData((prev) => ({
                     ...prev,
@@ -93,24 +96,23 @@ export default function LuckySpinModal({ show, onClose }) {
                 }
                 setWinToast({
                     show: true,
-                    amount: winAmount,
+                    amounts: res.results, // wrap in array
+                    totalamount: res?.total_win,
                 });
-
                 setTimeout(() => {
-                    setWinToast({ show: false, amount: 0 });
-                }, 3000);
-                setTimeout(() => {
-                    onClose && onClose();
-                }, 3000);
+                    setWinToast({ show: false, amount: [] });
+                }, 15000);
             }
         } catch (err) {
             console.log(err);
             showToast("Spin failed", "error");
         }
     };
+
     useEffect(() => {
         if (show) getRechargDetails();
     }, [show]);
+
     const getRechargDetails = async () => {
         setLoading(true);
         try {
@@ -121,7 +123,6 @@ export default function LuckySpinModal({ show, onClose }) {
             if (res?.success) {
                 const data = res.data;
                 setApiData(data);
-
                 setSpinData((prev) => ({
                     ...prev,
                     rewards: data.rewards.map((r) => ({
@@ -135,10 +136,8 @@ export default function LuckySpinModal({ show, onClose }) {
                 if (!data?.can_spin) {
                     showToast("No spins available", "error");
                     openConfirm("You're out of spins! 🎯 Continue playing by purchasing more spins?", () => {
-
                     });
                     setTimeout(() => {
-                        // onClose && onClose();
                     }, 2000);
                 }
             }
@@ -150,9 +149,7 @@ export default function LuckySpinModal({ show, onClose }) {
         }
     };
     if (!show) return null;
-
     const slice = 360 / (spinData.rewards.length || 1);
-
     const gradient = `conic-gradient(
         ${spinData.rewards
             .map(
@@ -161,7 +158,9 @@ export default function LuckySpinModal({ show, onClose }) {
             )
             .join(",")}
     )`;
-    const spinWheel = () => {
+
+    const spinWheel = (count) => {
+        getRechargDetails()
         if (spinData.isSpinning || !apiData?.can_spin) {
             showToast("No spins available", "error");
             return;
@@ -171,12 +170,10 @@ export default function LuckySpinModal({ show, onClose }) {
             spinAudioRef.current.currentTime = 0;
             spinAudioRef.current.play().catch(() => { });
         }
-
         const index = Math.floor(Math.random() * spinData.rewards.length);
         const stopAngle = 360 - (index * slice + slice / 2);
         const spins = 360 * (6 + Math.random() * 3);
         const finalRotation = spinData.rotation + spins + stopAngle;
-
         setSpinData((prev) => ({
             ...prev,
             isSpinning: true,
@@ -195,7 +192,7 @@ export default function LuckySpinModal({ show, onClose }) {
             }
 
             // 🔥 CALL API AFTER SPIN
-            await getResuktData();
+            await getResuktData(count);
 
             // 🎉 OPTIONAL WIN SOUND
             const winAudio = new Audio("/sounds/win.mp3");
@@ -231,7 +228,7 @@ export default function LuckySpinModal({ show, onClose }) {
                 </div>
             )}
 
-            {/* 🔥 IMPROVED TOAST */}
+
             {toast.show && (
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.4s_ease]">
                     <div
@@ -272,48 +269,13 @@ export default function LuckySpinModal({ show, onClose }) {
                         </div>
                     </div>
                 )}
-            {winToast.show && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
-                    {/* ✨ FLOATING SPARKLES */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        {[...Array(15)].map((_, i) => (
-                            <span
-                                key={i}
-                                className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-ping"
-                                style={{
-                                    top: `${Math.random() * 100}%`,
-                                    left: `${Math.random() * 100}%`,
-                                    animationDuration: `${1 + Math.random() * 2}s`,
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="relative z-10 
-            bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-500
-            text-black px-14 py-10 rounded-[30px] shadow-[0_0_60px_rgba(255,215,0,0.9)]
-            text-center animate-winPop">
-
-                        <div className="absolute inset-0 rounded-[30px] border-4 border-yellow-200 animate-pulse"></div>
-
-                        {/* 🎉 TITLE */}
-                        <div className="text-3xl font-extrabold animate-bounce tracking-wide">
-                            🎉 JACKPOT 🎉
-                        </div>
-
-                        {/* 💰 AMOUNT */}
-                        <div className="text-6xl font-black mt-4 text-green-800 drop-shadow-[0_5px_10px_rgba(0,0,0,0.5)] animate-scaleUp">
-                            ₹{winToast.amount}
-                        </div>
-
-                        {/* ✨ SUBTEXT */}
-                        <div className="text-lg mt-3 font-semibold text-gray-900 animate-fadeIn">
-                            Congratulations! Big Win 🎊
-                        </div>
-                    </div>
-                </div>
-            )}
+            <WinToast
+                winToast={winToast}
+                show={winToast?.show}
+                amounts={winToast?.amount}
+                totalamount={winToast.totalamount}
+                onClose={() => setWinToast({ show: false, amounts: [] })}
+            />
             <div className="w-[350px] relative h-[600px] bottom-8">
                 <button
                     onClick={onClose}
@@ -321,24 +283,24 @@ export default function LuckySpinModal({ show, onClose }) {
                 >
                     ✕
                 </button>
-                <div className="bg-gradient-to-b from-yellow-700 to-brown-500 rounded-3xl p-4 text-center shadow-2xl">
-
+                <div className="bg-gradient-to-b from-yellow-700 to-brown-500 rounded-3xl p-4 text-center shadow-2xl ">
                     <h2 className="text-yellow-300 text-lg font-bold">🎉 LUCKY SPIN</h2>
                     <div className="text-sm text-white mt-1">
-                        💰 ₹{apiData?.wallet_balance}
-                    </div>
-                    <div className="text-xs text-white mt-1">
-                        {`Spin Left ${apiData?.spin_balance} | Free ${apiData?.free_spins}`}
+                        <span>💰 ₹{apiData?.wallet_balance ?? 0}</span>
+                        {
+                            apiData?.free_spins &&
+                            <>
+                                <span> | </span>
+                                <span>🎰 Free {apiData?.free_spins ?? 0}</span>
+                            </>
+                        }
                     </div>
                     <img
                         src={luckywheel}
                         alt="Lucky Wheel"
-                        className="h-61 w-62  absolute left-13 top-29 z-1"
+                        className="h-61 w-62  absolute left-13 top-17 z-1"
                     />
-                    <div className="w-0 h-0 mx-auto mt-2 border-l-[12px] border-r-[12px] border-b-[20px] border-transparent border-b-yellow-400"></div>
-                    <div className="relative w-56 h-56 mx-auto mt-2">
-                        {/* Wheel */}
-
+                    <div className="relative w-56 h-56 mx-auto mt-2 mb-4">
                         <div
                             className="w-full h-full rounded-full border-[10px] border-yellow-400"
                             style={{
@@ -349,7 +311,7 @@ export default function LuckySpinModal({ show, onClose }) {
                                     : "none",
                             }}
                         >
-                            {spinData.rewards.map((item, i) => {
+                            {spinData?.rewards.map((item, i) => {
                                 const angle = slice * i + slice / 2;
                                 return (
                                     <div
@@ -368,19 +330,20 @@ export default function LuckySpinModal({ show, onClose }) {
                                                 whiteSpace: "nowrap",
                                             }}
                                         >
-                                            ₹{item.label}
+                                            ₹{item?.label}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
                         <button
+                            //   onClick={() => openConfirm("Start 1 spins?", () => spinWheel("SINGLE"))}
                             onClick={() =>
                                 openConfirm(
-                                    apiData?.can_spin
-                                        ? "Do you want to spin?"
+                                    apiData?.free_spins
+                                        ? "Do you want to Free spin ?"
                                         : "No spins left. Continue by purchasing?",
-                                    spinWheel
+                                    () => spinWheel('FREE')
                                 )
                             }
                             disabled={spinData.isSpinning}
@@ -397,23 +360,22 @@ export default function LuckySpinModal({ show, onClose }) {
                             </div>
                         )}
                     </div>
-                    <div className="flex gap-5 mt-1 ">
+                    <div className="flex gap-5 mt-8  mb-8">
                         <button
-                            onClick={() => openConfirm("Buy 1 spins?", () => handleBuySpin("SINGLE"))}
+                            onClick={() => openConfirm("Start 1 spins?", () => spinWheel("SINGLE"))}
                             className="flex-1 bg-green-500 py-1 rounded-full text-white font-bold"
                         >
                             {buyLoading === "SINGLE" ? "..." : "x1"}
                             <div className="text-[9px]">Spin</div>
                         </button>
                         <button
-                            onClick={() => openConfirm("Buy 30 spins?", () => handleBuySpin("BULK"))}
+                            onClick={() => openConfirm("Start 30 spins?", () => spinWheel("BULK"))}
                             className="flex-1 bg-blue-500 py-2 rounded-full text-white font-bold"
                         >
                             {buyLoading === "BULK" ? "..." : "x30"}
-                            <div className="text-[9px]">Spin x30</div>
+                            <div className="text-[9px]">Spin x300</div>
                         </button>
                     </div>
-
                     <div className="mt-4 bg-red-600 rounded-xl overflow-hidden text-white text-sm">
                         <div className="flex">
                             <div onClick={() => setSpinData(p => ({ ...p, activeTab: "winners" }))} className={`flex-1 py-2 ${spinData.activeTab === "winners" ? "bg-red-800" : ""}`}>Big Winners</div>
@@ -442,7 +404,7 @@ export default function LuckySpinModal({ show, onClose }) {
                                                 </p>
                                                 {isPaid && (
                                                     <p className="text-xs">
-                                                        {item.buy_text}
+                                                        {item?.buy_text}
                                                     </p>
                                                 )}
                                                 <p className="text-white-600">{item.win_text}</p>

@@ -9,7 +9,6 @@ export default function WithdrawHistory() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [historyDataS, sethistoryDataS] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const filteredData =
     activeTab === "ALL"
       ? historyDataS
@@ -30,8 +29,7 @@ export default function WithdrawHistory() {
   const fetchWithdrawData = async () => {
     try {
       setLoading(true);
-      const res = await getWithdraWList({});
-      // alert(JSON.stringify(res));
+      const res = await getWithdraWList({ type: activeTab });
       if (res?.success) {
         sethistoryDataS(res.data || []);
       }
@@ -44,14 +42,14 @@ export default function WithdrawHistory() {
 
   useEffect(() => {
     fetchWithdrawData();
-  }, []);
+  }, [activeTab]);
 
   return (
     <div className="max-w-[430px] mx-auto bg-gray-100 min-h-screen">
 
       {/* LOADER */}
       {loading && (
-                 <GameLoader />
+        <GameLoader />
 
       )}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] flex items-center gap-3 px-4 py-4 bg-white shadow-sm z-50">
@@ -84,13 +82,12 @@ export default function WithdrawHistory() {
               key={item.id}
               className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
             >
-              {/* TOP */}
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-lg font-bold text-gray-800">
                     ₹ {item.amount}
                   </p>
-                  <p className="text-xs text-gray-400">{item.date}</p>
+                  <p className="text-xs text-gray-800">{item.created_at}</p>
                 </div>
 
                 <span
@@ -109,7 +106,7 @@ export default function WithdrawHistory() {
 
                 <div>
                   <p className="text-gray-400">Ref ID</p>
-                  <p className="font-medium text-gray-700">{item.ref}</p>
+                  <p className="font-medium text-gray-700">{item.txn_id}</p>
                 </div>
               </div>
             </div>

@@ -59,9 +59,9 @@ export default function PasswordSetScreen() {
   // ✅ VALIDATION
   const validate = () => {
     let newErrors = {};
-    if (!oldPassword) {
-      newErrors.oldPassword = "Old password is required";
-    }
+    // if (!oldPassword) {
+    //   newErrors.oldPassword = "Old password is required";
+    // }
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 6 || password.length > 15) {
@@ -122,10 +122,8 @@ export default function PasswordSetScreen() {
         </span>
         <span style={styles.headerTitle}>Change Password</span>
       </div>
-
       <div style={styles.form}>
-        {/* OLD PASSWORD */}
-        <div>
+        {/* <div>
           <p style={styles.label}>Enter old password</p>
           <div style={styles.inputBox}>
             <input
@@ -145,8 +143,7 @@ export default function PasswordSetScreen() {
           {errors.oldPassword && (
             <p style={styles.error}>{errors.oldPassword}</p>
           )}
-        </div>
-
+        </div> */}
         {/* NEW PASSWORD */}
         <div>
           <p style={styles.label}>Enter New password</p>

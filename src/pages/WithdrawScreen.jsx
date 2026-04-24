@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Banknote, ChevronLeft, Headphones, History, PictureInPictureIcon, Plus, Trash2, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getWithdrawApi, removeBankId, withdrawCreate } from "../services/authService";
+import WithdrawConfirmModal from "./WithdrawConfirmModal";
+import GameLoader from "./LoaderComponet";
 
 export default function WithdrawScreen() {
 
@@ -53,23 +55,22 @@ export default function WithdrawScreen() {
       setLoading(false);
     }
   };
-  const handleWithdraw = async () => {
-    // alert(selectedBankId)
+  const handleWithdraw = async (otp) => {
     // return
     try {
       setwihtdrawConfirm(false);
       setLoading(true);
+
       const res = await withdrawCreate({
         amount,
         bank_id: selectedBankId,
+        otp, // 🔥 send otp
       });
+
       if (res?.success) {
         showToast(res?.message, "success");
-        setTimeout(() => {
-          navigate("/withdrawhistory");
-        }, 2000)
-      }
-      else {
+        navigate("/withdrawhistory");
+      } else {
         showToast(res?.message, "error");
       }
     } catch (err) {
@@ -77,7 +78,7 @@ export default function WithdrawScreen() {
     } finally {
       setLoading(false);
     }
-  }
+  };
   useEffect(() => {
     fetchWithdrawData();
   }, [activeTab]); // ✅ refetch when tab changes
@@ -146,14 +147,12 @@ export default function WithdrawScreen() {
       <div className="flex gap-3 p-3">
         {/* Cash Balance */}
         <div className="flex-1 rounded-xl p-3 bg-gradient-to-r from-orange-800 to-orange-500 text-white flex items-center justify-between">
-
           <div>
             <p className="text-sm">Cash Balance</p>
             <p className="text-lg font-bold">
-              ₹ {balance.cash_balance || 0}
+              ₹ {balance?.non_withdrawable || 0}
             </p>
           </div>
-
           <Wallet size={28} className="opacity-100" />
         </div>
 
@@ -306,14 +305,8 @@ export default function WithdrawScreen() {
         </div>
       </div>
       {loading && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-white text-sm font-medium">Processing...</p>
-          </div>
-        </div>
+        <GameLoader />
       )}
-      {/* SUMMARY */}
       <div className="mx-3 mt-3 bg-white rounded-xl p-4 text-sm">
         <div className="flex justify-between py-1">
           <span>Amount</span>
@@ -328,8 +321,6 @@ export default function WithdrawScreen() {
           <span>₹ {preview.final_amount}</span>
         </div>
       </div>
-
-      {/* NOTE */}
       <div className="mx-3 mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-gray-700">
         <span className="font-semibold block mb-1">Note:</span>
         {Array.isArray(noteText) ? (
@@ -343,7 +334,6 @@ export default function WithdrawScreen() {
         )}
       </div>
 
-      {/* BUTTON */}
       <div className="fixed cursor-pointer bottom-0 w-full max-w-[430px] bg-white p-3 shadow-inner">
         <button
           onClick={() => setwihtdrawConfirm(true)}
@@ -356,36 +346,14 @@ export default function WithdrawScreen() {
           Withdraw ({activeTab})
         </button>
       </div>
-      {wihtdrawConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[90%] max-w-sm rounded-xl p-5">
-            <h2 className="text-lg font-semibold mb-2">
-              Confirm Withdrawal
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to wqithdraw ₹ {preview.final_amount} to this account?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setwihtdrawConfirm(false)}
-                className="px-4 py-2 rounded-lg bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleWithdraw}
-                className="px-4 py-2 rounded-lg bg-indigo-500 text-white"
-              >
-                Yes, Withdraw
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* CONFIRM MODAL */}
+      <WithdrawConfirmModal
+        open={wihtdrawConfirm}
+        amount={preview.final_amount}
+        onCancel={() => setwihtdrawConfirm(false)}
+        onConfirm={handleWithdraw}
+        preview={preview}
+        selectedBankId={selectedBankId}
+      />
       {showConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-[90%] max-w-sm rounded-xl p-5">

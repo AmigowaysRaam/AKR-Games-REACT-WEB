@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileExclamationPoint } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getNotificationList } from "../services/authService";
 
 export default function NotificationScreen() {
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("announcement"); // ✅ match API
+  const [activeTab, setActiveTab] = useState("announcement");
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
 
-  // ✅ Load user + fetch API
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -24,7 +23,7 @@ export default function NotificationScreen() {
     try {
       const res = await getNotificationList({
         id: userId,
-        type: activeTab, // ✅ send type to API
+        tab: activeTab,
       });
       if (res?.success) {
         setNotifications(res.data || []);
@@ -34,23 +33,21 @@ export default function NotificationScreen() {
     }
   };
 
-  // ✅ Filter based on tab
   const filteredData = notifications.filter((item) => {
-    if (activeTab === "announcement") {
-      return item.type === "announcement";
-    } else {
-      return item.type === "system";
-    }
+    return activeTab === "announcement"
+      ? item.type === "announcement"
+      : item.type === "system";
   });
 
   return (
     <div style={styles.container}>
+
       {/* HEADER */}
       <div style={styles.header}>
         <ChevronLeft
           size={22}
           onClick={() => navigate(-1)}
-          style={{ zIndex: 1, cursor: "pointer" }}
+          style={{ cursor: "pointer" }}
         />
         <span style={styles.headerTitle}>Notification</span>
       </div>
@@ -64,8 +61,7 @@ export default function NotificationScreen() {
               activeTab === "announcement"
                 ? "2px solid purple"
                 : "none",
-            color:
-              activeTab === "announcement" ? "#000" : "#777",
+            color: activeTab === "announcement" ? "#000" : "#777",
           }}
           onClick={() => setActiveTab("announcement")}
         >
@@ -88,18 +84,13 @@ export default function NotificationScreen() {
       </div>
 
       {/* CONTENT */}
-      <div style={{ paddingTop: 40 }}>
+      <div style={styles.content}>
         {filteredData.length === 0 ? (
           <div style={styles.emptyContainer}>
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
-              alt="no data"
-              style={styles.emptyImage}
-            />
             <p style={styles.emptyText}>No Data</p>
           </div>
         ) : (
-          filteredData.map((item) => (
+          filteredData?.map((item) => (
             <div key={item.id} style={styles.card}>
               <div style={styles.rowBetween}>
                 <span style={{ fontWeight: "bold" }}>
@@ -121,6 +112,9 @@ export default function NotificationScreen() {
   );
 }
 
+const HEADER_HEIGHT = 60;
+const TAB_HEIGHT = 48;
+
 const styles = {
   container: {
     maxWidth: 430,
@@ -131,12 +125,18 @@ const styles = {
   },
 
   header: {
-    position: "relative",
+    position: "fixed",
+    top: 0,
+    width: "100%",
+    maxWidth: 430,
+    height: HEADER_HEIGHT,
     display: "flex",
     alignItems: "center",
-    padding: 16,
+    padding: "0 16px",
     background: "#fff",
     fontWeight: "bold",
+    zIndex: 1000,
+    borderBottom: "1px solid #eee",
   },
 
   headerTitle: {
@@ -147,22 +147,51 @@ const styles = {
   },
 
   tabs: {
+    position: "fixed",
+    top: HEADER_HEIGHT,
+    width: "100%",
+    maxWidth: 430,
     display: "flex",
     background: "#fff",
     borderBottom: "1px solid #eee",
+    zIndex: 999,
   },
 
   tab: {
-    flex: 1,    textAlign: "center",
-    padding: 12,    cursor: "pointer",    fontSize: 14,
-    fontWeight: 500,  },  emptyContainer: {
-    textAlign: "center",    marginTop: 80,    color: "#888",
+    flex: 1,
+    textAlign: "center",
+    padding: 12,
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 500,
   },
-  emptyImage: {    width: 100,    opacity: 0.7,    position: "absolute",
-    left: "40%",
-    bottom: "65%",  },  emptyText: {    marginTop: 10,    fontSize: 14,
-  },  card: {    background: "#fff",    margin: "10px 16px",
-    padding: 16,    borderRadius: 12,  },
+
+  content: {
+    paddingTop: HEADER_HEIGHT + TAB_HEIGHT + 10,
+  },
+
+  emptyContainer: {
+    textAlign: "center",
+    marginTop: 80,
+    color: "#888",
+  },
+
+  emptyImage: {
+    width: "20%",
+    opacity: 0.7,
+  },
+  emptyText: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+
+  card: {
+    background: "#fff",
+    margin: "10px 16px",
+    padding: 16,
+    borderRadius: 12,
+  },
 
   rowBetween: {
     display: "flex",

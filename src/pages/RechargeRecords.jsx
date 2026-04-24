@@ -39,14 +39,12 @@ export default function RechargeRecords() {
   const fetchHistory = async (userId) => {
     try {
       setLoading(true);
-
       const res = await getRechargeHist({
         id: userId,
       });
-
-      // 🔥 SAFE SET
-      setData(res?.history || []);
-
+      if (res?.success) {
+        setData(res?.history || []);
+      }
     } catch (err) {
       console.log("API Error:", err);
       setData([]);
@@ -82,27 +80,19 @@ export default function RechargeRecords() {
           onClick={() => navigate("/CustomerSupport")}
         />
       </div>
-
       <div className="p-3 space-y-4">
-
-        {/* 🔄 LOADER */}
         {loading ? (
           <GameLoader />
-
-        ) : histdata.length === 0 ? (
-          /* ❌ EMPTY STATE */
+        ) : histdata?.length === 0 ? (
           <div className="text-center py-10 text-gray-400">
             No Records Found
           </div>
         ) : (
-          /* ✅ DATA LIST */
-          histdata.map((item) => (
+          histdata?.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all"
             >
-
-              {/* STATUS */}
               <div className="flex justify-between items-center px-4 py-2 bg-blue-50">
                 <span className="text-blue-600 text-xs font-semibold">
                   {(item.status || "pending").toUpperCase()}
@@ -111,8 +101,6 @@ export default function RechargeRecords() {
                   within 24 hours
                 </span>
               </div>
-
-              {/* MAIN */}
               <div
                 className="flex justify-between items-center px-4 py-4 cursor-pointer"
                 onClick={() => toggleOpen(item.id)}
@@ -122,7 +110,6 @@ export default function RechargeRecords() {
                   <div className="bg-orange-100 text-orange-500 p-2.5 rounded-full">
                     <Wallet className="w-4 h-4" />
                   </div>
-
                   <div>
                     <p className="font-semibold text-gray-800">
                       Recharge
@@ -134,7 +121,6 @@ export default function RechargeRecords() {
                     )}
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-gray-900 text-base">
                     ₹ {Number(item.amount || 0).toLocaleString()}
@@ -145,8 +131,6 @@ export default function RechargeRecords() {
                   />
                 </div>
               </div>
-
-              {/* DETAILS */}
               <div
                 className={`px-4 transition-all duration-300 ${openId === item.id
                   ? "max-h-40 pb-4 opacity-100"
@@ -161,29 +145,24 @@ export default function RechargeRecords() {
                       ₹ {Number(item.total || 0).toLocaleString()}
                     </span>
                   </div>
-
                   <div className="flex justify-between">
                     <span>Recharge Time</span>
                     <span className="text-gray-900 font-medium">
                       {formatDate(item.created_at)}
                     </span>
                   </div>
-
                   <div className="flex justify-between items-center">
                     <span>Order ID</span>
-
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium">
                         #{item.id}
                       </span>
-
                       <Copy
                         className="w-4 h-4 cursor-pointer text-gray-500 hover:text-black"
                         onClick={() =>
                           copyToClipboard(item.id, item.id)
                         }
                       />
-
                       {copiedId === item.id && (
                         <span className="text-green-500 text-xs">
                           Copied
@@ -191,7 +170,6 @@ export default function RechargeRecords() {
                       )}
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>

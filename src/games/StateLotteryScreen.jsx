@@ -19,6 +19,9 @@ const getBetRulesInfo = (tab) => {
     case "2D":
       return "Select numbers for C & D positions";
 
+      case "3D":
+  return "Select numbers for A, B, C positions";
+
     case "4D":
       return "Select numbers for A, B, C, D";
 
@@ -32,6 +35,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import LotteryHeader from "./LotteryHeader";
 import TwoSideBetGrid from "./TwoSideBetGrid";
+import ThreeDBetGrid from "./ThreeDBetGrid";
 import FourDBetGrid from "./FourDBetGrid";
 import TwoDBetGrid from "./TwoDBetGrid";
 import FishPrawnCrabBet from "./FishPrawnCrabBet";
@@ -226,6 +230,12 @@ export default function StateLotteryScreen() {
 
 ) : game.activeGameTab === '2D' ? (
   <TwoDBetGrid
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+
+  ) : game.activeGameTab === '3D' ? (  
+  <ThreeDBetGrid
     isBetSelected={game.isBetSelected}
     toggleBet={game.toggleBet}
   />

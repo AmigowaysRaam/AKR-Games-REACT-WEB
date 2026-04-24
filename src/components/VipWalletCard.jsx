@@ -84,14 +84,14 @@ return (
           <div>
             <p className="text-white/70 text-xs">Cash Balance</p>
             <p className="font-bold text-lg">
-              {showBalance ? "₹ 23.05" : "****"}
+              {showBalance ? "" : "****"}
             </p>
           </div>
 
           <div>
             <p className="text-white/70 text-xs">Withdrawable</p>
             <p className="font-bold text-lg">
-              {showBalance ? "₹ 20.50" : "****"}
+              {showBalance ? "₹" : "****"}
             </p>
           </div>
         </div>

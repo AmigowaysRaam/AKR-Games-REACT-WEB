@@ -2,6 +2,7 @@ import { ChevronLeft, Headset } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PromoList from "./Promolist";
+import BonusDetailScreen from "./BonusDetailScreen";
 
 export default function PromotionScreen() {
   const navigate = useNavigate();
@@ -115,82 +116,7 @@ export default function PromotionScreen() {
 
       {/* ✅ CONTENT OFFSET (IMPORTANT for fixed header) */}
       <div style={{ paddingTop: 70 }}>
-        {activeTab === "bonus" && (
-          <div style={{ background: "#f4a261", minHeight: "100vh" }}>
-            <div
-              style={{
-                background: "linear-gradient(90deg, #e65100, #ff9800)",
-                color: "#fff",
-                padding: 16,
-                fontWeight: "bold",
-              }}
-            >
-              <div style={{ fontSize: 20 }}>REWARDS TASK CENTER</div>
-              <div style={{ fontSize: 12 }}>
-                Complete Tasks, Win Rewards
-              </div>
-            </div>
-
-            <div
-              style={{
-                margin: 12,
-                background: "#f1e5d6",
-                borderRadius: 12,
-                padding: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: 10,
-                  fontSize: 13,
-                }}
-              >
-                <span>Bonus</span>
-                <span>History</span>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontWeight: "bold",
-                }}
-              >
-                <div>₹ 0.00</div>
-                <div>₹54.59</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                margin: 12,
-                background: "#fff",
-                borderRadius: 12,
-                padding: 12,
-                height: 400,
-                textAlign: "center",
-              }}
-            >
-              <div
-                style={{
-                  textAlign: "left",
-                  fontWeight: 600,
-                  marginBottom: 20,
-                }}
-              >
-                Task List
-              </div>
-
-              <div style={{ marginTop: 100, color: "#999" }}>
-                <div style={{ fontSize: 40 }}>📭</div>
-                <div>All Empty</div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {activeTab === "bonus" && <BonusDetailScreen />}
         {activeTab === "promo" && <PromoList />}
       </div>
     </div>

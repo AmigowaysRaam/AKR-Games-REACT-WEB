@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, Headphones, RefreshCcw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import RechargeRules from "../components/RechargeRules";
 import { getrechargeDetailsCall, rechargeCall } from "../services/authService";
 import GameLoader from "./LoaderComponet";
+import OfferBanner from "./OfferBanner";
+import ConfirmRechargeModal from "./ConfirmRechargeModal";
 export default function RechargeScreen() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("UPI");
@@ -25,11 +27,32 @@ export default function RechargeScreen() {
     setToast({ message, type });
     setTimeout(() => setToast({ message: "", type: "" }), 2500);
   };
-  const [loading, setLoading] = useState(false);
-
+  const location = useLocation();
   useEffect(() => {
     getRechargDetails();
-  }, [activeTab, amount, selectedBonus]);
+  }, [location.key]); // 🔥 triggers on back navigation
+  const [loading, setLoading] = useState(false);
+  const [meetThreeAvail, setmeetThreeAvail] = useState(false);
+  const [showOffer, setShowOffer] = useState(false);
+  useEffect(() => {
+    if (rechData?.offer?.message) {
+      setShowOffer(true);
+      if (!rechData.offer.available) {
+        const timer = setTimeout(() => {
+          setShowOffer(false);
+        }, 5000);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [rechData]);
+  useEffect(() => {
+    getRechargDetails();
+  }, [activeTab, amount, selectedBonus, selectedChannel]);
+
+  useEffect(() => {
+    setAmount(null);
+  }, [activeTab]);
 
   const getRechargDetails = async () => {
     // alert(JSON.stringify(
@@ -42,7 +65,6 @@ export default function RechargeScreen() {
     //   }
     // ))
     // return
-
     try {
       setLoading(true);
       const res = await getrechargeDetailsCall({
@@ -52,10 +74,11 @@ export default function RechargeScreen() {
         amount: amount,
         selectedBonus: bonusCards[selectedBonus]?.key || null
       });
+
       if (res?.success) {
         const data = res.data;
-
         setrechData(data);
+        setmeetThreeAvail(data?.offer?.available || false);
         setWallet(data.wallet_balance);
         const mappedChannels = data.methods.map((m) => ({
           name: m.name,
@@ -68,7 +91,6 @@ export default function RechargeScreen() {
         setMethodText(data.header?.current_method_text || "");
         setNote(data.header?.note || "");
         setBonusCards(data.promotions || []);
-        // alert(data.selected.amount)
         if (data.selected) {
           setAmount(data.selected.amount);
           setSelectedAmountObj(data.selected);
@@ -98,7 +120,7 @@ export default function RechargeScreen() {
     setShowConfirm(true);
   };
   const finalAmount = selectedAmountObj?.total || amount;
-  const handleConfirmRecharge = async () => {
+  const handleConfirmRecharge = async (useOffer) => {
     setShowConfirm(false);
     setLoading(true);
     try {
@@ -106,7 +128,9 @@ export default function RechargeScreen() {
         amount,
         finalAmount,
         channel: channels[selectedChannel]?.name,
-        method: activeTab
+        method: activeTab,
+        use_special_offer: useOffer, // 🔥 send this if backend supports
+        selectedBonus: bonusCards[selectedBonus]?.key || null
       });
       if (res?.success) {
         showToast(res?.message || "Success", "success");
@@ -121,33 +145,33 @@ export default function RechargeScreen() {
       setLoading(false);
     }
   };
-
+  const meetThreebanner =
+    rechData?.offer?.message?.image ||
+    "https://www.singamlottery.com/static/media/recharge-header-bg.785a720239d8eb20f9d6.webp";
   return (
-    <div className="max-w-[430px] mx-auto bg-gray-100 min-h-screen pb-10">
-      <div className=" flex items-center justify-between px-4 py-5 bg-white shadow-sm">
+    <div className={`max-w-[430px] mx-auto min-h-screen pb-10 
+      ${rechData?.offer ? "bg-white" : "bg-gray-100"}`}>
+      <div className={`flex items-center justify-between px-4 py-5 shadow-sm 
+  ${rechData?.offer ? "bg-white" : "bg-white"}`}>
         <ChevronLeft onClick={() => navigate(-1)} />
         <span className="font-semibold">Recharge</span>
         <Headphones onClick={() => navigate('/CustomerSupport')} />
       </div>
-      {/* ✅ BALANCE CARD (UPDATED DESIGN) */}
+      {!showConfirm && rechData?.offer && (
+        <OfferBanner offer={rechData?.offer} />
+      )}
       <div className="m-3 rounded-2xl text-white relative overflow-hidden">
-        {/* https://www.singamlottery.com/static/media/recharge-header-bg.785a720239d8eb20f9d6.webp */}
         <img
-          src="https://www.singamlottery.com/static/media/recharge-header-bg.785a720239d8eb20f9d6.webp"
-          className="absolute inset-0 w-full h-full object-cover"
+          src={"https://www.akrlottery.com/assets/images/plain_bg.jpg"}
+          className={`absolute inset-0 w-full h-full object-cover ${meetThreeAvail ? "scale-110  brightness-80" : "brightness-50"}`}
         />
-
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-purple-600 to-purple-800 opacity-90"></div>
-
+        <div className="absolute inset-0  opacity-90"></div>
         <div className="relative z-10 p-4 pt-5 pb-16">
           <div className="flex justify-between items-start">
-
             <div>
               <p className="text-sm opacity-80">Balance</p>
-
               <div className="flex items-center gap-2 mt-1 pb-5">
                 <p className="text-xl font-bold">₹ {wallet}</p>
-
                 <div
                   onClick={getRechargDetails}
                   className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20 cursor-pointer"
@@ -225,15 +249,13 @@ export default function RechargeScreen() {
           );
         })}
       </div>
-
       <div className="mx-3 mt-3">
         <input
           className="w-full p-3 rounded-lg border outline-none"
           type="number"
           value={amount}
           onChange={(e) => {
-            let value = e.target.value;
-
+            let value = e.target?.value;
             if (value === "") {
               setAmount("");
               return;
@@ -244,11 +266,11 @@ export default function RechargeScreen() {
             setAmount(value);
           }}
         />
-        <p className="text-xs mt-2">Min ₹{rules.min} & Max ₹{rules.max}</p>
+        <p className="text-xs mt-2">Min ₹{rules?.min} & Max ₹{rules?.max}</p>
       </div>
       {toast?.message && (
         <div
-          className={`fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-white ${toast.type === "success" ? "bg-green-500" : "bg-red-500 z-555"
+          className={`fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-white ${toast?.type === "success" ? "bg-green-500" : "bg-red-500 z-555"
             }`}
         >
           {toast?.message}
@@ -268,7 +290,8 @@ export default function RechargeScreen() {
                 : "bg-gray-200"
               }`}
           >
-            {activeTab === "UPI" && amt?.bonus && (
+            {/* <p>{JSON.stringify(amt)}</p> */}
+            {amt?.bonus && (
               <div className="absolute  left-1/2 -translate-x-1/2 bottom-9">
                 <span className="bonus-blink text-white text-[8px] px-1 py-[2px] rounded">
                   {amt.bonus_text}
@@ -301,38 +324,18 @@ export default function RechargeScreen() {
           ))}
         </div>
       </div>
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex justify-center items-center">
-          <div className="bg-white p-5 rounded-xl" style={{ width: "400px" }}>
-            <h2 className="text-center font-bold mb-3">Confirm Recharge</h2>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Amount</span>
-                <span>₹{amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Channel</span>
-                <span>{channels[selectedChannel]?.name}</span>
-              </div>
+      <ConfirmRechargeModal
+        show={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmRecharge}
+        amount={amount}
+        channel={channels[selectedChannel]?.name}
+        total={rechData?.total}
+        offer={rechData?.offer}
+        activeTab={activeTab}
+      />
 
-              <div className="flex justify-between font-bold text-green-600">
-                <span>Total</span>
-                <span>₹{rechData?.total}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => setShowConfirm(false)} className="flex-1 bg-gray-200 py-2 rounded">
-                Cancel
-              </button>
-              <button onClick={handleConfirmRecharge} className="flex-1 bg-purple-600 text-white py-2 rounded">
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="fixed bottom-0 w-full max-w-[430px] bg-white p-3">
         <button
           onClick={handleRechargeClick}
@@ -346,7 +349,7 @@ export default function RechargeScreen() {
               </span>
             </div>
           }
-          Recharge ₹{rechData?.total}
+          Recharge {`${activeTab == 'UPI' ? '₹' : '$'} ${rechData?.total}`}
         </button>
       </div>
       <RechargeRules />

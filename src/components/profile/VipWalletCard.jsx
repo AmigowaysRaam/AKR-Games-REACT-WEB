@@ -36,9 +36,10 @@ export default function VipWalletCard({ showSpin }) {
       const apiData = res?.data;
       if (apiData) {
         setWalletData({
-          total_wallet: apiData?.totalWallet || "0",
+          total_wallet: apiData?.total || "0",
           cash_balance: apiData?.wallet?.cash_balance || "0",
           withdrawable_balance: apiData?.wallet?.withdrawable || "0",
+          total: apiData?.wallet?.total || "0",
         });
         // localStorage.setItem("wallet", apiData?.totalWallet);
         setVipData({
@@ -114,12 +115,16 @@ export default function VipWalletCard({ showSpin }) {
           </div>
         </div>
         <div
-          className="p-4 text-white relative overflow-hidden"
+          // onClick={() => { navigate("/WalletScreen") }}
+          className="p-4 text-white relative overflow-hidden cursor-pointer"
           style={{
-            background: "linear-gradient(135deg, #6d28d9, #9333ea)",
+            backgroundImage: `url(https://www.akrlottery.com/assets/images/plain2.jpg)`,
+            backgroundSize: "cover",       // makes image fill container
+            backgroundPosition: "center",  // keeps it centered
+            backgroundRepeat: "no-repeat", // prevents tiling
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-red/10 to-red pointer-events-none" />
           <div className="flex justify-between items-center relative">
             <div className="flex items-center gap-2">
               <Wallet size={16} className="opacity-80" />
@@ -157,14 +162,15 @@ export default function VipWalletCard({ showSpin }) {
             className={`flex items-center gap-2 cursor-pointer ${userdata ? "" : "opacity-50 cursor-not-allowed"
               }`}
           >
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 mt-2"
+            >
               <IndianRupee size={20} className="opacity-80" />
 
               <h3 className="text-2xl font-bold">
                 {loading ? (
                   <div className="h-8 w-32 bg-white/30 rounded animate-pulse" />
                 ) : showBalance && walletData ? (
-                  walletData.total_wallet
+                  walletData?.total
                 ) : (
                   "****"
                 )}
@@ -178,7 +184,9 @@ export default function VipWalletCard({ showSpin }) {
           <div className="flex justify-between mt-4 text-sm">
 
             {/* Cash Balance */}
-            <div>
+            <div
+              className="curosr-pointer"
+              onClick={() => { userdata && navigate("/WalletScreen") }}>
               <p className="text-white/70 text-xs flex items-center gap-1">
                 <IndianRupee size={12} /> Cash Balance
               </p>
@@ -200,7 +208,8 @@ export default function VipWalletCard({ showSpin }) {
             </div>
 
             {/* Withdrawable */}
-            <div>
+            <div className="curosr-pointer"
+              onClick={() => { userdata && navigate("/WalletScreen") }}>
               <p className="text-white/70 text-xs flex items-center gap-1">
                 <IndianRupee size={12} /> Withdrawable
               </p>

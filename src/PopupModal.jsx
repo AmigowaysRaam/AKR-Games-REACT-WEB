@@ -62,13 +62,12 @@ export default function PopupModal() {
   const fetchHome = async () => {
     try {
       const res = await getPopdata();
-      console.log("API RESPONSE:", res);
+      // console.log("API RESPONSE:", res);
       if (res?.success && res?.popups?.length > 0 && res?.show) {
         const formatted = res.popups.map((item, index) => ({
           id: item.id || index + 1,
           src: item.image,
         }));
-
         console.log(formatted, "Formatted Popup Data");
         setImages(formatted);
       } else {
@@ -89,28 +88,21 @@ export default function PopupModal() {
       const lastClosed = localStorage.getItem("popup_last_closed");
       if (lastClosed) {
         const diff = Date.now() - parseInt(lastClosed, 10);
-        // ❌ within 6 hours → don't show
         if (diff < POPUP_EXPIRY) return;
       }
       const timer = setTimeout(() => {
         setIsOpen(true);
         setAnimate(true);
       }, 500);
-
       return () => clearTimeout(timer);
     }
   }, [loading, images]);
-
-  // ✅ Prevent scroll
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
   }, [isOpen]);
-
-
-  // ✅ Loader
   if (loading) {
     return (
       <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
@@ -118,14 +110,10 @@ export default function PopupModal() {
       </div>
     );
   }
-
   if (!isOpen || images.length === 0) return null;
-
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="relative w-full max-w-sm px-4">
-
-        {/* CLOSE / NEXT */}
         <button
           onClick={handleNext}
           className="absolute -top-3 right-4 z-20 
@@ -135,8 +123,6 @@ export default function PopupModal() {
         >
           <X />
         </button>
-
-        {/* IMAGE */}
         <div
           className={`w-full rounded-2xl overflow-hidden shadow-2xl transform transition-all duration-300 ${animate ? "scale-100 opacity-100" : "scale-95 opacity-0"
             }`}
@@ -148,7 +134,6 @@ export default function PopupModal() {
             className="w-full h-auto object-contain"
           />
         </div>
-
       </div>
     </div>
   );

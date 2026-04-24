@@ -3,13 +3,10 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { addBankAccont, getOtpLogin, updateBankAccont } from "../services/authService";
 import GameLoader from "./LoaderComponet";
-import { set } from "date-fns";
 
 export default function AddbankAccount() {
   const navigate = useNavigate();
   const location = useLocation();
-
-
   const state =
     location.state?.bank ||
     JSON.parse(localStorage.getItem("editBank")) ||
@@ -53,7 +50,6 @@ export default function AddbankAccount() {
     }
   }, [state]);
 
-  // OTP TIMER
   useEffect(() => {
     let interval;
     if (timer > 0) {
@@ -76,8 +72,6 @@ export default function AddbankAccount() {
   // GET OTP
   const handleGetOtp = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
-    // alert(JSON.stringify(user))
-    // return;
     if (!user.phone || user.phone.length < 10) {
       showToast('Error');
       return;
@@ -86,7 +80,7 @@ export default function AddbankAccount() {
       setLoading(true);
       const res = await getOtpLogin(user.phone, user.country_code, "updatebank");
       if (res?.success) {
-        showToast(res?.message);
+        showToast(res?.message,'success');
         setTimer(30);
         setOtpSent(true); // ✅ IMPORTANT
       } else {
@@ -145,9 +139,7 @@ export default function AddbankAccount() {
 
   const handleSubmit = async () => {
     if (!validate()) return;
-
     const user = JSON.parse(localStorage.getItem("user"));
-
     const payload = {
       user_id: user?.id,
       account_name: form.name,
@@ -157,6 +149,7 @@ export default function AddbankAccount() {
       upi_address: form.upi,
       email: form.email,
       otp: otp, // ✅ added OTP
+      flag:"updatebank"
     };
 
     if (isEdit && state?.id) {

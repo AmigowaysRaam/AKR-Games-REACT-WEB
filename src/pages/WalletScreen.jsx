@@ -17,14 +17,13 @@ export default function WalletScreen() {
     games: [],
     info: "",
   });
-
-  // ✅ INITIAL LOAD
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       fetchWallet(parsedUser.id);
     } else {
+      navigate("/Login");
       setLoading(false);
     }
   }, []);
@@ -38,7 +37,7 @@ export default function WalletScreen() {
       const api = res?.data;
       if (!api) return;
       setWalletData({
-        totalWallet: Number(api?.totalWallet || 0),
+        totalWallet: Number(api?.wallet?.total),
         cash_balance: Number(api?.wallet?.cash_balance || 0),
         withdrawable_balance: Number(api?.wallet?.withdrawable || 0),
         actions: api?.actions || [],
@@ -143,7 +142,7 @@ export default function WalletScreen() {
               <div className="text-3xl">{g.icon}</div>
               <p className="text-sm font-medium mt-1">{g.name}</p>
               <p className="text-xs text-gray-500">
-                ₹ {Number(g.balance || 0).toFixed(2)}
+                ₹ {Number(g.balance || 0)}
               </p>
             </div>
           ))}

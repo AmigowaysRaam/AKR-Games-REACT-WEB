@@ -31,7 +31,26 @@
     opacity: 1;
   }
 }
-
+/* 
+ */
+ 
+ @keyframes offerGlowPulse {
+  0% {
+    box-shadow: 0 0 6px rgba(255,0,150,0.4),
+                0 0 12px rgba(255,200,0,0.3),
+                0 0 18px rgba(0,200,255,0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255,0,150,0.8),
+                0 0 24px rgba(255,200,0,0.6),
+                0 0 36px rgba(0,200,255,0.5);
+  }
+  100% {
+    box-shadow: 0 0 6px rgba(255,0,150,0.4),
+                0 0 12px rgba(255,200,0,0.3),
+                0 0 18px rgba(0,200,255,0.2);
+  }
+}
 @keyframes scaleUp {
   0% {
     transform: scale(0.5);
@@ -229,7 +248,6 @@ div::-webkit-scrollbar {
     opacity: 1;
   }
 }
-
 .animate-scaleIn {
   animation: scaleIn 0.3s ease;
 }

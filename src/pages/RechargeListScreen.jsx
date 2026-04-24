@@ -115,7 +115,8 @@ export default function RechargeListScreen() {
               <div
                 className={`card ${i === activeIndex ? "active" : ""}`}
                 style={{
-                  backgroundImage: `url(${item?.uri})`,
+                  backgroundImage: `url(${item?.banner})`,
+
                 }}
               >
                 <div className="overlay" />
@@ -231,7 +232,7 @@ export default function RechargeListScreen() {
         .slider {
           display: flex;          overflow-x: auto;
           padding: 10px;          scroll-snap-type: x mandatory;
-        }        .slide {          min-width: 90%;
+        }        .slide {          min-width: 85%;
           margin-right: 10px;          scroll-snap-align: center;
         }
         .card {          height: 190px;          border-radius: 18px;
@@ -242,7 +243,7 @@ export default function RechargeListScreen() {
         }        .card.active {          transform: scale(1);
         }        .overlay {          position: absolute;
           inset: 0;          background: linear-gradient(
-            135deg,            rgba(255,255,255,0.85),            rgba(240,248,255,0.6)
+            135deg,            rgba(255,255,255,0.5),            rgba(240,248,255,0.6)
           );
           border-radius: 18px;        }
         .cardContent {          position: relative;          z-index: 2;

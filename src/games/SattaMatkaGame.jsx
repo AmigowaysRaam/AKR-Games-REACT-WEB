@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
  
 const MATKA_MARKETS = [
   {
-    id: 21,
+    id: 28,
     name: "MP BAZAR",
     number: "NO.9",
     panel: "* * * - * * - * * *",
@@ -32,7 +32,7 @@ const MATKA_MARKETS = [
     ],
   },
   {
-    id: 22,
+    id: 29,
     name: "KUBER",
     number: "NO.3",
     panel: "* * * - * * - * * *",
@@ -58,7 +58,7 @@ const MATKA_MARKETS = [
     ],
   },
   {
-    id: 23,
+    id: 27,
     name: "MUMBAI MAIN",
     number: "NO.11",
     panel: "* * * - * * - * * * *",
@@ -84,7 +84,7 @@ const MATKA_MARKETS = [
     ],
   },
   {
-    id: 20,
+    id: 26,
     name: "BENGAL BAZAR",
     number: "NO.7",
     panel: "* * * - * * - * * *",

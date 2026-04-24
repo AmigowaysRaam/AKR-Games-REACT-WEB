@@ -3,15 +3,9 @@ import { useState ,useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getkeralaLottery, generateTickets,deleteTicket,createBet,getBettingList} from "../services/gameSevice";
 import { getWalletSummary,homeApi } from "../services/authService";
+import { getAllLotteryResults,getLotteryDetails } from "../services/gameSevice";
 
-const RESULT_HISTORY = [
-  { id: "OA-1440", name: "ONLINE-ONLY", date: "06-04-2026 08:00 PM" },
-  { id: "BT-48", name: "BHAGYATHARA", date: "06-04-2026 03:00 PM" },
-  { id: "SM-49", name: "SAMRUDHI", date: "05-04-2026 03:00 PM" },
-  { id: "OA-1439", name: "ONLINE-ONLY", date: "05-04-2026 08:00 PM" },
-  { id: "OA-1438", name: "ONLINE-ONLY", date: "04-04-2026 08:00 PM" },
-  { id: "KR-749", name: "KARUNYA", date: "04-04-2026 03:00 PM" },
-];
+
 
 function JackpotBall({ value, index }) {
   const isLetter = isNaN(value);
@@ -253,21 +247,147 @@ const add = () => {
     </div>
   );
 }
-function ResultHistoryTab() {
+function ResultHistoryTab({ lottery }) {
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchResults();
+  }, [lottery]);
+
+  const fetchResults = async () => {
+    try {
+      const res = await getAllLotteryResults({
+        lotteryDigit: lottery?.lotteryDigit,
+      });
+
+      if (res?.success) {
+        setResults(res.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDetails = async (item) => {
+    setSelected(item);
+
+    try {
+      const res = await getLotteryDetails({
+        lotteryDigit: item.lotteryDigit,
+      });
+
+      if (res?.success) {
+        setDetails(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const goBack = () => {
+    setSelected(null);
+    setDetails(null);
+  };
+
+  if (loading) {
+    return <div className="pt-4 text-center text-gray-400">Loading...</div>;
+  }
+
+  // ✅ DETAILS VIEW
+ if (selected) {
+  return (
+    <div className="pt-4">
+
+      {/* 🔙 BACK HEADER */}
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={goBack} className="text-lg"><ChevronLeft/></button>
+        <div>
+          <div className="font-bold text-gray-800">
+            {selected.lotteryDigit}
+          </div>
+          <div className="text-xs text-gray-500">
+            {selected.name} | {selected.drawDate} {selected.drawTime}
+          </div>
+        </div>
+      </div>
+
+      {/* 📊 DETAILS UI (YOUR STYLE) */}
+      {loading ? (
+        <div className="text-center text-gray-400">Loading...</div>
+      ) : (
+        <div className="flex flex-col gap-4">
+
+          {(details?.draws || []).map((draw, i) => (
+            <div key={i}>
+
+              {draw.prizes.map((p, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl p-4 bg-gradient-to-r from-yellow-100 to-pink-100 shadow-sm"
+                >
+                  {/* 🏆 HEADER */}
+                  <div className="flex justify-between mb-3">
+                    <span className="font-bold text-gray-800">
+                      Rank {p.rank}
+                    </span>
+                    <span className="text-orange-600 font-semibold">
+                      ₹{p.amount}
+                    </span>
+                  </div>
+
+                  {/* 🎯 NUMBERS */}
+                  <div className="flex flex-wrap gap-2">
+                    {(p.winningNumbers || []).map((num, i2) => (
+                      <div
+                        key={i2}
+                        className="bg-white px-3 py-1 rounded-full text-sm font-medium shadow"
+                      >
+                        {num}
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+          ))}
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+  // ✅ ORIGINAL LIST UI (UNCHANGED STYLE)
   return (
     <div className="pt-4 flex flex-col gap-2">
-      {RESULT_HISTORY.map((r) => (
+      {results.map((r) => (
         <div
-          key={r.id}
+          key={r.lotteryDigit}
+          onClick={() => openDetails(r)} // ✅ ONLY CHANGE
           className="flex items-center gap-3 border border-yellow-300 bg-yellow-50 rounded-xl px-4 py-3 cursor-pointer hover:bg-yellow-100 transition-colors"
         >
           <div className="border-r border-dashed border-yellow-400 pr-3 min-w-[72px]">
-            <span className="font-bold text-gray-800 text-sm">{r.id}</span>
+            <span className="font-bold text-gray-800 text-sm">
+              {r.lotteryDigit}
+            </span>
           </div>
+
           <div className="flex-1">
-            <div className="font-semibold text-gray-800 text-sm">{r.name}</div>
-            <div className="text-xs text-gray-500">{r.date}</div>
+            <div className="font-semibold text-gray-800 text-sm">
+              {r.name}
+            </div>
+            <div className="text-xs text-gray-500">
+              {r.drawDate} {r.drawTime}
+            </div>
           </div>
+
           <span className="text-gray-400 text-lg">›</span>
         </div>
       ))}
@@ -278,6 +398,20 @@ function ResultHistoryTab() {
 function MyOrderTab({ lottery }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+    const formatDateTime = (date) => {
+  if (!date) return "-";
+
+  const d = new Date(date);
+
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
   useEffect(() => {
     fetchOrders();
@@ -303,25 +437,31 @@ function MyOrderTab({ lottery }) {
   };
 
   // ✅ STATUS UI HELPER
-  const getStatusUI = (order) => {
-    if (order.status === "SUCCESS") {
-      return (
-        <span className="text-green-600 font-semibold">
-          Win ₹{order.winAmount || 0}
-        </span>
-      );
-    }
+const getStatusUI = (order) => {
+  const status = order.status?.toLowerCase();
 
-    if (order.status === "FAILED") {
-      return <span className="text-red-500 font-semibold">Lost</span>;
-    }
-
+  if (status === "won" || status === "success") {
     return (
-      <span className="text-yellow-500 font-semibold">
-        Result Awaited
+      <span className="text-green-600 font-semibold">
+        Win ₹{order.win_amount || order.winAmount || 0}
       </span>
     );
-  };
+  }
+
+  if (status === "lost" || status === "failed") {
+    return (
+      <span className="text-red-500 font-semibold">
+        Lost
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-yellow-500 font-semibold">
+      Result Awaited
+    </span>
+  );
+};
 
   if (loading) {
     return <div className="pt-4 text-center text-gray-400">Loading...</div>;
@@ -335,108 +475,54 @@ function MyOrderTab({ lottery }) {
     );
   }
 
-  return (
-    <div className="pt-4 flex flex-col gap-4">
-      {orders.map((order, i) => (
-        <div key={i} className="bg-white rounded-xl shadow-sm border">
+    return (
+      <div className="pt-4 flex flex-col gap-4">
+        {orders.map((order, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm border">
 
-          {/* 🔝 STATUS HEADER */}
-          <div className="flex justify-between items-center px-3 py-2 border-b bg-gray-50 rounded-t-xl">
-            {getStatusUI(order)}
+            {/* 🔝 STATUS HEADER */}
+            <div className="flex justify-between items-center px-3 py-2 border-b bg-gray-50 rounded-t-xl">
+              {getStatusUI(order)}
 
-            <span className="text-xs text-gray-500">
-              ID {order.id}
-            </span>
-          </div>
-
-          {/* 🎯 WINNING NUMBER */}
-          {order.winningNumber && (
-            <div className="px-3 py-2 text-xs text-green-600 font-semibold border-b">
-              Winning Number: {order.winningNumber}
-            </div>
-          )}
-
-          {/* 🧾 ORDER HEADER */}
-          <div className="flex justify-between items-center px-3 py-3">
-            <div>
-              <div className="font-semibold text-gray-800 text-sm">
-                {order.number}
-              </div>
-
-              <div className="text-xs text-gray-500">
-                {order.status === "PENDING"
-                  ? `Draw Time ${order.drawTime || order.created_at}`
-                  : `Played on ${order.created_at}`}
-              </div>
+              <span className="text-xs text-gray-500">
+                ID {order.id}
+              </span>
             </div>
 
-            <div className="text-right">
-              <div className="text-xs text-gray-400">Total</div>
-              <div className="font-semibold text-gray-800">
-                ₹{order.amount}
+            {/* 🎯 WINNING NUMBER */}
+            {order.winningNumber && (
+              <div className="px-3 py-2 text-xs text-green-600 font-semibold border-b">
+                Winning Number: {order.winningNumber}
+              </div>
+            )}
+
+            {/* 🧾 ORDER HEADER */}
+            <div className="flex justify-between items-center px-3 py-3">
+              <div>
+                <div className="font-semibold text-gray-800 text-sm">
+                  {order.number}
+                </div>
+
+                <div className="text-xs text-gray-500">
+                 {order.status === "PENDING"
+  ? `Draw Time ${formatDateTime(order.drawTime || order.created_at)}`
+  : `Played on ${formatDateTime(order.created_at)}`}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-xs text-gray-400">Total</div>
+                <div className="font-semibold text-gray-800">
+                  ₹{order.amount}
+                </div>
               </div>
             </div>
+
+          
           </div>
-
-          {/* 🎟️ TITLE */}
-          <div className="border-t px-3 py-2 bg-gray-50 text-xs text-gray-500 font-medium">
-            Your Tickets
-          </div>
-
-          {/* 📊 TABLE HEADER */}
-          <div className="grid grid-cols-3 px-3 py-2 text-xs text-gray-500">
-            <span>NUMBER</span>
-            <span>PRICE</span>
-            <span className="text-right">RESULT</span>
-          </div>
-
-          {/* 🎫 TICKETS */}
-          {(order.tickets || []).map((ticket, idx) => {
-            const isWinner =
-              order.winningTicket && ticket === order.winningTicket;
-
-            return (
-              <div
-                key={idx}
-                className="grid grid-cols-3 px-3 py-2 text-sm border-t items-center"
-              >
-                {/* NUMBER */}
-                <span
-                  className={`font-medium ${
-                    isWinner
-                      ? "text-green-600 font-bold"
-                      : "text-gray-800"
-                  }`}
-                >
-                  {ticket}
-                </span>
-
-                {/* PRICE */}
-                <span className="text-gray-600">
-                  ₹{order.amount / (order.tickets?.length || 1)}
-                </span>
-
-                {/* RESULT */}
-                <span className="text-right">
-                  {order.status === "SUCCESS" ? (
-                    <span className="text-green-600 font-semibold">
-                      ₹{order.winAmount || 0}
-                    </span>
-                  ) : order.status === "FAILED" ? (
-                    <span className="text-gray-400">--</span>
-                  ) : (
-                    <span className="text-yellow-500 text-xs">
-                      {order.drawTime || order.created_at}
-                    </span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
 }
 
 export function KeralaLotteryDetail() {
@@ -479,7 +565,7 @@ const fetchWallet = async (uid) => {
     const api = res?.data;
 
     setBalance({
-      totalWallet: Number(api?.totalWallet || 0)
+      totalWallet: Number(api?.wallet?.total || 0)
     });
 
   } catch (err) {
@@ -551,6 +637,16 @@ const handlePayNow = async () => {
 
     const storedUser = JSON.parse(localStorage.getItem("user"));
 
+     if (!storedUser?.id) {
+      showToast("Login to continue play", "error");
+
+      setTimeout(() => {
+        navigate("/login"); // 👈 change route if needed
+      }, 1500);
+
+      return;
+    }
+
    const payload = {
   userId: storedUser?.id,
   lotteryId: lottery.id,
@@ -579,6 +675,7 @@ const handlePayNow = async () => {
     showToast("Something went wrong");
   }
 };
+const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
@@ -596,7 +693,9 @@ const handlePayNow = async () => {
         <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-800 text-xl"><ChevronLeft/></button>
         <p className="font-semibold text-gray-800">Kerala State Lottery</p>
         <div className="flex items-center gap-2">
-          <span className="text-medium font-semibold text-black-400"> ₹{balance.totalWallet || 0}</span>
+          <span className="text-medium font-semibold text-black-400">
+  {user ? `₹${balance.totalWallet || 0}` : "-"}
+</span>
           <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">💰</div>
         </div>  
       </div>
@@ -648,7 +747,9 @@ const handlePayNow = async () => {
     setTickets={setTickets}
   />
 )}
-        {tab === "result history" && <ResultHistoryTab />}
+        {tab === "result history" && (
+  <ResultHistoryTab lottery={lottery} />
+)}
         {tab === "my order" && <MyOrderTab  lottery={lottery}/>}
       </div>
       <div className="bg-white border-t border-gray-100 px-4 py-3 flex items-center justify-between">

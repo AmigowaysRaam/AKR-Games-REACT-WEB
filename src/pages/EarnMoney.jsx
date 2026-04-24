@@ -8,6 +8,7 @@ export default function InviteFriends() {
   const navigate = useNavigate();
   const [data, SetApiData] = useState(null);
   const copyCode = () => {
+
     if (!JSON.parse(localStorage.getItem("user"))?.id) {
       showToast("User not found", "error");
       navigate('/login');
@@ -24,9 +25,8 @@ export default function InviteFriends() {
     }, 2000);
   };
 
-
   const handleShareLink = async () => {
-    const url = `${window.location.origin}?ref=${data.code}`;
+    const url = `${window.location.origin}/Sign?ref=${data.referral_code}`;
     const shareData = {
       title: "Join me on AKR Lottery!",
       text: `Use my invite code ${data?.referral_code}`,
@@ -132,21 +132,21 @@ export default function InviteFriends() {
           {toast?.msg}
         </div>
       )}
+      {/* {JSON.stringify(data)} */}
       {
         loading ?
           <GameLoader />
           :
           <>
             <div style={content}>
-              <div style={{
+              <div className="px-4 py-2" style={{
                 banner,
                 backgroundImage: `url(${data?.image})`,
                 position: "relative",
-                padding: 16,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                bottom: 50,
               }}>
+
                 <div style={{
                   position: "relative", zIndex: 2, paddingTop: "45%",
                 }}>
@@ -178,7 +178,6 @@ export default function InviteFriends() {
                     </span>
                     <div style={{
                       display: "flex", alignItems: "center", gap: "10px",
-                      // background: "rgba(255,255,255,0.2)"                ,
                       padding: "6px 10px", borderRadius: "20px"
                     }}>
                       {/* <p>{JSON.stringify(data,null,2)}</p> */}
@@ -343,37 +342,36 @@ export default function InviteFriends() {
                 {data?.inviteRules?.map((b, index) => (
                   <div key={index} style={card}>
                     <div style={cardHeader}>
-                      <span>{b.title}</span>
+                      <span>{b?.title}</span>
                       <span style={{ color: "#7c3aed" }}>₹{b.bonusAmount}</span>
                     </div>
                     <div style={grayRow}>
                       <span>Number of invitees</span>
-                      <span>{b.noOfPeople}</span>
+                      <span>{b?.noOfPeople}</span>
                     </div>
                     <div style={grayRow}>
                       <span>Recharge per people</span>
                       <span style={{ color: "#7c3aed" }}>
-                        ₹{b.rechargePerPerson}
+                        ₹{b?.rechargePerPerson}
                       </span>
                     </div>
-
                     <div style={progressRow}>
                       <div>
                         <span style={highlight}>
-                          {b.inviteProgress?.split("/")?.[0]}
+                          {b?.inviteProgress?.split("/")?.[0]}
                         </span>
-                        /{b.noOfPeople}
+                        /{b?.noOfPeople}
                         <div style={smallText}>Invitees</div>
                       </div>
-
                       <div>
                         <span style={highlight}>
-                          {b.depositProgress?.split("/")?.[0]}
+                          {b?.depositProgress?.split("/")?.[0]}
                         </span>
                         /{b.noOfPeople}
                         <div style={smallText}>Deposits</div>
                       </div>
                     </div>
+                    {/* <p>{JSON.stringify(b,null,2)}</p> */}
                     <button onClick={() => handleShareLink()} style={btn}>
                       Go Complete
                     </button>
@@ -386,7 +384,6 @@ export default function InviteFriends() {
     </div>
   );
 }
-
 const container = {
   maxWidth: 430, margin: "0 auto",
   height: "100vh", display: "flex", flexDirection: "column", background: "#f5f5f5",

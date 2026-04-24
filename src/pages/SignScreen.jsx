@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchCountryCodeFromIP } from "../utils/fetchCountry";
 import { getOtpLogin, getRegister } from "../services/authService";
 export default function SignUpPage() {
@@ -23,27 +23,23 @@ export default function SignUpPage() {
   const phoneRef = useRef(null);
   const navigate = useNavigate();
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const refFromUrl = searchParams.get("ref");
+    if (refFromUrl) {
+      setReferral(refFromUrl);
+    }
+  }, [searchParams]);
 
-  // ✅ COUNTRY LIST
   const countries = [
-    { name: "India", code: "+91" },
-    { name: "Pakistan", code: "+92" },
-    { name: "Bangladesh", code: "+880" },
-    { name: "Malaysia", code: "+60" },
-    { name: "Singapore", code: "+65" },
-    { name: "Turkey", code: "+90" },
-    { name: "Russia", code: "+7" },
-    { name: "South Africa", code: "+27" },
-  ];
+    { name: "India", code: "+91" }, { name: "Pakistan", code: "+92" },
+    { name: "Bangladesh", code: "+880" }, { name: "Malaysia", code: "+60" }, { name: "Singapore", code: "+65" },
+    { name: "Turkey", code: "+90" }, { name: "Russia", code: "+7" },
+    { name: "South Africa", code: "+27" },];
   const countryMap = {
-    IN: "+91",
-    PK: "+92",
-    BD: "+880",
-    MY: "+60",
-    SG: "+65",
-    TR: "+90",
-    RU: "+7",
-    ZA: "+27",
+    IN: "+91", PK: "+92", BD: "+880",
+    MY: "+60", SG: "+65",
+    TR: "+90", RU: "+7", ZA: "+27",
   };
   // ✅ isValid
   const isValid =
@@ -59,8 +55,10 @@ export default function SignUpPage() {
       .then((c) => setCountryCode(countryMap[c] || "+91"))
       .catch(console.error);
   }, []);
-
-  // ⏱ timer
+  useEffect(() => {
+    const userdata = localStorage.getItem("user");
+    if (userdata) navigate("/");
+  }, [])
   useEffect(() => {
     if (timer <= 0) return;
     const interval = setInterval(() => setTimer((t) => t - 1), 1000);
@@ -111,7 +109,6 @@ export default function SignUpPage() {
       setOtpLoading(false);
     }
   };
-  
   const handleSignup = async () => {
     if (!validateFields()) return;
     try {

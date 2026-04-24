@@ -118,7 +118,7 @@ export default function LoginPage() {
         showToast(res?.message, "success");
         navigate('/');
       } else {
-        showToast("Invalid login response", "error");
+        showToast(res?.message, "error");
       }
     } catch (err) {
       showToast(err?.response?.data?.message || "Login Failed", "error");

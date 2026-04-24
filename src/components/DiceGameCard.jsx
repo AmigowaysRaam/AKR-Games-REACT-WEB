@@ -1,15 +1,14 @@
 import { useNavigate } from "react-router-dom";
-
-// components/DiceSection.js
 export default function DiceSection({ items = [] }) {
     if (!items.length) return null;
-     const navigate = useNavigate();
+    const navigate = useNavigate();
     return (
         <div className="px-3 py-2">
             <div className="grid grid-cols-2 gap-3  cursor-pointer">
-                {items.map((item) => (
+                {items?.map((item) => (
                     <div
-                    onClick={() => navigate('/dice')}
+                        // onClick={() => navigate('/dice')}
+                        onClick={() => navigate(`/dice/${item.key}`)}
                         key={item.id}
                         className="rounded-sm p-8 text-white relative overflow-hidden  
                         "

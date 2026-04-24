@@ -1,25 +1,11 @@
-/**
- * DiceGame.jsx  — Enhanced with:
- *  🔊 Web Audio API sound engine (zero external files)
- *     • Dice rolling rattle (multi-hit noise bursts)
- *     • Last-3-second tick-tock beeps
- *     • Win chime / Lose buzz
- *  📊 Full Result History section (Result History · Winners · Analyze · My Order)
- *     identical pattern to ColorPrediction screen
- *
- * Zero external dependencies — pure React + Web Audio API
- *
- * Usage:
- *   import DiceGame from './DiceGame';
- *   <DiceGame onBack={() => navigation.goBack()} />
- */
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useNavigate,useParams } from "react-router-dom";
+import redBall from "../assets/redBall.png"
+import greenBall from "../assets/greenBall.png"
+import { getDiceGame,getDiceHistory,getCategoryDesc, placeDiceBet ,getUserBets } from "../services/gameSevice";
+import { getWalletSummary } from "../services/authService";
+import { ChevronLeft } from "lucide-react";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-
-/* ══════════════════════════════════════════════════════
-   🔊  WEB AUDIO ENGINE   (all sounds synthesised)
-══════════════════════════════════════════════════════ */
 function useAudioEngine() {
   const ctxRef = useRef(null);
 const masterGainRef = useRef(null);
@@ -59,10 +45,7 @@ const getCtx = useCallback(() => {
     src.start(when);
   }, []);
 
-  /**
-   * 🎲 Dice rolling rattle — 20 hits spread over 0.8 s
-   *    Density highest at start, slows toward end (physical feel)
-   */
+
 const playRoll = useCallback(() => {
   const ctx = getCtx();
   const now = ctx.currentTime;
@@ -173,14 +156,12 @@ const playTick = useCallback((urgent = false) => {
   return { playRoll, playTick, playWin, playLose };
 }
 
-/* ══════════════════════════════════════════════════════
-   CONSTANTS
-══════════════════════════════════════════════════════ */
+
 const PERIODS = [
-  { key: "1min",  label: "1min",  seconds: 60,  lockAt: 10 },
-  { key: "3min",  label: "3min",  seconds: 180, lockAt: 30 },
-  { key: "5min",  label: "5min",  seconds: 300, lockAt: 30 },
-  { key: "15min", label: "15min", seconds: 900, lockAt: 30 },
+  { key: "1m",  label: "1min",  seconds: 60,  lockAt: 10 },
+  { key: "3m",  label: "3min",  seconds: 180, lockAt: 30 },
+  { key: "5m",  label: "5min",  seconds: 300, lockAt: 30 },
+  { key: "15m", label: "15min", seconds: 900, lockAt: 30 },
 ];
 
 const BET_TABS = ["Sum", "Triple", "Double", "Single"];
@@ -196,10 +177,13 @@ const SUM_BETS = [
   ].map(([id,m],i) => ({ id, payout:String(m), multiplier:m, color:i%2===0?"#e8302a":"#4caf50" })),
 ];
 
-const TRIPLE_BETS = [
-  { id:"ANY_TRIPLE", label:"Any Triple", payout:"30",  multiplier:30,  color:"#9c27b0", type:"label" },
-  ...[1,2,3,4,5,6].map((n,i)=>({ id:`T${n}`, label:String(n), payout:"180", multiplier:180, color:i%2===0?"#e8302a":"#4caf50" })),
-];
+const TRIPLE_BETS = [1,2,3,4,5,6].map((n,i)=>({
+  id:`T${n}`,
+  label:String(n),
+  payout:"180",
+  multiplier:180,
+  color:i%2===0 ? "#e8302a" : "#4caf50"
+}));
 
 const DOUBLE_BETS = [1,2,3,4,5,6].map((n,i)=>({
   id:`D${n}`, label:`${n}-${n}`, payout:"11", multiplier:11, color:i%2===0?"#e8302a":"#4caf50",
@@ -220,44 +204,11 @@ const DICE_DOTS = {
 
 const QUICK_AMOUNTS = [10, 50, 100, 500, 1000];
 
-/* ══════════════════════════════════════════════════════
-   BET SETTLEMENT LOGIC
-══════════════════════════════════════════════════════ */
-function settleBet(bet, dice, sum) {
-  const isTriple = dice[0]===dice[1] && dice[1]===dice[2];
-  const isBig    = sum>=11 && sum<=17 && !isTriple;
-  const isSmall  = sum>=4  && sum<=10 && !isTriple;
-  const isOdd    = sum%2!==0 && !isTriple;
-  const isEven   = sum%2===0 && !isTriple;
-  switch (bet.id) {
-    case "BIG":         return isBig    ? bet.multiplier : 0;
-    case "SMALL":       return isSmall  ? bet.multiplier : 0;
-    case "ODD":         return isOdd    ? bet.multiplier : 0;
-    case "EVEN":        return isEven   ? bet.multiplier : 0;
-    case "ANY_TRIPLE":  return isTriple ? 30             : 0;
-    case "T1": return dice.every(d=>d===1) ? 180 : 0;
-    case "T2": return dice.every(d=>d===2) ? 180 : 0;
-    case "T3": return dice.every(d=>d===3) ? 180 : 0;
-    case "T4": return dice.every(d=>d===4) ? 180 : 0;
-    case "T5": return dice.every(d=>d===5) ? 180 : 0;
-    case "T6": return dice.every(d=>d===6) ? 180 : 0;
-    case "D1": return dice.filter(d=>d===1).length>=2 ? 11 : 0;
-    case "D2": return dice.filter(d=>d===2).length>=2 ? 11 : 0;
-    case "D3": return dice.filter(d=>d===3).length>=2 ? 11 : 0;
-    case "D4": return dice.filter(d=>d===4).length>=2 ? 11 : 0;
-    case "D5": return dice.filter(d=>d===5).length>=2 ? 11 : 0;
-    case "D6": return dice.filter(d=>d===6).length>=2 ? 11 : 0;
-    case "S1":{ const c=dice.filter(d=>d===1).length; return c?c:0; }
-    case "S2":{ const c=dice.filter(d=>d===2).length; return c?c:0; }
-    case "S3":{ const c=dice.filter(d=>d===3).length; return c?c:0; }
-    case "S4":{ const c=dice.filter(d=>d===4).length; return c?c:0; }
-    case "S5":{ const c=dice.filter(d=>d===5).length; return c?c:0; }
-    case "S6":{ const c=dice.filter(d=>d===6).length; return c?c:0; }
-    default:
-      if (typeof bet.id === "number") return sum===bet.id ? bet.multiplier : 0;
-      return 0;
-  }
+const BALL_IMAGES = {
+  red: redBall,
+  green: greenBall
 }
+
 
 /* ══════════════════════════════════════════════════════
    SEED HISTORY
@@ -273,36 +224,93 @@ function seedHistory() {
 /* ══════════════════════════════════════════════════════
    ATOMS
 ══════════════════════════════════════════════════════ */
-function DiceFace({ value, size=38, rolling=false, flash=false }) {
-  const dots = DICE_DOTS[value] || DICE_DOTS[1];
-  const r    = Math.max(5, Math.round(size*0.115));
+function Dice3D({ value, rolling, size = 60 }) {
+  const half = size / 2;
+
+  // Each face is placed with getFacePosition(face, half).
+  // To SHOW face N, we rotate the CUBE in the OPPOSITE direction.
+  const faceTransforms = {
+    1: "rotateX(0deg) rotateY(0deg)",     // translateZ → no rotation needed
+    2: "rotateX(-90deg)",                  // face2 = rotateX(90) translateZ → show with rotateX(-90)
+    3: "rotateY(-90deg)",                  // ✅ FIXED — face3 = rotateY(90) → show with rotateY(-90)
+    4: "rotateY(90deg)",                   // ✅ FIXED — face4 = rotateY(-90) → show with rotateY(+90)
+    5: "rotateX(90deg)",                   // face5 = rotateX(-90) → show with rotateX(+90)
+    6: "rotateX(180deg)",                  // face6 = rotateX(180)
+  };
+
   return (
-    <div style={{
-      width:size, height:size,
-      background: flash?"#fff9c4":"white",
-      borderRadius:size*0.18,
-      border:`2px solid ${flash?"#f59e0b":"#ccc"}`,
-      display:"flex", alignItems:"center", justifyContent:"center",
-      boxShadow: rolling?"0 0 16px rgba(255,200,0,0.6)":"0 2px 6px rgba(0,0,0,0.25)",
-      animation: rolling?"rollDice 0.18s ease-in-out infinite alternate":"none",
-      transition:"box-shadow 0.2s, border-color 0.2s, background 0.2s",
-      flexShrink:0,
-    }}>
-      <svg width={size-8} height={size-8} viewBox="0 0 100 100">
-        {dots.map(([cx,cy],i)=>(
-          <circle key={i} cx={cx} cy={cy} r={r} fill={flash?"#92400e":"#1a1a2e"}/>
+    <div style={{ perspective: size * 6 }}>
+      <div
+        style={{
+          width: size,
+          height: size,
+          position: "relative",
+          transformStyle: "preserve-3d",
+          transform: rolling
+            ? "rotateX(720deg) rotateY(720deg)"
+            : faceTransforms[value],
+          transition: rolling
+            ? "transform 0.8s cubic-bezier(0.2,0.8,0.2,1)"
+            : "transform 0.4s ease-out",
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((face) => (
+          <div
+            key={face}
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              background: "white",
+              border: "2px solid #ccc",
+              borderRadius: size * 0.15,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transform: getFacePosition(face, half),
+            }}
+          >
+            <DiceDots value={face} size={size} />
+          </div>
         ))}
-      </svg>
+      </div>
     </div>
   );
 }
 
+function DiceDots({ value, size }) {
+  const dots = DICE_DOTS[value];
+
+  // 🔥 smarter scaling
+  const r = Math.max(3.5, size * 0.14);   // minimum size + responsive
+  const svgSize = size * 0.85;
+
+  return (
+    <svg width={svgSize} height={svgSize} viewBox="0 0 100 100">
+      {dots.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={r} fill="#111" />
+      ))}
+    </svg>
+  );
+}
+
+function getFacePosition(face, half) {
+  switch (face) {
+    case 1: return `translateZ(${half}px)`;
+    case 2: return `rotateX(90deg) translateZ(${half}px)`;
+    case 3: return `rotateY(90deg) translateZ(${half}px)`;
+    case 4: return `rotateY(-90deg) translateZ(${half}px)`;
+    case 5: return `rotateX(-90deg) translateZ(${half}px)`;
+    case 6: return `rotateX(180deg) translateZ(${half}px)`;
+    default: return "";
+  }
+}
 function DigitBox({digit,urgent}) {
   return (
     <div style={{
       background:"#111", color: urgent?"#ef4444":"white",
-      fontSize:19, fontWeight:900,
-      width:28, height:34,
+      fontSize:11, fontWeight:600,
+      width:20, height:20,
       display:"flex", alignItems:"center", justifyContent:"center",
       borderRadius:5, border:`1px solid ${urgent?"#ef444480":"#333"}`,
       fontVariantNumeric:"tabular-nums",
@@ -315,7 +323,7 @@ function CountdownTimer({seconds, urgent}) {
   const mm=String(Math.floor(seconds/60)).padStart(2,"0");
   const ss=String(seconds%60).padStart(2,"0");
   return (
-    <div style={{display:"flex",alignItems:"center",gap:3}}>
+    <div style={{display:"flex",alignItems:"center",gap:1}}>
       {[mm[0],mm[1]].map((d,i)=><DigitBox key={i} digit={d} urgent={urgent}/>)}
       <span style={{color:urgent?"#ef4444":"white",fontSize:20,fontWeight:900,lineHeight:1}}>:</span>
       {[ss[0],ss[1]].map((d,i)=><DigitBox key={i+2} digit={d} urgent={urgent}/>)}
@@ -351,7 +359,7 @@ function PeriodSelector({selected,onSelect}) {
 
 function BetTabs({selected,onSelect}) {
   return (
-    <div style={{display:"flex",background:"white",borderBottom:"1px solid #f0eef8"}}>
+    <div style={{display:"flex",background:"white",borderBottom:"1px solid #f0eef8", marginTop:4}}>
       {BET_TABS.map(tab=>(
         <button key={tab} onClick={()=>onSelect(tab)} style={{
           flex:1,padding:"13px 0",
@@ -365,7 +373,7 @@ function BetTabs({selected,onSelect}) {
   );
 }
 
-function BetBall({item,selected,onSelect,size=74}) {
+const BetBall = React.memo(function BetBall({item,selected,onSelect,size=74}) {
   const isSel=selected?.id===item.id;
   const common={
     width:size, height:size, borderRadius:14,
@@ -400,118 +408,331 @@ function BetBall({item,selected,onSelect,size=74}) {
       <span style={{fontSize:11,color:isSel?item.color:"#888",fontWeight:600}}>{item.payout}X</span>
     </button>
   );
+ const idStr = String(item.id);
+ const isRed = item.color === "#e8302a";
+const isGreen = item.color === "#4caf50";
 
+ // 🎯 SUM NUMBER BALL (3–18)
+if (typeof item.id === "number") {
   return (
-    <button onClick={()=>onSelect(item)} style={{...common,background:isSel?"#f5f0ff":"white"}}>
-      <div style={{
-        width:48,height:48,borderRadius:"50%",background:item.color,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        position:"relative",overflow:"hidden",
-        borderTop:"2px solid rgba(255,255,255,0.4)",
-        boxShadow:"inset -3px -3px 8px rgba(0,0,0,0.25)",
-      }}>
-        <div style={{position:"absolute",top:6,left:9,width:12,height:8,
-          borderRadius:"50%",background:"rgba(255,255,255,0.5)"}}/>
-        <span style={{color:"white",fontSize:17,fontWeight:900,
-          textShadow:"0 1px 3px rgba(0,0,0,0.4)"}}>{item.id}</span>
-      </div>
-      <span style={{fontSize:11,color:isSel?item.color:"#888",fontWeight:600}}>{item.payout}X</span>
+    <button
+      onClick={() => onSelect(item)}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 14,
+        border: `2.5px solid ${isSel ? item.color : "#e8e4f5"}`,
+        background: isSel ? "#f5f0ff" : "#F5F5F5",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        cursor: "pointer",
+        boxShadow: isSel
+          ? `0 4px 16px ${item.color}55`
+          : "0 2px 6px rgba(0,0,0,0.07)",
+        transform: isSel ? "scale(1.06)" : "scale(1)",
+        transition: "all 0.15s",
+      }}
+    >
+      {/* 🔥 BALL */}
+<div
+  style={{
+    width: 60,
+    height: 60,
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  {/* 🎯 BALL IMAGE */}
+<img
+  src={isRed ? BALL_IMAGES.red : BALL_IMAGES.green}
+  alt="ball"
+  style={{
+    width: "90%",
+    height: "90%",
+    objectFit: "contain",
+  }}
+/>
+
+  {/* 🔢 NUMBER ON TOP */}
+  <span
+    style={{
+      position: "absolute",
+      fontSize: 16,
+      fontWeight: 900,
+      color: item.color,
+    }}
+  >
+    {item.id}
+  </span>
+</div>
+      <span
+        style={{
+          fontSize: 11,
+          color: isSel ? item.color : "#888",
+          fontWeight: 600,
+        }}
+      >
+        {item.payout}X
+      </span>
     </button>
   );
 }
+// 🎯 For Single / Double / Triple → show ONLY dice (no ball)
+if (idStr.startsWith("S") || idStr.startsWith("D") || idStr.startsWith("T")) {
+  return (
+    <button
+      onClick={() => onSelect(item)}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 14,
+        border: `2.5px solid ${isSel ? item.color : "#e8e4f5"}`,
+        background: isSel ? "#f5f0ff" : "white",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        cursor: "pointer",
+        boxShadow: isSel
+          ? `0 4px 16px ${item.color}55`
+          : "0 2px 6px rgba(0,0,0,0.07)",
+        transform: isSel ? "scale(1.06)" : "scale(1)",
+        transition: "all 0.15s",
+      }}
+    >
+
+
+      {/* 🎲 BIG DICE UI */}
+      {idStr.startsWith("S") && (
+        <Dice3D  value={parseInt(idStr.replace("S", ""))} size={42} dotScale={0.22}/>
+      )}
+
+      {idStr.startsWith("D") && (
+        <div style={{ display: "flex", gap: 4 }}>
+          <Dice3D  value={parseInt(idStr.replace("D", ""))} size={34} dotScale={0.26}/>
+          <Dice3D  value={parseInt(idStr.replace("D", ""))} size={34} dotScale={0.26}/>
+        </div>
+      )}
+
+      { idStr.startsWith("T") && (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 2,
+    }}
+  >
+    {/* TOP DICE */}
+    <Dice3D  value={parseInt(idStr.replace("T", ""))} size={28} dotScale={0.30}/>
+
+    {/* BOTTOM TWO */}
+    <div style={{ display: "flex", gap: 4 }}>
+      <Dice3D  value={parseInt(idStr.replace("T", ""))} size={28} dotScale={0.30}/>
+      <Dice3D  value={parseInt(idStr.replace("T", ""))} size={28} dotScale={0.30}/>
+    </div>
+  </div>
+)}
+      <span
+        style={{
+          fontSize: 11,
+          color: isSel ? item.color : "#888",
+          fontWeight: 600,
+        }}
+      >
+        {item.payout}X
+      </span>
+    </button>
+  );
+}
+});
 
 /* ══════════════════════════════════════════════════════
    BET SLIP
 ══════════════════════════════════════════════════════ */
-function BetSlip({selection,balance,onClose,onConfirm}) {
-  const [amount,setAmount]=useState(100);
-  const [qty,setQty]=useState(1);
-  const [active,setActive]=useState(100);
-  const total=amount*qty;
-  const potential=Math.round(total*(selection.multiplier||1.95));
-  const canBet=total<=balance&&total>0;
-  const label=selection.label||String(selection.id);
+function BetSlip({ selection, onClose, onConfirm }) {
+  const [amount, setAmount] = useState(100);
+  const [multiplier, setMultiplier] = useState(1);
+
+  const amounts = [10, 100, 500, 1000];
+  const multipliers = [1, 3, 9, 27, 81, 243, 729];
+
+  const total = amount * multiplier;
 
   return (
-    <div style={{
-      position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
-      width:"100%",maxWidth:430,background:"white",borderRadius:"20px 20px 0 0",
-      boxShadow:"0 -8px 40px rgba(0,0,0,0.22)",zIndex:100,animation:"slideUp 0.25s ease-out",
-    }}>
-      <div style={{width:40,height:4,background:"#ddd",borderRadius:2,margin:"10px auto 0"}}/>
-      <div style={{background:"#7c3aed",padding:"14px 18px",
-        display:"flex",alignItems:"center",justifyContent:"space-between",
-        borderRadius:"20px 20px 0 0"}}>
-        <div>
-          <div style={{color:"white",fontSize:15,fontWeight:800}}>{label} — {selection.payout}X</div>
-          <div style={{color:"rgba(255,255,255,0.6)",fontSize:11,marginTop:2}}>Multiplier: {selection.multiplier}x</div>
-        </div>
-        <button onClick={onClose} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",
-          width:30,height:30,borderRadius:"50%",cursor:"pointer",fontSize:18,fontWeight:700}}>×</button>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "100%",
+        maxWidth: 430,
+        background: "#fff",
+        borderRadius: "18px 18px 0 0",
+        zIndex: 100,
+        boxShadow: "0 -6px 30px rgba(0,0,0,0.25)",
+      }}
+    >
+      {/* HEADER */}
+      <div
+        style={{
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span style={{ fontWeight: 700 }}>Bets</span>
+        <button onClick={onClose} style={{ border: "none", background: "none", fontSize: 18 }}>
+          ×
+        </button>
       </div>
-      <div style={{padding:"16px 18px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",background:"#f8f6ff",
-          borderRadius:10,padding:"10px 14px",marginBottom:14}}>
-          <div>
-            <div style={{fontSize:11,color:"#888"}}>Wallet Balance</div>
-            <div style={{fontSize:16,fontWeight:900,color:"#1a1a2e"}}>₹{balance.toLocaleString("en-IN")}</div>
-          </div>
+
+      {/* SELECTED BALL */}
+      <div
+        style={{
+          background: "#f5f1e6",
+          padding: 20,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            background: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 800,
+            fontSize: 20,
+            color: "#e11d48",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          }}
+        >
+          {selection.label || selection.id}
         </div>
-        <div style={{fontSize:11,color:"#888",marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:0.5}}>
-          Quick Amount
-        </div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
-          {QUICK_AMOUNTS.map(a=>(
-            <button key={a} onClick={()=>{setAmount(a);setActive(a);}} style={{
-              padding:"7px 14px",borderRadius:8,cursor:"pointer",
-              background:active===a?"#7c3aed":"#f0eef8",
-              color:active===a?"white":"#5b3fa0",
-              border:`1.5px solid ${active===a?"#7c3aed":"#ddd"}`,
-              fontSize:13,fontWeight:700,transition:"all 0.15s",
-            }}>₹{a}</button>
+      </div>
+
+      {/* AMOUNT BUTTONS */}
+      <div style={{ padding: 16 }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+          {amounts.map((a) => (
+            <button
+              key={a}
+              onClick={() => setAmount(a)}
+              style={{
+                flex: 1,
+                padding: "10px 0",
+                borderRadius: 8,
+                border: "none",
+                fontWeight: 700,
+                background: amount === a ? "#7c3aed" : "#eee",
+                color: amount === a ? "#fff" : "#000",
+              }}
+            >
+              ₹{a}
+            </button>
           ))}
         </div>
-        <div style={{fontSize:11,color:"#888",marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:0.5}}>
-          Bet Amount
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-          <button onClick={()=>setAmount(a=>Math.max(10,a-10))} style={{
-            width:40,height:40,borderRadius:10,background:"#f0eef8",
-            border:"1.5px solid #e0dcf0",color:"#7c3aed",fontSize:20,fontWeight:900,cursor:"pointer",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
-          <input type="number" value={amount}
-            onChange={e=>{setAmount(Math.max(10,parseInt(e.target.value)||10));setActive(null);}}
-            style={{flex:1,border:"2px solid #d4ccf0",borderRadius:10,padding:"10px",
-              fontSize:18,fontWeight:800,textAlign:"center",color:"#1a1a2e",outline:"none"}}/>
-          <button onClick={()=>setAmount(a=>a+10)} style={{
-            width:40,height:40,borderRadius:10,background:"#7c3aed",
-            border:"none",color:"white",fontSize:20,fontWeight:900,cursor:"pointer",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-          <span style={{fontSize:11,color:"#888",fontWeight:700,textTransform:"uppercase"}}>Qty</span>
-          <button onClick={()=>setQty(q=>Math.max(1,q-1))} style={{
-            width:34,height:34,borderRadius:"50%",background:"#f0eef8",
-            border:"1.5px solid #e0dcf0",color:"#7c3aed",fontSize:20,fontWeight:900,cursor:"pointer"}}>−</button>
-          <span style={{fontSize:18,fontWeight:900,minWidth:32,textAlign:"center"}}>{qty}</span>
-          <button onClick={()=>setQty(q=>q+1)} style={{
-            width:34,height:34,borderRadius:"50%",background:"#7c3aed",
-            border:"none",color:"white",fontSize:20,fontWeight:900,cursor:"pointer"}}>+</button>
-          <div style={{marginLeft:"auto",textAlign:"right"}}>
-            <div style={{fontSize:11,color:"#888"}}>Total</div>
-            <div style={{fontWeight:900,color:"#7c3aed",fontSize:16}}>₹{total}</div>
+
+        {/* MULTIPLIER */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 6, fontSize: 13 }}>Multiplier:</div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={() => setMultiplier((m) => Math.max(1, m - 1))}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                border: "none",
+                background: "#eee",
+              }}
+            >
+              -
+            </button>
+
+            <div
+              style={{
+                width: 60,
+                textAlign: "center",
+                fontWeight: 700,
+              }}
+            >
+              {multiplier}
+            </div>
+
+            <button
+              onClick={() => setMultiplier((m) => m + 1)}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                border: "none",
+                background: "#eee",
+              }}
+            >
+              +
+            </button>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:11,color:"#888"}}>Potential Win</div>
-            <div style={{fontWeight:900,color:"#16a34a",fontSize:16}}>₹{potential}</div>
+
+          {/* QUICK MULTIPLIERS */}
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            {multipliers.map((m) => (
+              <button
+                key={m}
+                onClick={() => setMultiplier(m)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  border: "1px solid #ddd",
+                  background: multiplier === m ? "#f3e8ff" : "#fff",
+                  color: multiplier === m ? "#7c3aed" : "#333",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                x{m}
+              </button>
+            ))}
           </div>
         </div>
-        <button onClick={()=>canBet&&onConfirm(selection,amount,qty)} style={{
-          width:"100%",padding:15,borderRadius:14,border:"none",
-          background:canBet?"linear-gradient(135deg,#7c3aed,#9d5cf5)":"#ccc",
-          color:"white",fontSize:16,fontWeight:800,cursor:canBet?"pointer":"not-allowed",
-          boxShadow:canBet?"0 4px 16px rgba(124,58,237,0.4)":"none",
-        }}>{!canBet?"Insufficient Balance":`Confirm Bet · ₹${total}`}</button>
+
+        {/* CHECKBOX */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13 }}>
+            <input type="checkbox" defaultChecked style={{ marginRight: 6 }} />
+            I Agree <span style={{ color: "#7c3aed" }}>(Pre-sale rules)</span>
+          </label>
+        </div>
+
+        {/* TOTAL BUTTON */}
+        <button
+          onClick={() => onConfirm(selection, amount, multiplier)}
+          style={{
+            width: "100%",
+            padding: 14,
+            borderRadius: 30,
+            border: "none",
+            background: "linear-gradient(90deg,#7c3aed,#a855f7)",
+            color: "#fff",
+            fontWeight: 800,
+            fontSize: 16,
+          }}
+        >
+          Total Price ₹{total}
+        </button>
       </div>
     </div>
   );
@@ -527,7 +748,13 @@ const HIST_TABS = [
   {key:"myorder", label:"My Order"},
 ];
 
-function ResultHistoryTab({history}) {
+
+function ResultHistoryTab({history,
+  histTab,
+  histPage,
+  hasMoreHistory,
+  handleNext,
+  handlePrev}) {
   const tc = t => t==="BIG"?"#ef4444":"#3b82f6";
   return (
     <div>
@@ -545,7 +772,7 @@ function ResultHistoryTab({history}) {
         }}>
           <span style={{fontSize:11,color:"#555",fontVariantNumeric:"tabular-nums"}}>{row.issue}</span>
           <div style={{display:"flex",gap:3}}>
-            {row.dice.map((d,j)=><DiceFace key={j} value={d} size={20}/>)}
+            {row.dice.map((d,j)=><Dice3D  key={j} value={d} size={20}/>)}
           </div>
           <span style={{fontSize:15,fontWeight:800,color:tc(row.tag)}}>{row.sum}</span>
           <span style={{
@@ -554,6 +781,50 @@ function ResultHistoryTab({history}) {
           }}>{row.tag}</span>
         </div>
       ))}
+      
+  <div style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+    padding: "12px"
+  }}>
+    {/* PREV */}
+    <button
+      onClick={handlePrev}
+      disabled={histPage === 1}
+      style={{
+        padding: "6px 12px",
+        borderRadius: 6,
+        border: "1px solid #ddd",
+        background: histPage === 1 ? "#eee" : "#fff",
+        cursor: histPage === 1 ? "not-allowed" : "pointer"
+      }}
+    >
+      ⬅ Prev
+    </button>
+
+    {/* PAGE NUMBER */}
+    <span style={{ fontSize: 13, fontWeight: 600 }}>
+      Page {histPage}
+    </span>
+
+    {/* NEXT */}
+    <button
+      onClick={handleNext}
+      disabled={!hasMoreHistory}
+      style={{
+        padding: "6px 12px",
+        borderRadius: 6,
+        border: "1px solid #ddd",
+        background: !hasMoreHistory ? "#eee" : "#fff",
+        cursor: !hasMoreHistory ? "not-allowed" : "pointer"
+      }}
+    >
+      Next ➡
+    </button>
+  </div>
+
     </div>
   );
 }
@@ -578,7 +849,7 @@ function WinnersTab({history}) {
             <div>
               <div style={{fontSize:13,fontWeight:700,color:"#1a1a2e"}}>{w.user}</div>
               <div style={{display:"flex",gap:3,marginTop:2,alignItems:"center"}}>
-                {w.dice.map((d,j)=><DiceFace key={j} value={d} size={16}/>)}
+                {w.dice.map((d,j)=><Dice3D  key={j} value={d} size={16}/>)}
                 <span style={{fontSize:11,color:"#888",marginLeft:3}}>Sum {w.sum}</span>
               </div>
             </div>
@@ -677,48 +948,238 @@ function AnalyzeTab({history}) {
   );
 }
 
-function MyOrderTab({bets}) {
-  if (!bets.length) return (
-    <div style={{padding:40,textAlign:"center",color:"#bbb"}}>
-      <div style={{fontSize:42,marginBottom:12}}>🎲</div>
-      <div style={{fontSize:14,fontWeight:600}}>No bets placed yet</div>
-      <div style={{fontSize:12,marginTop:4}}>Place a bet to see your order history</div>
-    </div>
-  );
+function MyOrderTab({ bets, user, setBets,periodKey }) {
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserBets();
+    }
+  }, [user?.id,periodKey]);
+
+  const fetchUserBets = async () => {
+    try {
+      const res = await getUserBets({
+  user_id: user?.id,
+  key: periodKey   // ✅ IMPORTANT
+});
+
+      if (!res?.success) return;
+
+      const list = res.data || [];
+
+const formatted = list.map(item => {
+  const rawResult = item.result;
+
+  // 🔥 NORMALIZE RESULT
+  let status = "pending";
+
+  if (rawResult === "win" || rawResult === 1 || rawResult === true) {
+    status = "win";
+  } else if (
+    rawResult === "lose" ||
+    rawResult === "loss" ||
+    rawResult === 0 ||
+    rawResult === false
+  ) {
+    status = "lose";
+  } else {
+    status = "pending";
+  }
+
+  return {
+    id: item.id,
+
+    selection: {
+      id: item.value,
+      label: item.value,
+      payout: item.multiplier || "-",
+      type: item.type 
+    },
+
+    amount: item.bet_amount,
+    qty: 1,
+    issue: item.slot_num,
+
+    // ✅ FINAL STATUS
+    settled: status !== "pending",
+    won: status === "win",
+
+    payout: item.credit_amount || 0,
+    dice: item.dice || null
+  };
+});
+
+      setBets(formatted);
+
+    } catch (err) {
+      console.log("fetchUserBets error", err);
+    }
+  };
+
+  // 🟡 EMPTY STATE
+  if (!bets.length) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "#bbb" }}>
+        <div style={{ fontSize: 42, marginBottom: 12 }}>🎲</div>
+        <div style={{ fontSize: 14, fontWeight: 600 }}>
+          No bets placed yet
+        </div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>
+          Place a bet to see your order history
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {bets.map((b,i)=>{
-        const settled=b.settled;
-        const wlColor=!settled?"#f59e0b":b.won?"#16a34a":"#ef4444";
-        const wlLabel=!settled?"PENDING":b.won?"WON":"LOST";
+      {bets.map((b, i) => {
+
+        // ✅ STATUS FIXED
+        const isPending = !b.settled;
+        const isWon = b.settled && b.won;
+        const isLost = b.settled && !b.won;
+
+        const wlColor = isPending
+          ? "#f59e0b"
+          : isWon
+          ? "#16a34a"
+          : "#ef4444";
+
+        const wlLabel = isPending
+          ? "PENDING"
+          : isWon
+          ? "WON"
+          : "LOST";
+
         return (
-          <div key={i} style={{padding:"12px 14px",borderBottom:"1px solid #f4f2fc",
-            display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div
+            key={i}
+            style={{
+              padding: "12px 14px",
+              borderBottom: "1px solid #f4f2fc",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}
+          >
+            {/* LEFT */}
             <div>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                <span style={{fontSize:14,fontWeight:700,color:"#1a1a2e"}}>
-                  {b.selection.label||String(b.selection.id)}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 3
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#1a1a2e"
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+  <span
+    style={{
+      fontSize: 14,
+      fontWeight: 700,
+      color: "#1a1a2e"
+    }}
+  >
+    {b.selection.label || String(b.selection.id)}
+  </span>
+
+  {/* 🎯 TYPE */}
+  <span
+    style={{
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#7c3aed"
+    }}
+  >
+    {b.selection.type}
+  </span>
+</div>
                 </span>
-                <span style={{fontSize:11,fontWeight:700,padding:"1px 8px",borderRadius:10,
-                  background:wlColor+"22",color:wlColor}}>{wlLabel}</span>
+
+                {/* STATUS BADGE */}
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 10,
+                    background: wlColor + "22",
+                    color: wlColor
+                  }}
+                >
+                  {wlLabel}
+                </span>
               </div>
-              <div style={{fontSize:11,color:"#888"}}>
+
+              <div style={{ fontSize: 11, color: "#888" }}>
                 Issue {b.issue} · Bet ₹{b.amount} · {b.selection.payout}X
               </div>
-              {settled&&b.dice&&(
-                <div style={{display:"flex",gap:3,marginTop:4,alignItems:"center"}}>
-                  {b.dice.map((d,j)=><DiceFace key={j} value={d} size={18}/>)}
-                  <span style={{fontSize:11,color:"#888",marginLeft:3}}>Sum {b.dice.reduce((a,c)=>a+c,0)}</span>
+
+              {/* 🎲 RESULT DICE */}
+              {b.settled && b.dice && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 3,
+                    marginTop: 4,
+                    alignItems: "center"
+                  }}
+                >
+                  {b.dice.map((d, j) => (
+                    <Dice3D key={j} value={d} size={18} />
+                  ))}
+                  <span style={{ fontSize: 11, color: "#888", marginLeft: 3 }}>
+                    Sum {b.dice.reduce((a, c) => a + c, 0)}
+                  </span>
                 </div>
               )}
             </div>
-            <div style={{textAlign:"right"}}>
-              {settled
-                ?b.won
-                  ?<div style={{fontSize:16,fontWeight:800,color:"#16a34a"}}>+₹{b.payout}</div>
-                  :<div style={{fontSize:16,fontWeight:800,color:"#ef4444"}}>−₹{b.amount}</div>
-                :<div style={{fontSize:13,fontWeight:600,color:"#f59e0b"}}>Pending</div>
-              }
+
+            {/* RIGHT */}
+            <div style={{ textAlign: "right" }}>
+              {isPending && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#f59e0b"
+                  }}
+                >
+                  Pending
+                </div>
+              )}
+
+              {isWon && (
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 800,
+                    color: "#16a34a"
+                  }}
+                >
+                  +₹{b.payout}
+                </div>
+              )}
+
+              {isLost && (
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 800,
+                    color: "#ef4444"
+                  }}
+                >
+                  −₹{b.amount}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -726,6 +1187,32 @@ function MyOrderTab({bets}) {
     </div>
   );
 }
+  const TimerDisplay = React.memo(({ timeLeft, urgent }) => {
+  return <CountdownTimer seconds={timeLeft} urgent={urgent} />;
+});
+
+const BetGrid = React.memo(({ tabBets, selected, onSelect, betTab }) => {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          betTab === "Sum" ? "repeat(4,1fr)" : "repeat(3,1fr)",
+        gap: 8,
+      }}
+    >
+      {tabBets.map((item) => (
+        <BetBall
+          key={item.id}
+          item={item}
+          selected={selected}
+          onSelect={onSelect}
+          size={betTab === "Sum" ? 74 : 90}
+        />
+      ))}
+    </div>
+  );
+});
 
 /* ══════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -744,112 +1231,379 @@ export default function DiceGame({ onBack }) {
   window.addEventListener("click", unlockAudio);
 }, []);
   const [period,      setPeriod]      = useState(PERIODS[0]);
-  const [timeLeft,    setTimeLeft]    = useState(PERIODS[0].seconds);
-  const [roundId,     setRoundId]     = useState("20260325010675");
+  // const [timeLeft,    setTimeLeft]    = useState(PERIODS[0].seconds);
+  // const [roundId,     setRoundId]     = useState("20260325010675");
   const [nextRoundId, setNextRoundId] = useState("20260325010676");
   const [dice,        setDice]        = useState([2,4,3]);
   const [rolling,     setRolling]     = useState(false);
   const [flashDice,   setFlashDice]   = useState(false);
-  const [history,     setHistory]     = useState(()=>seedHistory());
   const [betTab,      setBetTab]      = useState("Sum");
   const [selected,    setSelected]    = useState(null);
   const [showSlip,    setShowSlip]    = useState(false);
-  const [balance,     setBalance]     = useState(5000);
+  const [balance,     setBalance]     = useState({totalWallet: 0});
   const [bets,        setBets]        = useState([]);
   const [histTab,     setHistTab]     = useState("result");
   const [toast,       setToast]       = useState(null);
+const { key } = useParams();
 
-  const timerRef  = useRef(null);
-  const audio     = useAudioEngine();
-  const isLocked  = timeLeft <= period.lockAt;
-  const urgent    = timeLeft <= 3 && isLocked;
-  const progress  = ((period.seconds - timeLeft) / period.seconds) * 100;
-  const sum       = dice.reduce((a,b)=>a+b,0);
-  const sumTag    = sum>=11?"BIG":"SMALL";
-  const tabBets   = {Sum:SUM_BETS,Triple:TRIPLE_BETS,Double:DOUBLE_BETS,Single:SINGLE_BETS}[betTab];
+const [history, setHistory] = useState([]);
+const [histPage, setHistPage] = useState(1);
+const [hasMoreHistory, setHasMoreHistory] = useState(true);
 
-  /* ── TIMER ── */
-  useEffect(()=>{
-    clearInterval(timerRef.current);
-    setTimeLeft(period.seconds);
-    timerRef.current=setInterval(()=>{
-      setTimeLeft(prev=>{
-        const next=prev-1;
-        /* Tick: last 3 seconds while in lock zone */
-        if (next > 0 && next <= 3) {
-  audio.playTick(next === 1);
-}
-        if(next<=0){ triggerRoll(); return period.seconds; }
-        return next;
-      });
-    },1000);
-    return ()=>clearInterval(timerRef.current);
-  },[period]);
+const [periodKey, setPeriodKey] = useState(key || "1m");
+const [timeLeft, setTimeLeft] = useState(0);
+const [totalTime, setTotalTime] = useState(60);
+const [roundId, setRoundId] = useState("");
+const [isRolling, setIsRolling] = useState(false);
+const [preRoundId,setPreRoundId]=useState('')
+const[lastResultDice,setLastResultDice]=useState([])
+  const lastResultDiceRef = useRef([]);
+const audio     = useAudioEngine();
 
+const [isRunning, setIsRunning] = useState(true);
+
+const fetchHistory = async (page = 1) => {
+  const res = await getDiceHistory({
+    key: periodKey,
+    limit: 10,
+    page
+  });
+
+  if (!res?.success) return;
+
+  const list = res.data || [];
+
+  const formatted = list.map(item => {
+    const dice = item.result?.dice || [];
+    const sum = item.result?.sum || 0;
+
+    return {
+      issue: item.slotNum,
+      dice,
+      sum,
+      tag: sum >= 11 ? "BIG" : "SMALL",
+      even: sum % 2 === 0
+    };
+  });
+
+  setHistory(formatted);
+
+  // if less than limit → last page
+  setHasMoreHistory(list.length === 10);
+};
+
+const handleNext = () => {
+  if (!hasMoreHistory) return;
+
+  const nextPage = histPage + 1;
+  setHistPage(nextPage);
+  fetchHistory(nextPage);
+};
+
+const handlePrev = () => {
+  if (histPage === 1) return;
+
+  const prevPage = histPage - 1;
+  setHistPage(prevPage);
+  fetchHistory(prevPage);
+};
+
+useEffect(() => {
+  setHistPage(1);
+  fetchHistory(1, false);
+}, [periodKey]);
+
+const loadMoreHistory = () => {
+  if (!hasMoreHistory) return;
+
+  const nextPage = histPage + 1;
+  setHistPage(nextPage);
+  fetchHistory(nextPage, true);
+};
   /* ── ROLL ── */
-  const triggerRoll=useCallback(()=>{
-    audio.playRoll();
-    setRolling(true);
-    setFlashDice(false);
-    const rollInt=setInterval(()=>{
-      setDice([Math.ceil(Math.random()*6),Math.ceil(Math.random()*6),Math.ceil(Math.random()*6)]);
-    },80);
-    setTimeout(()=>{
-      clearInterval(rollInt);
-      const fd=[Math.ceil(Math.random()*6),Math.ceil(Math.random()*6),Math.ceil(Math.random()*6)];
-      const fsum=fd.reduce((a,b)=>a+b,0);
-      setDice(fd);
+const triggerRoll = useCallback(() => {
+  audio.playRoll();
+  setRolling(true);
+
+  let start = null;
+  const animate = (time) => {
+    if (!start) start = time;
+    const progress = time - start;
+
+    if (progress < 700) {
+      setDice([
+        Math.ceil(Math.random()*6),
+        Math.ceil(Math.random()*6),
+        Math.ceil(Math.random()*6),
+      ]);
+      requestAnimationFrame(animate);
+    } else {
+      // ✅ Read from ref, not state — always has latest value
+      const finalDice = lastResultDiceRef.current.length === 3
+        ? lastResultDiceRef.current
+        : [
+            Math.ceil(Math.random()*6),
+            Math.ceil(Math.random()*6),
+            Math.ceil(Math.random()*6),
+          ];
+
+      setDice(finalDice);
       setRolling(false);
       setFlashDice(true);
-      setTimeout(()=>setFlashDice(false),800);
+      setTimeout(() => setFlashDice(false), 800);
+    }
+  };
 
-      let anyWin=false,anyLose=false;
-      setBets(prev=>{
-        const settled=prev.map(b=>{
-          if(b.settled)return b;
-          const mult=settleBet(b.selection,fd,fsum);
-          const won=mult>0;
-          const payout=won?Math.round(b.amount*mult):0;
-          if(won){anyWin=true;setBalance(bal=>bal+payout);}
-          else anyLose=true;
-          return{...b,settled:true,dice:fd,won,payout};
-        });
-        return settled;
+  requestAnimationFrame(animate);
+}, [audio]); // ✅ Remove lastResultDice from deps — ref doesn't need it
+
+
+const prevRoundRef = useRef("");
+
+useEffect(() => {
+  if (!prevRoundRef.current) {
+    prevRoundRef.current = roundId;
+    return;
+  }
+
+  if (roundId !== prevRoundRef.current) {
+    // 🎯 New round started → trigger roll
+    triggerRoll();
+    prevRoundRef.current = roundId;
+  }
+}, [roundId, triggerRoll]);
+
+useEffect(() => {
+  if (key) {
+    setPeriodKey(key);
+
+    const found = PERIODS.find(p => p.key === key);
+    if (found) setPeriod(found);
+  }
+}, [key]);
+
+
+useEffect(() => {
+  fetchGameData(periodKey);
+}, [periodKey]);
+
+const fetchGameData = async (key = periodKey) => {
+  const res = await getDiceGame({ key });
+
+  if (!res?.success) return;
+
+  const g = res.data?.[0]; // ✅ FIX
+
+  if (!g) return;
+
+  setIsRunning(g.isRunning); 
+  setTimeLeft(Math.max(0, g.remaining)); // avoid negative
+  setTotalTime(g.seconds);
+  setRoundId(g.currentSlotNum);
+  setPreRoundId(g.lastResult?.slotNum)
+  setIsRolling(g.isRolling);
+
+
+
+  // 🎯 SET LAST RESULT (important)
+if (g.lastResult?.result) {
+  const diceData = g.lastResult.result.dice;
+
+  setLastResultDice(diceData);
+  lastResultDiceRef.current = diceData;
+}
+}
+useEffect(() => {
+  const timer = setInterval(() => {
+    setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
+
+const isGameClosed = !isRunning;
+
+useEffect(() => {
+  const sync = setInterval(() => {
+    fetchGameData(periodKey);
+  }, 3000); // every 10 sec
+
+  return () => clearInterval(sync);
+}, [periodKey]);
+
+useEffect(() => {
+  if (isRolling) {
+    triggerRoll(); // your existing animation
+  }
+}, [isRolling,triggerRoll]);
+
+  const timerRef  = useRef(null);
+  
+  const isLocked  = timeLeft <= period.lockAt;
+  const urgent    = timeLeft <= 3 && isLocked;
+const progress = ((totalTime - timeLeft) / totalTime) * 100;
+  const sum       = dice.reduce((a,b)=>a+b,0);
+  const sumTag    = sum>=11?"BIG":"SMALL";
+const tabBets = useMemo(() => {
+  return {
+    Sum: SUM_BETS,
+    Triple: TRIPLE_BETS,
+    Double: DOUBLE_BETS,
+    Single: SINGLE_BETS
+  }[betTab];
+}, [betTab]);
+
+
+  useEffect(() => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        fetchWallet(parsedUser.id);
+      } else {
+        console.log("...")
+      }
+    }, []);
+  const fetchWallet = async (uid) => {
+    try {
+      const res = await getWalletSummary({ id: uid });
+      const api = res?.data;
+  
+      setBalance({
+        totalWallet: Number(api?.wallet.total || 0)
       });
-      setTimeout(()=>{
-        if(anyWin) audio.playWin();
-        else if(anyLose) audio.playLose();
-      },100);
+  
+    } catch (err) {
+      console.log("API Error:", err);
+    }
+  };
+    const showT=(msg,type="info")=>{
+    setToast({msg,type});
+    setTimeout(()=>setToast(null),2600);
+  };
 
-      const tag=fsum>=11?"BIG":"SMALL";
-      setHistory(prev=>[
-        {issue:String(parseInt(roundId)+1),dice:fd,sum:fsum,tag,even:fsum%2===0},
-        ...prev.slice(0,49),
-      ]);
-      setRoundId(r=>String(parseInt(r)+1));
-      setNextRoundId(r=>String(parseInt(r)+1));
-    },750);
-  },[roundId,audio]);
 
   const handleSelect=item=>{
+   if (isGameClosed) {
+    showT("🚫 Game is temporarily closed", "error");
+    return;
+  }
+
     if(isLocked){showT("⏳ Betting closed! Wait for next round.","error");return;}
     setSelected(item);setShowSlip(true);
   };
 
-  const handleConfirm=(selection,amount,qty)=>{
-    const total=amount*qty;
-    if(total>balance){showT("❌ Insufficient balance","error");return;}
-    setBalance(b=>b-total);
-    setBets(prev=>[{id:Date.now(),selection,amount:total,qty,issue:roundId,settled:false},...prev]);
-    setShowSlip(false);setSelected(null);
-    showT(`✅ Bet ₹${total} on ${selection.label||selection.id}`);
-  };
+  const getApiType = (tab) => {
+  switch (tab) {
+    case "Sum": return "SUM";
+    case "Triple": return "TRIPLE";
+    case "Double": return "DOUBLE";
+    case "Single": return "SINGLE";
+    default: return "SUM";
+  }
+};
 
-  const showT=(msg,type="info")=>{
-    setToast({msg,type});
-    setTimeout(()=>setToast(null),2600);
-  };
+const getApiValue = (selection) => {
+  const id = String(selection.id);
+
+  // 🎯 SINGLE (S1 → 1)
+  if (id.startsWith("S")) {
+    return Number(id.replace("S", ""));
+  }
+
+  // 🎯 DOUBLE (D1 → 1)
+  if (id.startsWith("D")) {
+    return Number(id.replace("D", ""));
+  }
+
+  // 🎯 TRIPLE (T1 → 1)
+  if (id.startsWith("T")) {
+    return Number(id.replace("T", ""));
+  }
+
+  // 🎯 SUM (BIG / SMALL / ODD / EVEN OR 3–18)
+  return id;
+};
+
+const handleConfirm = async (selection, amount, qty) => {
+  const total = amount * qty;
+
+  if (total > balance.totalWallet) {
+    showT("❌ Insufficient balance", "error");
+    return;
+  }
+
+  try {
+    const payload = {
+      user_id: user?.id,
+      key: periodKey,
+      type: getApiType(betTab),
+      value: getApiValue(selection),
+      amount: total
+    };
+
+    const res = await placeDiceBet(payload);
+
+    if (!res?.success) {
+      showT(res?.message || "❌ Bet failed", "error");
+      return;
+    }
+
+    // ✅ update wallet
+    setBalance(prev => ({
+      ...prev,
+      totalWallet: prev.totalWallet - total
+    }));
+
+    // ✅ update local bets
+    setBets(prev => [
+      {
+        id: Date.now(),
+        selection,
+        amount: total,
+        qty,
+        issue: roundId,
+        settled: false
+      },
+      ...prev
+    ]);
+
+    setShowSlip(false);
+    setSelected(null);
+
+    showT(`✅ Bet placed ₹${total}`, "success");
+
+  } catch (err) {
+    console.log(err);
+    showT("❌ Server error", "error");
+  }
+};
+
+
+
   const navigate =useNavigate();
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const [showHowTo, setShowHowTo] = useState(false);
+const [howToData, setHowToData] = useState("");
+const [loadingHowTo, setLoadingHowTo] = useState(false);
+
+const handleHowToPlay = async () => {
+  setShowHowTo(true);
+
+  // prevent multiple calls
+  if (howToData) return;
+
+  setLoadingHowTo(true);
+
+  const res = await getCategoryDesc({ seoUrl: "dice" });
+
+  if (res?.success) {
+    setHowToData(res.data?.description || "");
+  }
+
+  setLoadingHowTo(false);
+};
 
   /* ══════════════════════════════════════════════════
      RENDER
@@ -881,52 +1635,99 @@ export default function DiceGame({ onBack }) {
       )}
 
       {/* HEADER */}
-      <div style={{background:"#7c3aed",display:"flex",alignItems:"center",
+      <div style={{background:"#ffffff",display:"flex",alignItems:"center",
         justifyContent:"space-between",padding:"12px 16px",
         position:"sticky",top:0,zIndex:50}}>
         <button onClick={()=>navigate(-1)} style={{background:"rgba(255,255,255,0.15)",border:"none",
-          color:"white",width:36,height:36,borderRadius:"50%",cursor:"pointer",
-          fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-        <span style={{color:"white",fontSize:17,fontWeight:800}}>🎲 Dice — {period.label}</span>
+          color:"black",width:36,height:36,borderRadius:"50%",cursor:"pointer",
+          fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}><ChevronLeft/></button>
+        <span style={{color:"black",fontSize:17,fontWeight:800}}>🎲 Dice — {period.label}</span>
         <div style={{display:"flex",alignItems:"center",gap:8,
           background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"4px 12px"}}>
-          <span style={{color:"rgba(255,255,255,0.75)",fontSize:10}}>Balance</span>
-          <span style={{color:"#ffd700",fontWeight:900,fontSize:14}}>₹{balance.toLocaleString("en-IN")}</span>
+          <span style={{color:"rgb(0, 0, 0)",fontSize:13}}>Balance</span>
+          <span style={{color:"#ffd700",fontWeight:900,fontSize:14}}>{user ? `₹${balance.totalWallet || 0}` : "-"}</span>
         </div>
       </div>
 
       {/* PERIOD SELECTOR */}
-      <PeriodSelector selected={period} onSelect={p=>{setPeriod(p);setTimeLeft(p.seconds);}}/>
+      <PeriodSelector selected={period} onSelect={p => {
+  setPeriod(p);
+  setPeriodKey(p.key);   // ✅ IMPORTANT (API payload)
+  setTimeLeft(p.seconds);
+}}/>
 
       {/* ROUND INFO PANEL */}
       <div style={{background:"#e8e4f5",padding:"10px 14px",
         display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
         <div style={{flex:1}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-            <span style={{fontSize:12,fontWeight:800,color:"#3b1a8a"}}>{period.label}</span>
-            <span style={{fontSize:11,color:"#6b4fa0",fontVariantNumeric:"tabular-nums"}}>{roundId}</span>
-            <button style={{background:"white",border:"1px solid #ccc",borderRadius:12,
+          <button onClick={handleHowToPlay} style={{background:"white",border:"1px solid #ccc",borderRadius:12,
               padding:"2px 10px",fontSize:11,color:"#555",cursor:"pointer"}}>How to play</button>
+          <div style={{display:"flex",alignItems:"center",gap:2,marginBottom:3, marginTop:3}}>
+            <span style={{fontSize:12,fontWeight:800,color:"#3b1a8a"}}>{period.label}</span>
+            <span style={{fontSize:11,color:"#6b4fa0",fontVariantNumeric:"tabular-nums"}}>{preRoundId}</span>
+            
           </div>
           {/* mini history dice */}
-          <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-            {history.slice(0,3).map((h,i)=>(
-              <div key={i} style={{display:"flex",gap:2,alignItems:"center"}}>
-                {h.dice.map((d,j)=><DiceFace key={j} value={d} size={22}/>)}
-                <span style={{fontSize:10,fontWeight:700,marginLeft:2,
-                  color:h.tag==="BIG"?"#ef4444":"#3b82f6"}}>{h.sum}</span>
-                {i<2&&<div style={{width:1,height:20,background:"#c5bde8",margin:"0 4px"}}/>}
-              </div>
-            ))}
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6,  marginTop:20}}>
+  
+  {/* 🎲 SMALL DICE */}
+  {dice.map((d, i) => (
+    <Dice3D  key={i} value={d} size={30}/>
+  ))}
+
+  {/* 🎯 RESULT TAGS */}  
+  <div style={{ display: "flex", gap: 5, marginLeft: 6 }}>
+
+    {/* SUM (green circle like image) */}
+    <div style={{
+      width: 26,
+      height: 26,
+      borderRadius: "50%",
+      background: "#22c55e",
+      color: "white",
+      fontSize: 12,
+      fontWeight: 800,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
+      {sum}
+    </div>
+
+    {/* SMALL / BIG */}
+    <div style={{
+      padding: "3px 8px",
+      borderRadius: 14,
+      background: "#3b82f6",
+      color: "white",
+      fontSize: 11,
+      fontWeight: 700
+    }}>
+      {sum <= 10 ? "SMALL" : "BIG"}
+    </div>
+
+    {/* EVEN */}
+    <div style={{
+      padding: "3px 8px",
+      borderRadius: 14,
+      background: "#38bdf8",
+      color: "white",
+      fontSize: 11,
+      fontWeight: 700
+    }}>
+      {sum % 2 === 0 ? "Even" : "Odd"}  
+    </div>
+
+  </div>
+</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
           <span style={{fontSize:10,color:urgent?"#ef4444":"#6b4fa0",
             fontWeight:urgent?700:400,transition:"color 0.3s"}}>
             {urgent?"⚠️ Time remaining":"Time remaining"}
           </span>
-          <CountdownTimer seconds={timeLeft} urgent={urgent}/>
-          <span style={{fontSize:10,color:"#8b6bbf",fontVariantNumeric:"tabular-nums"}}>{nextRoundId}</span>
+          <TimerDisplay timeLeft={timeLeft} urgent={urgent} />
+          <span style={{fontSize:10,color:"#8b6bbf",fontVariantNumeric:"tabular-nums"}}>{roundId}</span>
         </div>
       </div>
 
@@ -934,69 +1735,27 @@ export default function DiceGame({ onBack }) {
       <div style={{height:5,background:"#d4ccf0"}}>
         <div style={{height:"100%",width:`${progress}%`,
           background:isLocked?"linear-gradient(90deg,#ef4444,#dc2626)":"linear-gradient(90deg,#7c3aed,#ec4899)",
-          transition:"width 1s linear, background 0.5s"}}/>
+          transition:"width 0.3s linear, background 0.3s"}}/>
       </div>
 
       {/* LIVE DICE PANEL */}
-      <div style={{
-        background:urgent
-          ?"linear-gradient(135deg,#dc2626,#ef4444)"
-          :"linear-gradient(135deg,#7c3aed,#9d5cf5)",
-        padding:"18px 20px",
-        display:"flex",alignItems:"center",justifyContent:"space-between",
-        transition:"background 0.4s",
-        ...(urgent?{animation:"urgentPulse 0.8s ease infinite"}:{})
-      }}>
-        <div>
-          <div style={{color:"rgba(255,255,255,0.75)",fontSize:11,marginBottom:8}}>
-            {rolling?"🎲 Rolling...":isLocked?"🔒 Betting Locked":"🎲 Place Your Bets"}
-          </div>
-          <div style={{display:"flex",gap:10,alignItems:"center"}}>
-            {dice.map((d,i)=>(
-              <DiceFace key={i} value={d} size={46} rolling={rolling} flash={flashDice}/>
-            ))}
-            <div style={{
-              background:"rgba(255,255,255,0.18)",borderRadius:12,
-              padding:"6px 14px",marginLeft:6,
-              animation:flashDice?"resultPop 0.45s ease":"none",
-            }}>
-              <div style={{color:"rgba(255,255,255,0.7)",fontSize:10}}>Sum</div>
-              <div style={{color:"#ffd700",fontSize:24,fontWeight:900,lineHeight:1.1}}>{sum}</div>
-              <div style={{fontSize:11,fontWeight:800,marginTop:2,
-                color:sumTag==="BIG"?"#fca5a5":"#93c5fd"}}>{sumTag}</div>
-            </div>
-          </div>
-        </div>
-        <div style={{textAlign:"right"}}>
-          {bets.filter(b=>!b.settled).length>0&&(
-            <div style={{background:"#ffd700",color:"#333",borderRadius:10,
-              padding:"4px 12px",marginBottom:6,fontSize:12,fontWeight:800}}>
-              {bets.filter(b=>!b.settled).length} Active Bet{bets.filter(b=>!b.settled).length>1?"s":""}
-            </div>
-          )}
-          {urgent&&(
-            <div style={{color:"#ffd700",fontSize:13,fontWeight:900,letterSpacing:1}}>
-              ⚡ {timeLeft}s
-            </div>
-          )}
-        </div>
-      </div>
+
 
       {/* BET TABS */}
       <BetTabs selected={betTab} onSelect={setBetTab}/>
 
       {/* BET GRID */}
-      <div style={{padding:"12px 10px 8px",position:"relative"}}>
-        <div style={{
-          display:"grid",
-          gridTemplateColumns:betTab==="Sum"?"repeat(4,1fr)":"repeat(3,1fr)",
-          gap:8,
-        }}>
-          {tabBets.map(item=>(
-            <BetBall key={item.id} item={item} selected={selected}
-              onSelect={handleSelect} size={betTab==="Sum"?74:90}/>
-          ))}
-        </div>
+      <div style={{
+  padding:"12px 10px 8px",
+  position:"relative",
+  minHeight: betTab === "Sum" ? 420 : 360
+}}>
+        <BetGrid
+  tabBets={tabBets}
+  selected={selected}
+  onSelect={handleSelect}
+  betTab={betTab}
+/>
         {isLocked&&(
           <div style={{
             position:"absolute",inset:0,
@@ -1010,6 +1769,37 @@ export default function DiceGame({ onBack }) {
             </span>
           </div>
         )}
+        {isGameClosed && (
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      background: "rgba(0,0,0,0.65)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 8,
+      zIndex: 5,
+    }}
+  >
+    <div
+      style={{
+        background: "rgba(0,0,0,0.85)",
+        padding: "14px 22px",
+        borderRadius: 12,
+        color: "white",
+        fontWeight: 800,
+        fontSize: 14,
+        textAlign: "center",
+      }}
+    >
+      🚫 Game Closed<br />
+      <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>
+        Please wait...
+      </span>
+    </div>
+  </div>
+)}
         {/* payout info */}
         <div style={{margin:"12px 4px 0",padding:"12px 14px",
           background:"#f0ebff",borderRadius:12,border:"1px solid #e0d8f8"}}>
@@ -1023,9 +1813,6 @@ export default function DiceGame({ onBack }) {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════
-          📊 RESULT HISTORY  (like ColorPrediction)
-      ════════════════════════════════════════ */}
       <div style={{background:"white",marginTop:8}}>
         {/* Tab strip */}
         <div style={{display:"flex",borderBottom:"2px solid #f0eef8",overflowX:"auto"}}>
@@ -1045,10 +1832,23 @@ export default function DiceGame({ onBack }) {
           ))}
         </div>
 
-        {histTab==="result"  &&<ResultHistoryTab history={history}/>}
+        {histTab === "result" && (
+  <ResultHistoryTab
+    history={history}
+    histPage={histPage}
+    hasMoreHistory={hasMoreHistory}
+    handleNext={handleNext}
+    handlePrev={handlePrev}
+  />
+)}
         {histTab==="winners" &&<WinnersTab       history={history}/>}
         {histTab==="analyze" &&<AnalyzeTab       history={history}/>}
-        {histTab==="myorder" &&<MyOrderTab       bets={bets}/>}
+        {histTab==="myorder" && <MyOrderTab 
+  bets={bets} 
+  setBets={setBets} 
+  user={user} 
+  periodKey={periodKey}   // ✅ ADD THIS
+/>}
 
         <div style={{height:24}}/>
       </div>
@@ -1063,6 +1863,54 @@ export default function DiceGame({ onBack }) {
             onConfirm={handleConfirm}/>
         </>
       )}
+
+      {showHowTo && (
+  <>
+    {/* BACKDROP */}
+    <div
+      onClick={() => setShowHowTo(false)}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        zIndex: 200
+      }}
+    />
+
+    {/* MODAL */}
+    <div
+      style={{
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: "90%",
+        maxWidth: 420,
+        maxHeight: "70vh",
+        overflowY: "auto",
+        background: "#fff",
+        borderRadius: 14,
+        padding: 16,
+        zIndex: 201,
+        boxShadow: "0 10px 40px rgba(0,0,0,0.3)"
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+        <span style={{ fontWeight: 700 }}>How to Play</span>
+        <button onClick={() => setShowHowTo(false)}>✕</button>
+      </div>
+
+      {loadingHowTo ? (
+        <div style={{ textAlign: "center", padding: 20 }}>Loading...</div>
+      ) : (
+        <div
+          style={{ fontSize: 13, lineHeight: 1.6, color: "#444" }}
+          dangerouslySetInnerHTML={{ __html: howToData }}
+        />
+      )}
+    </div>
+  </>
+)}
     </div>
   );
 }

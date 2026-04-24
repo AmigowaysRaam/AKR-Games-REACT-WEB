@@ -48,6 +48,19 @@ export const getOtpLogin = async (phone, countryCode, flag) => {
     throw error;
   }
 };
+
+export const getWithdrawOtpLogin = async (phone, countryCode, flag, bId, amount) => {
+  try {
+    const response = await API.post("?url=send-withdraw-otp", {
+      "amount": amount,
+      "bank_id": bId
+    });
+    return response.data;
+  } catch (error) {
+    console.error("OTP Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 export const verifyOtp = async (data) => {
   try {
     const response = await API.post("?url=verify-otp", data);
@@ -163,13 +176,24 @@ export const getEarningDetails = async (data) => {
     throw error;
   }
 };
+
+// getmeetthreeDetails
+export const getmeetthreeDetails = async (data) => {
+  try {
+    const response = await API.post("?url=special-recharge-details", data);
+    return response.data;
+  } catch (error) {
+    console.error("getmeetthreeDetails-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 // reset-referral-code
 export const handleResetLinkApi = async (data) => {
   try {
     const response = await API.post("?url=reset-referral-code", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("getmeetthreeDetails API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -179,7 +203,7 @@ export const getLangList = async (data) => {
     const response = await API.post("?url=languages", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getLangList API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -189,7 +213,7 @@ export const getJackPotData = async (data) => {
     const response = await API.post("?url=jackpot-summary", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getLangList API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -199,7 +223,7 @@ export const getBottomMenu = async (data) => {
     const response = await API.post("?url=footer-menu", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getBottomMenu API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -209,27 +233,26 @@ export const getSpinDetails = async (data) => {
     const response = await API.post("?url=spin", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getSpinDetails API Error:", error.response?.data || error.message);
     throw error;
   }
 };
-// getSpinResultData
+
 export const getSpinResultData = async (data) => {
   try {
     const response = await API.post("?url=spinplay", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-spinresult API Error:", error.response?.data || error.message);
     throw error;
   }
 };
-// 
 export const getBuySpin = async (data) => {
   try {
     const response = await API.post("?url=spinbuy", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getBuySpin API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -240,7 +263,7 @@ export const addBankAccont = async (data) => {
     const response = await API.post("?url=add-bank-account", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    // console.error("create-recharge API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -250,7 +273,7 @@ export const updateBankAccont = async (data) => {
     const response = await API.post("?url=update-bank-account", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-updateBankAccont API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -261,7 +284,7 @@ export const removeBankId = async (data) => {
     const response = await API.post("?url=delete-bank-account", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-removeBankId API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -270,7 +293,7 @@ export const getWithdrawApi = async (data) => {
     const response = await API.post("?url=withdraw-details", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getWithdrawApi API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -280,57 +303,95 @@ export const withdrawCreate = async (data) => {
     const response = await API.post("?url=withdraw-request", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-withdrawCreate API Error:", error.response?.data || error.message);
     throw error;
   }
 };
-
 export const getWithdraWList = async (data) => {
   try {
-    const response = await API.get("?url=withdraw-history", data);
+    const response = await API.post("?url=withdraw-history", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getWithdraWList API Error:", error.response?.data || error.message);
     throw error;
   }
 };
 
-// getCodeRedeem
+
+export const getBOnusHistory = async (data) => {
+  try {
+    const response = await API.post("?url=bonus-history", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-getBOnusHistory API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// getScratchData
+
+export const getScratchData = async (data) => {
+  try {
+    const response = await API.post("?url=scratchui", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-getBOnusHistory API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// getInviteRecords
+export const getPlayResult = async (data) => {
+  try {
+    const response = await API.post("?url=scratchplay", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-getPlayResult API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const getInviteRecords = async (data) => {
+  try {
+    const response = await API.post("?url=invitation-records", data);
+    return response.data;
+  } catch (error) {
+    console.error("getInviteRecords API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 export const getCodeRedeem = async (data) => {
   try {
     const response = await API.post("?url=giftredeem", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getCodeRedeem API Error:", error.response?.data || error.message);
     throw error;
   }
 };
-// getSideBarMenu
 export const getSideBarMenu = async (data) => {
   try {
     const response = await API.post("?url=sidebar-menu", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getSideBarMenu API Error:", error.response?.data || error.message);
     throw error;
   }
 };
-// getNotificationList
 export const getNotificationList = async (data) => {
   try {
     const response = await API.post("?url=notifications", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getNotificationList API Error:", error.response?.data || error.message);
     throw error;
   }
 };
 export const getRechargeHist = async (data) => {
   try {
     const response = await API.post("?url=recharge-history", data);
+    // alert(JSON.stringify(response));
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getRechargeHist API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -341,7 +402,16 @@ export const getPromoList = async (data) => {
     const response = await API.post("?url=promotion-list", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getPromoList API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const getCheckIndata = async (data) => {
+  try {
+    const response = await API.post("?url=checkin-details", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-getCheckIndata API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -350,7 +420,28 @@ export const getTransactionHist = async (data) => {
     const response = await API.post("?url=transaction-history", data);
     return response.data;
   } catch (error) {
-    console.error("create-recharge API Error:", error.response?.data || error.message);
+    console.error("create-getTransactionHist API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// getBonusDataList
+export const getBonusDataList = async (data) => {
+  try {
+    const response = await API.post("?url=bonus-list", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-getBonusDataList API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const claimTaskBonus = async (data) => {
+  try {
+    const response = await API.post("?url=bonus-claim", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-claimTaskBonus API Error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -373,6 +464,7 @@ export const getWalletSummary = async (data) => {
     throw error;
   }
 };
+
 export const getRechargeList = async (data) => {
   try {
     const response = await API.post("?url=vip-list", { data });

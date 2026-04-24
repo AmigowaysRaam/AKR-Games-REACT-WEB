@@ -53,6 +53,12 @@ import JackPotScreen from "./pages/JackPotScreen";
 import LanguageListScreen from "./pages/LanguageListScreen";
 import InviteRecord from "./pages/InviteRecord";
 import HotmatchesScreen from "./pages/HotmatchesScreen";
+import WeeklySignIn from "./pages/WeeklySignIn";
+import PromoEventDetails from "./pages/PromoEventDetails";
+import MeetThreeScreeen from "./pages/MeetThreeScreeen";
+import CommingSoon from "./pages/commingSoon";
+import BonusClainHIstory from "./pages/BonusClainHIstory";
+import ScratchFullScreen from "./pages/ScratchCard";
 // ─── APP WRAPPER ─────────────────
 function AppWrapper() {
   const location = useLocation();
@@ -91,7 +97,7 @@ function AppWrapper() {
 
     return () => handler.remove();
   }, []);
-  const showBottomNavRoutes = ["/", "/earn", "/promo", "/profile"];
+  const showBottomNavRoutes = ["/", "/earn", "/promo", "/profile",];
   // 🌐 NETWORK STATE
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [toast, setToast] = useState("");
@@ -151,12 +157,17 @@ function AppWrapper() {
           )}
           <Routes>
             <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
-            <Route path="/dice" element={<PrivateRoute><DiceGame /></PrivateRoute>} />
+            <Route path="/dice/:key" element={<PrivateRoute><DiceGame /></PrivateRoute>} />
+            {/* <Route path="/dice" element={<PrivateRoute><DiceGame /></PrivateRoute>} /> */}
             <Route path="/AddbankAccount" element={<PrivateRoute><AddbankAccount /></PrivateRoute>} />
             <Route path="/color" element={<PrivateRoute><ColorPrediction /></PrivateRoute>} />
             <Route path="/earn" element={<PrivateRoute><InviteFriends /></PrivateRoute>} />
             <Route path="/promo" element={<PrivateRoute><PromotionScreen /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          
+            <Route path="/bonusclainhist" element={<PrivateRoute><BonusClainHIstory /></PrivateRoute>} />
+            <Route path="/comingsoon" element={<PrivateRoute><CommingSoon /></PrivateRoute>} />
+            <Route path="/meetthreescreen" element={<PrivateRoute><MeetThreeScreeen /></PrivateRoute>} />
             <Route path="/PlayerProfileScreen" element={<PrivateRoute><PlayerProfileScreen /></PrivateRoute>} />
             <Route path="/Recharge" element={<PrivateRoute><RechargeListScreen /></PrivateRoute>} />
             <Route path="/payRecharge" element={<PrivateRoute><RechargeScreen /></PrivateRoute>} />
@@ -168,7 +179,7 @@ function AppWrapper() {
             <Route path="/withdrawhistory" element={<PrivateRoute><WithdrawHistory /></PrivateRoute>} />
             {/* JackPotScreen */}
             <Route path="/jackPotScreen" element={<PrivateRoute><JackPotScreen /></PrivateRoute>} />
-            
+            <Route path="/scratch" element={<PrivateRoute><ScratchFullScreen /></PrivateRoute>} />
             <Route path="/hotmatchscreen" element={<PrivateRoute><HotmatchesScreen /></PrivateRoute>} />
 
             <Route path="/invitationRecord" element={<PrivateRoute><InviteRecord /></PrivateRoute>} />
@@ -180,7 +191,9 @@ function AppWrapper() {
             <Route path="/rechargRecords" element={<PrivateRoute><RechargeRecords /></PrivateRoute>} />
             {/* rechargRecords */}
             <Route path="/WalletScreen" element={<PrivateRoute><WalletScreen /></PrivateRoute>} />
-
+            <Route path="/weeklysignup" element={<PrivateRoute><WeeklySignIn /></PrivateRoute>} />
+            
+            <Route path="/eventdetails" element={<PrivateRoute><PromoEventDetails /></PrivateRoute>} />
             <Route path="/Maintenance" element={<PrivateRoute><Maintenance /></PrivateRoute>} />
             <Route path="/PasswordChangeScreen" element={<PrivateRoute><PasswordChangeScreen /></PrivateRoute>} />
             <Route path="/NotificationScreen" element={<PrivateRoute><NotificationScreen /></PrivateRoute>} />
@@ -193,6 +206,7 @@ function AppWrapper() {
             {/* Public */}
             <Route path="/Login" element={<LoginPage />} />
             <Route path="/Sign" element={<SignUpPage />} />
+            
             <Route
               path="/state-lottery"
               element={

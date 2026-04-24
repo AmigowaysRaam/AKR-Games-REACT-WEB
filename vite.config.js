@@ -7,7 +7,7 @@ export default defineConfig({
     hmr: true,
     proxy: {
       '/api': {
-        target: 'https://kasjewellery.com',
+        // target: 'https://kasjewellery.com',
         changeOrigin: true,
         secure: false,
       },

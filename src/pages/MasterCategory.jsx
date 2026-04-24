@@ -64,6 +64,7 @@ export default function MasterCategoryScreen({
         if (!items || items.length === 0) {
             return <UpcomingGrid />;
         }
+        console.log("Rendering section:", key, "with items:", items);
         switch (key) {
             case "hot-match":
                 return <HotMatchesSection matches={items} />;
@@ -94,17 +95,16 @@ export default function MasterCategoryScreen({
         }
     }, []);
     if (!currentCategory) return null;
-   
     return (
         <div className="pb-10">
-            {/* <p>{JSON.stringify(currentCategory?.tabs)}</p> */}
+            {/* <p>{JSON.stringify(currentCategory?.tabs,null,2)}</p> */}
             {currentCategory?.tabs?.map((t) => (
                 <div
                     key={t.key}
                     id={`section-${t.key}`}
                     data-section={t.key}
                     className="scroll-mt-[122px]"
-                    // style={{ scrollMarginTop: `${headerHeight + 35}px` }}
+                // style={{ scrollMarginTop: `${headerHeight + 35}px` }}
                 >
                     {
                         t?.key &&

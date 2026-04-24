@@ -4,17 +4,15 @@ import * as Icons from "lucide-react";
 import { getBottomMenu } from "../services/authService";
 
 export function BottomNav({ active, onChange }) {
+
   const navigate = useNavigate();
   const [navData, setNavData] = useState([]);
   const [centerData, setCenterData] = useState({});
   const [userData, setUserData] = useState(null);
-
   const getIcon = (name) => {
     if (!name) return Icons.Home;
     return Icons[name] || Icons.Home;
   };
-
-  // ✅ Load user
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("user");
@@ -25,48 +23,27 @@ export function BottomNav({ active, onChange }) {
       console.log("User parse error:", e);
     }
   }, []);
-
   // ✅ Load menu
   useEffect(() => {
     const loadMenu = async () => {
       try {
-        const cachedMenu = localStorage.getItem("bottomMenu");
-
-        if (cachedMenu) {
-          const parsed = JSON.parse(cachedMenu);
-
-          setNavData(
-            parsed.nav.map((item) => ({
-              ...item,
-              icon: getIcon(item.icon),
-            }))
-          );
-
-          setCenterData(parsed.center);
-          return;
-        }
-
         const res = await getBottomMenu({
           user_id:
             JSON.parse(localStorage.getItem("user"))?.id || "",
         });
-
         if (res?.success) {
           const nav = res.data?.nav || [];
           const center = res.data?.earn_card || {};
-
           localStorage.setItem(
             "bottomMenu",
             JSON.stringify({ nav, center })
           );
-
           setNavData(
             nav.map((item) => ({
               ...item,
               icon: getIcon(item.icon),
             }))
           );
-
           setCenterData(center);
         } else {
           setDefaultCenter();
@@ -76,10 +53,8 @@ export function BottomNav({ active, onChange }) {
         setDefaultCenter();
       }
     };
-
     loadMenu();
   }, []);
-
   const setDefaultCenter = () => {
     setCenterData({
       amount: 200,
@@ -88,7 +63,6 @@ export function BottomNav({ active, onChange }) {
       image: "",
     });
   };
-
   const handleClick = (key, path) => {
     onChange(key);
     navigate(path);
@@ -98,13 +72,13 @@ export function BottomNav({ active, onChange }) {
     <div
       style={{
         position: "fixed",
-        bottom: 0,
+        bottom: -2,
         left: "50%",
         transform: "translateX(-50%)",
         width: "100%",
         maxWidth: 430,
-        zIndex: 100,
-        height: "9%",
+        zIndex: 49,
+        height: "10%",
       }}
     >
       <div
@@ -146,8 +120,6 @@ export function BottomNav({ active, onChange }) {
             />
           ))}
         </div>
-
-        {/* 🔥 CENTER BUTTON */}
         <div
           style={{
             position: "absolute",
@@ -207,19 +179,16 @@ export function BottomNav({ active, onChange }) {
           </span>
         </div>
       </div>
-
       <style>{`
         @keyframes pulse {
           0% { transform: scale(1); }
           50% { transform: scale(1.08); }
           100% { transform: scale(1); }
         }
-
         @keyframes pop {
           0% { transform: scale(0.8); opacity: 0.6; }
           100% { transform: scale(1); opacity: 1; }
         }
-
         @keyframes slideUp {
           0% { transform: translateY(6px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }

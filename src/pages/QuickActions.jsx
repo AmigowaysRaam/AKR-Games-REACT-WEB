@@ -1,7 +1,6 @@
 import React from "react";
 
 export default function QuickActions({ sections, user, navigate, setShowSpin }) {
-
     const handleClick = (item) => {
         if (user && user?.id) {
             if (item.name === "Lucky Spin") {
@@ -17,14 +16,12 @@ export default function QuickActions({ sections, user, navigate, setShowSpin }) 
         .filter(sec => sec.type === "quick_actions")
         .flatMap(sec => sec.items);
     if (!quickItems.length) return null;
-    // 🔥 Dynamic grid columns based on count
     const getGridCols = () => {
         if (quickItems.length <= 2) return "grid-cols-2";
         if (quickItems.length === 3) return "grid-cols-3";
         if (quickItems.length === 4) return "grid-cols-4";
         return "grid-cols-4";
     };
-
     return (
         <div className={`grid ${getGridCols()} gap-4 px-4 mt-6 text-center`}>
             {quickItems?.map((item, index) => (
@@ -41,7 +38,11 @@ export default function QuickActions({ sections, user, navigate, setShowSpin }) 
                         <img
                             src={item.img}
                             alt={item.name}
-                            className="w-full h-full object-contain"
+                            style={{
+                                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))",
+                                borderRadius: "8px",
+                            }}
+                            className="w-full h-full object-contain "
                         />
                     </div>
 
