@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { getPromoList } from "../services/authService";
 import GameLoader from "./LoaderComponet";
 import { useNavigate } from "react-router-dom";
-import { set } from "date-fns";
 
 export default function PromoList() {
     const [promoList, setPromoList] = useState([]);
@@ -10,9 +9,9 @@ export default function PromoList() {
     const [refreshing, setRefreshing] = useState(false);
     const [userDta, setuserDta] = useState(null);
 
-
     const startY = useRef(0);
     const pullDistance = useRef(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadData();
@@ -24,34 +23,33 @@ export default function PromoList() {
         setuserDta(parsedUser);
         await fetchHistory(parsedUser?.id || null);
     };
-    const navigate = useNavigate()
 
     const handleNavigate = (item) => {
         if (!userDta) {
-            navigate('/login')
+            navigate("/login");
             return;
         }
-        if (item.key == 'promotion') {
-            navigate('/recharge')
+
+        if (item.key === "3-digit-bet" || item.key === "agent-promotion" || item.key === "purchase-cumulate-amount") {
+            navigate("/eventdetails", { state: { item } });
+        } else if (item.key === "refer-promotion") {
+            navigate("/earn");
+        } else if (item.key === "withdraw") {
+            navigate("/WithdrawScreen");
+        } else if (item.key.includes("recharge")) {
+            navigate("/payRecharge");
+        } else if (item.key === "weekly-sign") {
+            navigate("/weeklysignup");
+        } else if (item.key.includes("rank")) {
+            navigate("/jackPotScreen");
+        } else if (item.key.includes("promotion")) {
+            navigate("/recharge");
         }
-        if (item.key == 'withdraw') {
-            navigate('/WithdrawScreen')
-        }
-        if (item.key == 'recharge') {
-            navigate('/payRecharge')
-        }
-        if (item.key == 'weekly-sign') {
-            navigate('/weeklysignup')
-        }
-        if (item.key === "purchase-cumulate-amount") {
-            navigate("/eventdetails", {
-                state: { item },   // ✅ correct
-            });
-        }
-    }
+    };
+
     const fetchHistory = async (userId) => {
         try {
-            const payload = userId ? { id: userId } : {};
+            const payload = userId ? { id: userId, user_id: userId } : {};
             const res = await getPromoList(payload);
             if (res?.data) setPromoList(res.data);
         } catch (err) {
@@ -62,14 +60,15 @@ export default function PromoList() {
         }
     };
 
-    // Pull-to-refresh
     const handleTouchStart = (e) => {
         startY.current = e.touches[0].clientY;
     };
+
     const handleTouchMove = (e) => {
         const currentY = e.touches[0].clientY;
         pullDistance.current = currentY - startY.current;
     };
+
     const handleTouchEnd = () => {
         if (pullDistance.current > 80) {
             setRefreshing(true);
@@ -77,6 +76,7 @@ export default function PromoList() {
         }
         pullDistance.current = 0;
     };
+
     return (
         <>
             <style>
@@ -93,107 +93,58 @@ export default function PromoList() {
                 }
                 `}
             </style>
+
             <div
-                style={{ padding: 12, paddingBottom: "25%" }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                className="cursor-pointer"
+                className="w-full max-w-[900px] mx-auto px-3 sm:px-4 md:px-6 pb-28"
             >
                 {refreshing && (
-                    <div style={{ textAlign: "center", marginBottom: 10 }}>
+                    <div className="text-center mb-2 text-sm text-gray-500">
                         Refreshing...
                     </div>
                 )}
+
                 {loading ? (
                     <GameLoader />
                 ) : promoList.length === 0 ? (
-                    <div>No Promotions Available</div>
+                    <div className="text-center text-gray-500">
+                        No Promotions Available
+                    </div>
                 ) : (
                     promoList.map((item, i) => (
                         <div
-                            onClick={() => handleNavigate(item)}
                             key={item.id}
+                            onClick={() => handleNavigate(item)}
+                            className="relative w-full rounded-2xl overflow-hidden mb-4 cursor-pointer shadow-md hover:shadow-lg transition"
                             style={{
-                                height: 160,
-                                borderRadius: 18,
-                                overflow: "hidden",
-                                marginBottom: 16,
-                                position: "relative",
-                                color: "#fff",
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
+                                aspectRatio: "16 / 9", // 🔥 responsive height
                                 animation: "fadeInUp 0.4s ease forwards",
                                 animationDelay: `${i * 100}ms`,
                                 opacity: 0,
                             }}
                         >
-                            {/* <p className="text-black">{JSON.stringify(item)}</p> */}
-                            {/* Background Image */}
                             <div
+                                className="absolute inset-0"
                                 style={{
-                                    position: "absolute",
-                                    inset: 0,
                                     backgroundImage: `url(${item.image})`,
                                     backgroundPosition: "center",
+                                    backgroundSize: "cover", // ✅ FIXED
+                                    backgroundRepeat: "no-repeat",
                                 }}
                             />
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    inset: 0,
-                                    background:
-                                        "linear-gradient(90deg, rgba(120,120,120,0.1), rgba(60,60,60,0.9))",
-                                }}
-                            />
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    inset: 0,
-                                    background:
-                                        "linear-gradient(135deg, rgba(123,31,162,0.2), rgba(74,20,140,0.1))",
-                                }}
-                            />
-                            <div
-                                style={{
-                                    position: "relative",
-                                    padding: 14,
-                                    height: "100%",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "space-between",
-                                    bottom: 8,
-                                    left: -2,
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        background: "rgba(255,255,255,0.9)",
-                                        padding: "4px 10px",
-                                        borderRadius: 5,
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        width: "fit-content",
-                                        color: "#222",
-                                        textTransform: "uppercase",
-                                    }}
-                                >
+
+                            {/* Overlay */}
+                            <div className="absolute inset-0 bg-black/20" />
+
+                            {/* Content */}
+                            <div className="relative h-full flex flex-col justify-between p-2 sm:p-4">
+                                <div className="bg-white/90 text-black text-[8px] sm:text-sm font-semibold px-1 py-[2px] rounded-[2px] w-fit uppercase">
                                     {item.key}
                                 </div>
-                                <div>
-                                </div>
-                                <div onClick={() => handleNavigate(item)} style={{ display: "flex", justifyContent: "flex-end" }}>
-                                    <div
-                                        style={{
-                                            background: "#fff",
-                                            color: "#6a1b9a",
-                                            padding: "6px 14px",
-                                            borderRadius: 20,
-                                            fontWeight: 700,
-                                            fontSize: 13,
-                                        }}
-                                    >
+                                <div className="flex justify-end">
+                                    <div className="bg-white text-purple-700 px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold animate-pulse">
                                         {item?.button_name || "Join to win"}
                                     </div>
                                 </div>

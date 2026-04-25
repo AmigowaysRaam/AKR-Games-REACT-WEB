@@ -89,8 +89,6 @@ export default function VipWalletCard({ showSpin }) {
               {vipData?.level || "VIP"}
             </span>
           </div>
-
-          {/* PROGRESS */}
           <div className="mt-3">
             <div className="w-full h-1.5 bg-white/40 rounded-full overflow-hidden">
               <div
@@ -164,9 +162,9 @@ export default function VipWalletCard({ showSpin }) {
           >
             <div className="flex items-center gap-1 mt-2"
             >
-              <IndianRupee size={20} className="opacity-80" />
+              <IndianRupee size={15} className="opacity-80" />
 
-              <h3 className="text-2xl font-bold">
+              <h3 className="text-xl font-bold">
                 {loading ? (
                   <div className="h-8 w-32 bg-white/30 rounded animate-pulse" />
                 ) : showBalance && walletData ? (

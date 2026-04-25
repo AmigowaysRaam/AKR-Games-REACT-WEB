@@ -3,12 +3,10 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, RefreshCcw } from "lucide-react";
 import { getEarningDetails, handleResetLinkApi } from "../services/authService";
 import GameLoader from "./LoaderComponet";
-
 export default function InviteFriends() {
   const navigate = useNavigate();
   const [data, SetApiData] = useState(null);
   const copyCode = () => {
-
     if (!JSON.parse(localStorage.getItem("user"))?.id) {
       showToast("User not found", "error");
       navigate('/login');
@@ -372,8 +370,18 @@ export default function InviteFriends() {
                       </div>
                     </div>
                     {/* <p>{JSON.stringify(b,null,2)}</p> */}
-                    <button onClick={() => handleShareLink()} style={btn}>
-                      Go Complete
+                    <button
+                      onClick={() => !b?.isCompleted && handleShareLink()}
+                      disabled={b?.isCompleted}
+                      className={`px-4 py-2 rounded-lg text-white transition-all w-full
+                        my-4
+    ${b?.isCompleted
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-violet-500 active:scale-95"
+                        }
+  `}
+                    >
+                      {b?.isCompleted ? "Completed" : "Go Complete"}
                     </button>
                   </div>
                 ))}
@@ -387,57 +395,32 @@ export default function InviteFriends() {
 const container = {
   maxWidth: 430, margin: "0 auto",
   height: "100vh", display: "flex", flexDirection: "column", background: "#f5f5f5",
-};
-const content = {
+}; const content = {
   flex: 1, overflowY: "auto",
   paddingBottom: "20%",
-};
-const header = {
-  height: 55,
-  background: "#7c3aed", color: "white",
-  display: "flex",
-  alignItems: "center", justifyContent: "space-between",
-  padding: "0 12px",
+}; const header = {
+  height: 55, background: "#7c3aed", color: "white", display: "flex",
+  alignItems: "center", justifyContent: "space-between", padding: "0 12px",
   flexShrink: 0,
-};
-const back = { fontSize: 15, cursor: "pointer" };
-const title = { fontWeight: "bold" };
+}; const back = { fontSize: 15, cursor: "pointer" }; const title = { fontWeight: "bold" };
 const rulesBtn = {
   background: "white", border: "none", padding: "4px 10px",
-  borderRadius: 6,
-  color: "#7c3aed",
-}; const banner = {
-};
-const overlay = {
-  position: "absolute", inset: 0,
-  background: "rgba(0,0,0,0.1)",
-};
-
-const list = {
-  padding: "0 12px",
-};
+  borderRadius: 6, color: "#7c3aed",
+}; const banner = {};
+const list = { padding: "0 12px", };
 const card = {
   background: "white", borderRadius: 12, padding: 12, marginBottom: 12,
 };
 const cardHeader = {
   display: "flex", justifyContent: "space-between",
   marginBottom: 10, fontWeight: "bold",
-};
-const grayRow = {
+}; const grayRow = {
   background: "#f1f1f1",
   padding: 8, borderRadius: 6, display: "flex", justifyContent: "space-between",
   marginBottom: 6,
 }; const toastStyle = {
   position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", color: "#fff",
   padding: "10px 16px", borderRadius: 8, fontWeight: 500, zIndex: 999,
-};
-const progressRow = {
-  display: "flex", justifyContent: "space-between", marginTop: 10,
-};
+}; const progressRow = { display: "flex", justifyContent: "space-between", marginTop: 10, };
 const highlight = { color: "#7c3aed", fontWeight: "bold", };
-
-const smallText = { fontSize: 10, color: "#777", }; const btn = {
-  width: "100%", marginTop: 10,
-  padding: 12, borderRadius: 25, border: "none", background: "linear-gradient(90deg,#7c3aed,#a855f7)",
-  color: "white", fontWeight: "bold",
-};
+const smallText = { fontSize: 10, color: "#777", };

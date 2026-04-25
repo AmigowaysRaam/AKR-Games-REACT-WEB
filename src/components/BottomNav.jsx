@@ -4,7 +4,6 @@ import * as Icons from "lucide-react";
 import { getBottomMenu } from "../services/authService";
 
 export function BottomNav({ active, onChange }) {
-
   const navigate = useNavigate();
   const [navData, setNavData] = useState([]);
   const [centerData, setCenterData] = useState({});
@@ -13,6 +12,7 @@ export function BottomNav({ active, onChange }) {
     if (!name) return Icons.Home;
     return Icons[name] || Icons.Home;
   };
+  
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("user");

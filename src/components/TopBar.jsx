@@ -33,6 +33,7 @@ export function TopBar({ sendDataToParent, onClosetheModal }) {
       setWallet(storedWallet);
     }
   }, [open, showLogoutModal]);
+
   useEffect(() => {
     setLoading(true);
     const fetchMenu = async () => {
@@ -40,7 +41,7 @@ export function TopBar({ sendDataToParent, onClosetheModal }) {
         const res = await getTopBarList();
         if (res?.success) {
           setMenuItems(res.data?.menu || []);
-          setCount(res.data?.count || null);
+          setCount(res.data?.total || null);
         }
       } catch (err) {
         console.error("Menu API failed", err);
@@ -108,7 +109,7 @@ export function TopBar({ sendDataToParent, onClosetheModal }) {
             <div className="flex items-center gap-3">
               {user ? (
                 <>
-                  <div className="relative inline-block">
+                  <div className="relative inline-block right-2">
                     <Bell
                       size={20}
                       className="cursor-pointer"

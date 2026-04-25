@@ -2,14 +2,16 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useNavigate,useParams } from "react-router-dom";
 import redBall from "../assets/redBall.png"
 import greenBall from "../assets/greenBall.png"
-import { getDiceGame,getDiceHistory,getCategoryDesc, placeDiceBet ,getUserBets } from "../services/gameSevice";
+import { getDiceGame,getDiceHistory,getCategoryDesc, placeDiceBet ,getUserBets ,getConfig} from "../services/gameSevice";
 import { getWalletSummary } from "../services/authService";
 import { ChevronLeft } from "lucide-react";
-
+import oddImg from "../assets/Odd.png";
+import evenImg from "../assets/Even.png";
+import smallImg from "../assets/Small.png";
+import bigImg from "../assets/Big.png";
 function useAudioEngine() {
   const ctxRef = useRef(null);
 const masterGainRef = useRef(null);
-
 const getCtx = useCallback(() => {
   if (!ctxRef.current) {
     ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -166,16 +168,6 @@ const PERIODS = [
 
 const BET_TABS = ["Sum", "Triple", "Double", "Single"];
 
-const SUM_BETS = [
-  { id:"BIG",   label:"BIG",   payout:"1.95", multiplier:1.95, type:"special", color:"#e8302a" },
-  { id:"SMALL", label:"SMALL", payout:"1.95", multiplier:1.95, type:"special", color:"#3aaee0" },
-  { id:"ODD",   label:"Odd",   payout:"1.95", multiplier:1.95, type:"special", color:"#e8302a", italic:true },
-  { id:"EVEN",  label:"Even",  payout:"1.95", multiplier:1.95, type:"special", color:"#3aaee0", italic:true },
-  ...[
-    [3,150],[4,50],[5,18],[6,14],[7,12],[8,8],[9,6],
-    [10,6],[11,6],[12,6],[13,8],[14,12],[15,14],[16,18],[17,50],[18,150],
-  ].map(([id,m],i) => ({ id, payout:String(m), multiplier:m, color:i%2===0?"#e8302a":"#4caf50" })),
-];
 
 const TRIPLE_BETS = [1,2,3,4,5,6].map((n,i)=>({
   id:`T${n}`,
@@ -385,18 +377,47 @@ const BetBall = React.memo(function BetBall({item,selected,onSelect,size=74}) {
     transition:"all 0.15s",
   };
 
-  if (item.type==="special") return (
-    <button onClick={()=>onSelect(item)} style={{...common,background:isSel?item.color:"white"}}>
-      <div style={{width:44,height:44,borderRadius:"50%",background:item.color,
-        display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <span style={{color:"white",fontSize:item.italic?13:14,fontWeight:900,fontStyle:item.italic?"italic":"normal"}}>
-          {item.label}
-        </span>
-      </div>
-      <span style={{fontSize:11,color:isSel?"white":"#888",fontWeight:600}}>{item.payout}X</span>
-    </button>
-  );
+if (item.type === "special") return (
+  <button
+    onClick={() => onSelect(item)}
+    style={{
+      ...common,
+      background: isSel ? "#f5f0ff" : "white"
+    }}
+  >
+    {/* 🎯 IMAGE */}
+    <div
+      style={{
+        width: 54,
+        height: 54,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+    <img
+  src={getTagImage(item.label?.toUpperCase())}
+  alt={item.label}
+  style={{
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+  }}
+/>
+    </div>
 
+    {/* 💰 PAYOUT */}
+    <span
+      style={{
+        fontSize: 11,
+        color: isSel ? item.color : "#888",
+        fontWeight: 600
+      }}
+    >
+      {item.payout}X
+    </span>
+  </button>
+);
   if (item.type==="label") return (
     <button onClick={()=>onSelect(item)} style={{...common,background:isSel?"#ede9fe":"white"}}>
       <div style={{width:50,height:50,borderRadius:"50%",background:item.color,
@@ -552,7 +573,6 @@ if (idStr.startsWith("S") || idStr.startsWith("D") || idStr.startsWith("T")) {
   );
 }
 });
-
 /* ══════════════════════════════════════════════════════
    BET SLIP
 ══════════════════════════════════════════════════════ */
@@ -747,83 +767,186 @@ const HIST_TABS = [
   {key:"analyze", label:"Analyze"},
   {key:"myorder", label:"My Order"},
 ];
+const getTagImage = (type) => {
+  if (type === "BIG") return bigImg;
+  if (type === "SMALL") return smallImg;
+  if (type === "ODD") return oddImg;
+  if (type === "EVEN") return evenImg;
+  return null;
+};
 
 
-function ResultHistoryTab({history,
-  histTab,
+function ResultHistoryTab({
+  history,
   histPage,
   hasMoreHistory,
   handleNext,
-  handlePrev}) {
-  const tc = t => t==="BIG"?"#ef4444":"#3b82f6";
+  handlePrev
+}) {
+
+  const Ball = ({ text, color }) => (
+    <div style={{
+      minWidth: 36,
+      height: 36,
+      borderRadius: "50%",
+      background: color,
+      color: "#fff",
+      fontSize: 11,
+      fontWeight: 700,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "inset 0 2px 4px rgba(0,0,0,0.25)"
+    }}>
+      {text}
+    </div>
+  );
+
+  const SmallBall = ({ text, color }) => (
+    <div style={{
+      minWidth: 36,
+      height: 36,
+      borderRadius: "50%",
+      background: "#eee",
+      color: color,
+      fontSize: 11,
+      fontWeight: 700,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
+      {text}
+    </div>
+  );
+const cellCenter = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const cellLeft = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+};
   return (
-    <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 90px 60px 60px",
-        padding:"8px 14px",background:"#f8f6ff",borderBottom:"1px solid #ede9f8"}}>
-        {["ISSUE","DICE","SUM","TAG"].map(h=>(
-          <span key={h} style={{fontSize:11,fontWeight:700,color:"#888",textTransform:"uppercase",letterSpacing:0.5}}>{h}</span>
-        ))}
-      </div>
-      {history.map((row,i)=>(
+    <div style={{ padding: 10 }}>
+
+      {/* HEADER */}
+<div style={{
+  display: "grid",
+  gridTemplateColumns: "1.4fr 1.2fr 0.6fr 0.9fr 0.9fr",
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#666",
+  padding: "8px 6px"
+}}>
+  <div style={{ textAlign: "left" }}>Issue</div>
+  <div style={{ textAlign: "center" }}>Result</div>
+  <div style={{ textAlign: "center" }}>Sum</div>
+  <div style={{ textAlign: "center" }}>Value</div>
+  <div style={{ textAlign: "center" }}>Number</div>
+</div>
+
+      {/* LIST */}
+      {history.map((row, i) => (
         <div key={i} style={{
-          display:"grid",gridTemplateColumns:"1fr 90px 60px 60px",
-          padding:"11px 14px",borderBottom:"1px solid #f4f2fc",alignItems:"center",
-          background:i%2===0?"white":"#faf9ff",
+            display: "grid",
+  gridTemplateColumns: "1.4fr 1.2fr 0.6fr 0.9fr 0.9fr",
+  alignItems: "center",
+  padding: "10px 6px",
+  borderRadius: 10,
+  marginBottom: 6,
+  background: i % 2 === 0 ? "#fff" : "#f9f9fb"
         }}>
-          <span style={{fontSize:11,color:"#555",fontVariantNumeric:"tabular-nums"}}>{row.issue}</span>
-          <div style={{display:"flex",gap:3}}>
-            {row.dice.map((d,j)=><Dice3D  key={j} value={d} size={20}/>)}
-          </div>
-          <span style={{fontSize:15,fontWeight:800,color:tc(row.tag)}}>{row.sum}</span>
-          <span style={{
-            fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,
-            background:tc(row.tag)+"18",color:tc(row.tag),
-          }}>{row.tag}</span>
+
+          {/* ISSUE */}
+          <div style={{
+  ...cellLeft,
+  fontSize: 12,
+  color: "#444",
+  lineHeight: "14px"
+}}>
+  {row.issue}
+</div>
+
+          {/* DICE */}
+          <div style={{
+  ...cellCenter,
+  gap: 4
+}}>
+  {row.dice.map((d, j) => (
+    <Dice3D key={j} value={d} size={26} dotScale={0.36} />
+  ))}
+</div>
+
+          {/* SUM */}
+          <div style={{
+  ...cellCenter,
+  fontSize: 16,
+  fontWeight: 700
+}}>
+  {row.sum}
+</div>
+          {/* BIG / SMALL */}
+<div style={cellCenter}>
+  <img
+    src={getTagImage(row.tag)}
+    style={{ width: 32, height: 32 }}
+  />
+</div>
+
+          {/* ODD / EVEN */}
+<div style={cellCenter}>
+  <img
+    src={getTagImage(row.even ? "EVEN" : "ODD")}
+    style={{ width: 32, height: 32 }}
+  />
+</div>
+
         </div>
-      ))}
-      
-  <div style={{
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    padding: "12px"
-  }}>
-    {/* PREV */}
-    <button
-      onClick={handlePrev}
-      disabled={histPage === 1}
-      style={{
-        padding: "6px 12px",
-        borderRadius: 6,
-        border: "1px solid #ddd",
-        background: histPage === 1 ? "#eee" : "#fff",
-        cursor: histPage === 1 ? "not-allowed" : "pointer"
-      }}
-    >
-      ⬅ Prev
-    </button>
+      ))}  
 
-    {/* PAGE NUMBER */}
-    <span style={{ fontSize: 13, fontWeight: 600 }}>
-      Page {histPage}
-    </span>
+      {/* PAGINATION */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 12,
+        padding: "8px"
+      }}>
+        <button
+          onClick={handlePrev}
+          disabled={histPage === 1}
+          style={{
+            padding: "6px 12px",
+            borderRadius: 8,
+            border: "none",
+            background: histPage === 1 ? "#ddd" : "#eee",
+            cursor: histPage === 1 ? "not-allowed" : "pointer"
+          }}
+        >
+          ‹
+        </button>
 
-    {/* NEXT */}
-    <button
-      onClick={handleNext}
-      disabled={!hasMoreHistory}
-      style={{
-        padding: "6px 12px",
-        borderRadius: 6,
-        border: "1px solid #ddd",
-        background: !hasMoreHistory ? "#eee" : "#fff",
-        cursor: !hasMoreHistory ? "not-allowed" : "pointer"
-      }}
-    >
-      Next ➡
-    </button>
-  </div>
+        <div style={{ fontWeight: 600 }}>
+          {histPage}
+        </div>
+
+        <button
+          onClick={handleNext}
+          disabled={!hasMoreHistory}
+          style={{
+            padding: "6px 12px",
+            borderRadius: 8,
+            border: "none",
+            background: !hasMoreHistory ? "#ddd" : "#eee",
+            cursor: !hasMoreHistory ? "not-allowed" : "pointer"
+          }}
+        >
+          ›
+        </button>
+      </div>
 
     </div>
   );
@@ -948,75 +1071,114 @@ function AnalyzeTab({history}) {
   );
 }
 
-function MyOrderTab({ bets, user, setBets,periodKey }) {
+function MyOrderTab({ bets, user, setBets, periodKey }) {
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchUserBets();
-    }
-  }, [user?.id,periodKey]);
+const [page, setPage] = useState(1);
+const [limit] = useState(5);
+const [hasNext, setHasNext] = useState(true);
+const [loading, setLoading] = useState(false);
 
-  const fetchUserBets = async () => {
-    try {
-      const res = await getUserBets({
-  user_id: user?.id,
-  key: periodKey   // ✅ IMPORTANT
-});
+  // ✅ GROUPING (same as yours)
+  const groupedBets = Object.values(
+    bets.reduce((acc, bet) => {
+      if (!acc[bet.issue]) {
+        acc[bet.issue] = {
+          issue: bet.issue,
+          items: []
+        };
+      }
+      acc[bet.issue].items.push(bet);
+      return acc;
+    }, {})
+  );
 
-      if (!res?.success) return;
+useEffect(() => {
+  if (user?.id) {
+    setPage(1);
+    fetchUserBets(1);
+  }
+}, [user?.id, periodKey]);
 
-      const list = res.data || [];
+const fetchUserBets = async (pageNum = 1) => {
+  if (loading) return;
 
-const formatted = list.map(item => {
-  const rawResult = item.result;
+  setLoading(true);
 
-  // 🔥 NORMALIZE RESULT
-  let status = "pending";
+  try {
+    const res = await getUserBets({
+      user_id: user?.id,
+      key: periodKey,
+      page: pageNum,   // ✅ REQUIRED
+      limit: limit     // ✅ REQUIRED
+    });
 
-  if (rawResult === "win" || rawResult === 1 || rawResult === true) {
-    status = "win";
-  } else if (
-    rawResult === "lose" ||
-    rawResult === "loss" ||
-    rawResult === 0 ||
-    rawResult === false
-  ) {
-    status = "lose";
-  } else {
-    status = "pending";
+    if (!res?.success) return;
+
+    const list = res.data || [];
+
+    const formatted = list.map(item => {
+      let status = "pending";
+
+      if (item.result === "win" || item.result === 1 || item.result === true) {
+        status = "win";
+      } else if (
+        item.result === "lose" ||
+        item.result === "loss" ||
+        item.result === 0 ||
+        item.result === false
+      ) {
+        status = "lose";
+      }
+
+      return {
+        id: item.id,
+        selection: {
+          id: item.value,
+          label: item.value,
+          payout: item.multiplier || "-",
+          type: item.type
+        },
+        amount: item.bet_amount,
+        qty: 1,
+        issue: item.slot_num,
+        settled: status !== "pending",
+        won: status === "win",
+        payout: item.credit_amount || 0,
+        dice: item.slotResult?.dice || [],
+        sum: item.slotResult?.sum,
+        resultTag: item.slotResult?.value,
+        oddEven: item.slotResult?.number
+      };
+    });
+
+    setBets(formatted); // ✅ ALWAYS REPLACE
+
+    // ✅ if less than limit → no next page
+    setHasNext(list.length === limit);
+
+  } catch (err) {
+    console.log("fetchUserBets error", err);
   }
 
-  return {
-    id: item.id,
+  setLoading(false);
+};
+const handleNext = () => {
+  if (!hasNext) return;
 
-    selection: {
-      id: item.value,
-      label: item.value,
-      payout: item.multiplier || "-",
-      type: item.type 
-    },
+  const nextPage = page + 1;
+  setPage(nextPage);
+  fetchUserBets(nextPage);
+};
 
-    amount: item.bet_amount,
-    qty: 1,
-    issue: item.slot_num,
+const handlePrev = () => {
+  if (page === 1) return;
 
-    // ✅ FINAL STATUS
-    settled: status !== "pending",
-    won: status === "win",
+  const prevPage = page - 1;
+  setPage(prevPage);
+  fetchUserBets(prevPage);
+};
 
-    payout: item.credit_amount || 0,
-    dice: item.dice || null
-  };
-});
-
-      setBets(formatted);
-
-    } catch (err) {
-      console.log("fetchUserBets error", err);
-    }
-  };
-
-  // 🟡 EMPTY STATE
+  // 🟡 EMPTY (same as yours)
   if (!bets.length) {
     return (
       <div style={{ padding: 40, textAlign: "center", color: "#bbb" }}>
@@ -1031,162 +1193,181 @@ const formatted = list.map(item => {
     );
   }
 
+  // ✅ 🔥 KEEP YOUR ORIGINAL UI BELOW (JUST FIX SMALL PART)
   return (
-    <div>
-      {bets.map((b, i) => {
+    <div style={{ padding: 10 }}>
+      {groupedBets.map((group, i) => {
+        const first = group.items[0];
 
-        // ✅ STATUS FIXED
-        const isPending = !b.settled;
-        const isWon = b.settled && b.won;
-        const isLost = b.settled && !b.won;
-
-        const wlColor = isPending
-          ? "#f59e0b"
-          : isWon
-          ? "#16a34a"
-          : "#ef4444";
-
-        const wlLabel = isPending
-          ? "PENDING"
-          : isWon
-          ? "WON"
-          : "LOST";
+        const isPending = group.items.some(b => !b.settled);
+        const isWon = group.items.some(b => b.won);
+        const isLost = !isPending && !isWon;
 
         return (
           <div
             key={i}
             style={{
-              padding: "12px 14px",
-              borderBottom: "1px solid #f4f2fc",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
+              background: "#fff",
+              borderRadius: 14,
+              marginBottom: 14,
+              overflow: "hidden",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
             }}
           >
-            {/* LEFT */}
+
+            {/* 🔹 DRAW HEADER */}
+            <div style={{
+              background: "#f5f5dc",
+              padding: 10,
+              fontSize: 13,
+              fontWeight: 700
+            }}>
+              Draw results
+            </div>
+
+            {/* 🔹 RESULT SECTION */}
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: 10,
+              alignItems: "center"
+            }}>
+              <div style={{ display: "flex", gap: 6 }}>
+                {first.dice?.length > 0 ? (
+                  first.dice.map((d, idx) => (
+                    <Dice3D key={idx} value={d} size={28} />
+                  ))
+                ) : (
+                  <span style={{ fontSize: 12, color: "#999" }}>
+                    Waiting result...
+                  </span>
+                )}
+              </div>
+
+              <div style={{ fontSize: 13 }}>
+                Sum: {first.sum ?? "-"}
+              </div>
+
+              <div style={{
+                background: "#3b82f6",
+                color: "#fff",
+                padding: "4px 8px",
+                borderRadius: 10,
+                fontSize: 11
+              }}>
+                {first.resultTag?.toUpperCase() || "-"}
+              </div>
+            </div>
+
+            {/* 🔹 STATUS */}
+            <div style={{
+              background: "#f3f4f6",
+              padding: "8px 10px",
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: 12
+            }}>
+              <div>
+                {isPending && "⏳ Pending"}
+                {isWon && "✅ Win"}
+                {isLost && "❌ No Win"}
+              </div>
+
+              <div>ID {group.issue}</div>
+            </div>
+
+            {/* 🔹 BET LIST (UNCHANGED) */}
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 3
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "#1a1a2e"
-                  }}
-                >
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-  <span
-    style={{
-      fontSize: 14,
-      fontWeight: 700,
-      color: "#1a1a2e"
-    }}
-  >
-    {b.selection.label || String(b.selection.id)}
-  </span>
-
-  {/* 🎯 TYPE */}
-  <span
-    style={{
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#7c3aed"
-    }}
-  >
-    {b.selection.type}
-  </span>
-</div>
-                </span>
-
-                {/* STATUS BADGE */}
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "2px 8px",
-                    borderRadius: 10,
-                    background: wlColor + "22",
-                    color: wlColor
-                  }}
-                >
-                  {wlLabel}
-                </span>
-              </div>
-
-              <div style={{ fontSize: 11, color: "#888" }}>
-                Issue {b.issue} · Bet ₹{b.amount} · {b.selection.payout}X
-              </div>
-
-              {/* 🎲 RESULT DICE */}
-              {b.settled && b.dice && (
+              {group.items.map((b, j) => (
                 <div
+                  key={j}
                   style={{
                     display: "flex",
-                    gap: 3,
-                    marginTop: 4,
+                    justifyContent: "space-between",
+                    padding: "10px 12px",
+                    borderTop: "1px solid #f1f1f1",
                     alignItems: "center"
                   }}
                 >
-                  {b.dice.map((d, j) => (
-                    <Dice3D key={j} value={d} size={18} />
-                  ))}
-                  <span style={{ fontSize: 11, color: "#888", marginLeft: 3 }}>
-                    Sum {b.dice.reduce((a, c) => a + c, 0)}
-                  </span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>
+                      {b.selection.label}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#888" }}>
+                      {b.selection.type}
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 13 }}>
+                    ₹{b.amount}
+                  </div>
+
+                  <div style={{
+                    fontWeight: 700,
+                    color: b.won
+                      ? "#16a34a"
+                      : b.settled
+                      ? "#ef4444"
+                      : "#f59e0b"
+                  }}>
+                    {b.settled
+                      ? b.won
+                        ? `+₹${b.payout}`
+                        : "No win"
+                      : "Pending"}
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* RIGHT */}
-            <div style={{ textAlign: "right" }}>
-              {isPending && (
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#f59e0b"
-                  }}
-                >
-                  Pending
-                </div>
-              )}
-
-              {isWon && (
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color: "#16a34a"
-                  }}
-                >
-                  +₹{b.payout}
-                </div>
-              )}
-
-              {isLost && (
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color: "#ef4444"
-                  }}
-                >
-                  −₹{b.amount}
-                </div>
-              )}
-            </div>
           </div>
         );
       })}
+      <div style={{
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: 10,
+  padding: "10px 6px"
+}}>
+  <button
+    onClick={handlePrev}
+    disabled={page === 1 || loading}
+    style={{
+      padding: "8px 14px",
+      borderRadius: 10,
+      border: "none",
+      background: page === 1 ? "#ccc" : "#7c3aed",
+      color: "#fff",
+      cursor: page === 1 ? "not-allowed" : "pointer"
+    }}
+  >
+    ⬅ Prev
+  </button>
+
+  <span style={{ fontSize: 13, fontWeight: 600 }}>
+    Page {page}
+  </span>
+
+  <button
+    onClick={handleNext}
+    disabled={!hasNext || loading}
+    style={{
+      padding: "8px 14px",
+      borderRadius: 10,
+      border: "none",
+      background: !hasNext ? "#ccc" : "#7c3aed",
+      color: "#fff",
+      cursor: !hasNext ? "not-allowed" : "pointer"
+    }}
+  >
+    Next ➡
+  </button>
+</div>
     </div>
   );
 }
+
   const TimerDisplay = React.memo(({ timeLeft, urgent }) => {
   return <CountdownTimer seconds={timeLeft} urgent={urgent} />;
 });
@@ -1261,6 +1442,86 @@ const[lastResultDice,setLastResultDice]=useState([])
 const audio     = useAudioEngine();
 
 const [isRunning, setIsRunning] = useState(true);
+
+
+const [config, setConfig] = useState([]);
+
+useEffect(() => {
+  console.log("CONFIG:", config);
+  console.log("PAYOUT MAP:", payoutMap);
+}, [config]);
+
+useEffect(() => {
+  fetchConfig();
+}, [periodKey]); // ✅ MUST
+
+const fetchConfig = async () => {
+  const res = await getConfig({ key: periodKey });
+
+  if (res?.success) {
+    setConfig(res.data?.payouts || []);
+  }
+};
+
+  const payoutMap = useMemo(() => {
+    const map = {};
+    config.forEach(item => {
+      map[item.bet_type] = Number(item.payout);
+    });
+    return map;
+  }, [config]);
+
+const SUM_BETS = useMemo(() => {
+  if (!config.length) return [];
+
+  return [
+    {
+      id: "BIG",
+      label: "BIG",
+      payout: payoutMap["BIG"] ?? "-",
+      multiplier: payoutMap["BIG"] ?? 0,
+      type: "special",
+      color: "#e8302a"
+    },
+    {
+      id: "SMALL",
+      label: "SMALL",
+      payout: payoutMap["SMALL"] ?? "-",
+      multiplier: payoutMap["SMALL"] ?? 0,
+      type: "special",
+      color: "#3aaee0"
+    },
+    {
+      id: "ODD",
+      label: "Odd",
+      payout: payoutMap["ODD"] ?? "-",
+      multiplier: payoutMap["ODD"] ?? 0,
+      type: "special",
+      color: "#e8302a"
+    },
+    {
+      id: "EVEN",
+      label: "Even",
+      payout: payoutMap["EVEN"] ?? "-",
+      multiplier: payoutMap["EVEN"] ?? 0,
+      type: "special",
+      color: "#3aaee0"
+    },
+
+    ...Array.from({ length: 16 }, (_, i) => {
+      const sum = i + 3;
+      const key = `SUM_${sum}`;
+
+      return {
+        id: sum,
+        label: String(sum),
+        payout: payoutMap[key] ?? "-",
+        multiplier: payoutMap[key] ?? 0,
+        color: i % 2 === 0 ? "#e8302a" : "#4caf50"
+      };
+    })
+  ];
+}, [payoutMap, config]);
 
 const fetchHistory = async (page = 1) => {
   const res = await getDiceHistory({
@@ -1444,15 +1705,12 @@ useEffect(() => {
 const progress = ((totalTime - timeLeft) / totalTime) * 100;
   const sum       = dice.reduce((a,b)=>a+b,0);
   const sumTag    = sum>=11?"BIG":"SMALL";
-const tabBets = useMemo(() => {
-  return {
-    Sum: SUM_BETS,
-    Triple: TRIPLE_BETS,
-    Double: DOUBLE_BETS,
-    Single: SINGLE_BETS
-  }[betTab];
-}, [betTab]);
-
+const tabBets = {
+  Sum: SUM_BETS,
+  Triple: TRIPLE_BETS,
+  Double: DOUBLE_BETS,
+  Single: SINGLE_BETS
+}[betTab];
 
   useEffect(() => {
       const storedUser = localStorage.getItem("user");
@@ -1587,6 +1845,14 @@ const handleConfirm = async (selection, amount, qty) => {
   const [showHowTo, setShowHowTo] = useState(false);
 const [howToData, setHowToData] = useState("");
 const [loadingHowTo, setLoadingHowTo] = useState(false);
+const formatHowTo = (text) => {
+  if (!text) return [];
+
+  return text
+    .split("\r\n")
+    .filter(line => line.trim() !== "");
+};
+const lines = formatHowTo(howToData);
 
 const handleHowToPlay = async () => {
   setShowHowTo(true);
@@ -1605,6 +1871,45 @@ const handleHowToPlay = async () => {
   setLoadingHowTo(false);
 };
 
+const MiniBall = ({ number }) => {
+  const isRed = number % 2 !== 0;   // same logic as your SUM_BETS
+  const isGreen = number % 2 === 0;
+
+  return (
+    <div
+      style={{
+        width: 34,
+        height: 34,
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* 🎯 BALL IMAGE */}
+      <img
+        src={isRed ? BALL_IMAGES.red : BALL_IMAGES.green}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+        }}
+      />
+
+      {/* 🔢 NUMBER */}
+      <span
+        style={{
+          position: "absolute",
+          fontSize: 13,
+          fontWeight: 900,
+          color: isRed ? "#e8302a" : "#2e7d32",
+        }}
+      >
+        {number}
+      </span>
+    </div>
+  );
+};
   /* ══════════════════════════════════════════════════
      RENDER
   ══════════════════════════════════════════════════ */
@@ -1679,44 +1984,19 @@ const handleHowToPlay = async () => {
   <div style={{ display: "flex", gap: 5, marginLeft: 6 }}>
 
     {/* SUM (green circle like image) */}
-    <div style={{
-      width: 26,
-      height: 26,
-      borderRadius: "50%",
-      background: "#22c55e",
-      color: "white",
-      fontSize: 12,
-      fontWeight: 800,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
-      {sum}
-    </div>
+<MiniBall number={sum} />
 
-    {/* SMALL / BIG */}
-    <div style={{
-      padding: "3px 8px",
-      borderRadius: 14,
-      background: "#3b82f6",
-      color: "white",
-      fontSize: 11,
-      fontWeight: 700
-    }}>
-      {sum <= 10 ? "SMALL" : "BIG"}
-    </div>
+{/* 🎯 BIG / SMALL IMAGE */}
+<img
+  src={getTagImage(sum <= 10 ? "SMALL" : "BIG")}
+  style={{ width: 32, height: 32 }}
+/>
 
-    {/* EVEN */}
-    <div style={{
-      padding: "3px 8px",
-      borderRadius: 14,
-      background: "#38bdf8",
-      color: "white",
-      fontSize: 11,
-      fontWeight: 700
-    }}>
-      {sum % 2 === 0 ? "Even" : "Odd"}  
-    </div>
+{/* 🎯 ODD / EVEN IMAGE */}
+<img
+  src={getTagImage(sum % 2 === 0 ? "EVEN" : "ODD")}
+  style={{ width: 32, height: 32 }}
+/>
 
   </div>
 </div>
@@ -1903,10 +2183,55 @@ const handleHowToPlay = async () => {
       {loadingHowTo ? (
         <div style={{ textAlign: "center", padding: 20 }}>Loading...</div>
       ) : (
-        <div
-          style={{ fontSize: 13, lineHeight: 1.6, color: "#444" }}
-          dangerouslySetInnerHTML={{ __html: howToData }}
-        />
+       <div style={{ fontSize: 13, color: "#444" }}>
+  {lines.map((line, i) => {
+    
+    // 🎯 Section Titles
+    if (
+      line.includes("Big / Small") ||
+      line.includes("Odd / Even") ||
+      line.includes("Sum of Points") ||
+      line.includes("Single Dice") ||
+      line.includes("Double Dice") ||
+      line.includes("Triple") ||
+      line.includes("Game Odds") ||
+      line.includes("DISCLAIMER")
+    ) {
+      return (
+        <div key={i} style={{
+          marginTop: 14,
+          fontWeight: 700,
+          fontSize: 14,
+          color: "#7c3aed"
+        }}>
+          {line}
+        </div>
+      );
+    }
+
+    // 🎯 Highlight important lines
+    if (line.includes("=") || line.includes("Bet on")) {
+      return (
+        <div key={i} style={{
+          background: "#f5f3ff",
+          padding: "8px 10px",
+          borderRadius: 8,
+          marginTop: 6,
+          fontSize: 12
+        }}>
+          {line}
+        </div>
+      );
+    }
+
+    // 🧾 Normal text
+    return (
+      <div key={i} style={{ marginTop: 6 }}>
+        {line}
+      </div>
+    );
+  })}
+</div>
       )}
     </div>
   </>

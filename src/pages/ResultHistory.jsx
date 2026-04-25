@@ -2,100 +2,174 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { getResultHistory } from "../services/authService";
+import KeralaLotteryTab from "./KeralaOverallHistory";
+import DiceResultWithTabs from "./useDiceResult";
+import ColorHistoryComp from "./ColorPredictionResultComp";
 
-/* 🔥 Drag Scroll Hook */
 function useDragScroll() {
-  const ref = useRef(null);
 
+  const ref = useRef(null);
   let isDown = false;
   let startX;
-  let scrollLeft;
-
   const onMouseDown = (e) => {
     isDown = true;
-    startX = e.pageX - ref.current.offsetLeft;
-    scrollLeft = ref.current.scrollLeft;
+    startX = e.pageX;
   };
 
-  const onMouseLeave = () => {
-    isDown = false;
-  };
-
-  const onMouseUp = () => {
-    isDown = false;
-  };
-
-  const onMouseMove = (e) => {
+  const onMouseUp = (e) => {
     if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - ref.current.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    ref.current.scrollLeft = scrollLeft - walk;
+    isDown = false;
+    const diff = e.pageX - startX;
+    const container = ref.current;
+    const itemWidth = container.firstChild?.offsetWidth + 10 || 100;
+    if (diff < -50) {
+      container.scrollBy({ left: itemWidth, behavior: "smooth" });
+    } else if (diff > 50) {
+      container.scrollBy({ left: -itemWidth, behavior: "smooth" });
+    }
   };
-
   return {
     ref,
-    handlers: {
-      onMouseDown,
-      onMouseLeave,
-      onMouseUp,
-      onMouseMove,
-    },
+    handlers: { onMouseDown, onMouseUp },
   };
 }
 
+function useSwipeTabs(tabs, activeTab, setActiveTab) {
+  const ref = useRef(null);
+  let startX = 0;
+  const onTouchStart = (e) => {
+    startX = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e) => {
+    const diff = e.changedTouches[0].clientX - startX;
+    const index = tabs.indexOf(activeTab);
+    if (diff < -50 && index < tabs.length - 1) {
+      setActiveTab(tabs[index + 1]);
+    }
+    if (diff > 50 && index > 0) {
+      setActiveTab(tabs[index - 1]);
+    }
+  };
+  return { ref, handlers: { onTouchStart, onTouchEnd } };
+}
 export default function ResultScreen() {
   const navigate = useNavigate();
-
   const [mainTab, setMainTab] = useState("");
   const [subTab, setSubTab] = useState("");
-  const [user, setUser] = useState(null);
   const [histdata, setData] = useState({});
   const [loading, setLoading] = useState(true);
-
   const mainTabScroll = useDragScroll();
   const subTabScroll = useDragScroll();
+  const subTabRefs = useRef({});
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
       fetchHistory(parsedUser.id);
     } else {
       setLoading(false);
     }
   }, []);
-
   const fetchHistory = async (userId) => {
     try {
       setLoading(true);
       const res = await getResultHistory({ id: userId });
-
       const apiData = res.data || {};
       setData(apiData);
-
       const firstMain = Object.keys(apiData)[0];
       if (firstMain) {
         setMainTab(firstMain);
-
         const firstSub = Object.keys(apiData[firstMain].subTabs || {})[0];
-        if (firstSub) setSubTab(firstSub);
+        setSubTab(firstSub || "");
       }
     } catch (err) {
-      console.log("API Error:", err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
   };
-
   const mainTabs = Object.keys(histdata || {});
   const currentSubTabs = histdata[mainTab]?.subTabs || {};
   const subTabs = Object.keys(currentSubTabs);
+  const contentSwipe = useSwipeTabs(subTabs, subTab, setSubTab);
+  useEffect(() => {
+    if (subTabRefs.current[subTab]) {
+      subTabRefs.current[subTab].scrollIntoView({
+        behavior: "smooth", inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [subTab]);
+  const renderContent = () => {
+    switch (subTab) {
+      case "dice":
+        return <DiceResultWithTabs />;
 
-  const currentData =
-    currentSubTabs[subTab]?.leaderboard || [];
+      case "color":
+        return <ColorHistoryComp />;
 
+      case "kerala":
+        return <KeralaLotteryTab lottery="kerala" />;
+
+      default:
+        return <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "60vh",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              padding: "24px",
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+              width: "80%",
+              maxWidth: "260px",
+              opacity: 10,
+              transform: `translateY( 10}px)`,
+              transition: "all 0.4s ease",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "40px",
+                marginBottom: "10px",
+                transform: `translateY(${10}px)`,
+                transition: "transform 0.1s linear",
+              }}
+            >
+              📦
+            </div>
+
+            {/* TEXT */}
+            <p
+              style={{
+                fontWeight: "600",
+                fontSize: "16px",
+                color: "#333",
+              }}
+            >
+              No Data Available
+            </p>
+
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#777",
+                marginTop: "4px",
+              }}
+            >
+              There’s nothing to show here right now
+            </p>
+          </div>
+        </div>;
+    }
+  };
   return (
     <div style={styles.container}>
       {/* Header */}
@@ -107,19 +181,13 @@ export default function ResultScreen() {
       </div>
 
       {/* Main Tabs */}
-      <div
-        ref={mainTabScroll.ref}
-        {...mainTabScroll.handlers}
-        style={styles.mainTabs}
-      >
+      <div ref={mainTabScroll.ref} {...mainTabScroll.handlers} style={styles.mainTabs}>
         {mainTabs.map((tabKey) => (
           <div
             key={tabKey}
             onClick={() => {
               setMainTab(tabKey);
-              const firstSub = Object.keys(
-                histdata[tabKey]?.subTabs || {}
-              )[0];
+              const firstSub = Object.keys(histdata[tabKey]?.subTabs || {})[0];
               setSubTab(firstSub || "");
             }}
             style={{
@@ -133,16 +201,17 @@ export default function ResultScreen() {
       </div>
 
       {/* Sub Tabs */}
-      <div
-        ref={subTabScroll.ref}
-        {...subTabScroll.handlers}
-        style={styles.subTabs}
-      >
+      <div ref={subTabScroll.ref} {...subTabScroll.handlers} style={styles.subTabs}>
         {subTabs.map((key) => (
           <div
             key={key}
+            ref={(el) => (subTabRefs.current[key] = el)} // ✅ attach ref
             onClick={() => setSubTab(key)}
-            style={styles.subTabItem}
+            style={{
+              ...styles.subTabItem,
+              transform: subTab === key ? "scale(1.05)" : "scale(1)",
+              transition: "0.2s",
+            }}
           >
             <span
               style={{
@@ -156,145 +225,50 @@ export default function ResultScreen() {
           </div>
         ))}
       </div>
-
-      {/* Content */}
-      <div style={styles.content}>
-        <div style={styles.card}>
-          <div style={styles.cardTitle}>
-            {currentSubTabs[subTab]?.label} Leaderboard
-          </div>
-
-          <div style={styles.tableHeader}>
-            <span>Game</span>
-            <span>User</span>
-            <span>Bonus</span>
-          </div>
-
-          {loading ? (
-            <div style={{ textAlign: "center", padding: 20 }}>
-              Loading...
-            </div>
-          ) : currentData.length > 0 ? (
-            currentData.map((item) => (
-              <div key={item.rank} style={styles.row}>
-                <div style={styles.game}>
-                  <span style={styles.rank}>{item.rank}</span>
-                  {item.name}
-                </div>
-                <div>{item.user}</div>
-                <div style={styles.amount}>{item.amount}</div>
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: "center", padding: 20, color: "#999" }}>
-              No Data Available
-            </div>
-          )}
-        </div>
+      <div ref={contentSwipe.ref} {...contentSwipe.handlers} style={styles.content}>
+        {renderContent()}
       </div>
     </div>
   );
 }
-
 const styles = {
   container: {
     maxWidth: 430,
     margin: "0 auto",
-    background: "#f4f6fb",
-    minHeight: "100vh",
-    fontFamily: "sans-serif",
-  },
-
-  header: {
-    background: "#fff",
-    padding: "14px",
-    textAlign: "center",
-    fontWeight: 700,
-    position: "relative",
+    background: "#f4f6fb", height: "100vh", display: "flex", flexDirection: "column",
+    overflow: "hidden",
+  }, header: {
+    background: "#fff", padding: 14,
+    textAlign: "center", fontWeight: 700, position: "relative",
     borderBottom: "1px solid #eee",
-  },
-
-  backBtn: {
-    position: "absolute",
-    left: 10,
-    top: 10,
-    border: "none",
+  }, backBtn: {
+    position: "absolute", left: 10, top: 10, border: "none",
     background: "none",
-    cursor: "pointer",
-  },
-
-  mainTabs: {
-    display: "flex",
-    gap: 10,
-    padding: 15,
-    background: "#fff",
+  }, mainTabs: {
+    display: "flex", gap: 10, padding: 15,
     overflowX: "auto",
-    cursor: "grab",
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    WebkitOverflowScrolling: "touch",
+    background: "#fff",
+  }, mainTab: {
+    padding: "8px 18px", borderRadius: 10,
+    background: "#e5e7eb", whiteSpace: "nowrap",
   },
-
-  mainTab: {
-    padding: "8px 18px",
-    borderRadius: 10,
-    background: "#e5e7eb",
-    fontWeight: 600,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-
   activeMainTab: {
     background: "#fff",
     borderTop: "3px solid #7c3aed",
   },
-
   subTabs: {
-    display: "flex",
-    gap: 20,
-    padding: "12px 15px",
-    overflowX: "auto",
-    background: "#fff",
-    borderTop: "1px solid #eee",
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    WebkitOverflowScrolling: "touch",
-    scrollSnapType: "x mandatory",
-    cursor: "grab",
-  },
-
-  subTabItem: {
-    display: "flex",
-    flexDirection: "column",    alignItems: "center",
-    cursor: "pointer",
+    display: "flex", gap: 20, padding: "12px 15px",
+    overflowX: "auto", background: "#fff",
+  }, subTabItem: {
+    display: "flex", flexDirection: "column", alignItems: "center",
     whiteSpace: "nowrap",
-    scrollSnapAlign: "start",  },  subTabText: {
-    fontWeight: 500,
-  },  activeUnderline: {    marginTop: 6,    width: "60%",    height: 3,
-    background: "#7c3aed",
-    borderRadius: 2,
-  },
-
-  content: {
+  }, subTabText: { fontWeight: 500 }, activeUnderline: {
+    marginTop: 6, width: "60%", height: 3, background: "#7c3aed",
+  }, content: {
+    flex: 1, overflowY: "auto", padding: 10,
+    touchAction: "pan-y",
+  }, card: {
+    background: "#fff", borderRadius: 10,
     padding: 10,
-  },
-  card: {    background: "#fff",    borderRadius: 10,
-    padding: 10,
-  },  cardTitle: {    fontWeight: 600,
-    marginBottom: 10,  },
-  tableHeader: {    display: "flex",    justifyContent: "space-between",
-    fontSize: 12,    color: "#888",
-    padding: "8px 0",  },  row: {
-    display: "flex",    justifyContent: "space-between",
-    padding: "12px 0",
-    borderBottom: "1px solid #eee",
-    alignItems: "center",
-  },
-  game: {    display: "flex",    alignItems: "center",    gap: 8,
-  },  rank: {    background: "#ddd",    borderRadius: 6,
-    padding: "2px 6px",    fontSize: 12,  },
-
-  amount: {
-    fontWeight: 600,
   },
 };

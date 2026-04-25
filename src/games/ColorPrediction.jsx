@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import colorRed from "../assets/colorred.png";
 import colorGreen from "../assets/colorgreen.png";
 import colorRedViolet from "../assets/colorredviolet.png";
+import colorGreenViolet from "../assets/colorgreenviolet.png"
 import { getColorGame,getColorHistory,placeColorBet,getColorUserBets  } from "../services/gameSevice";
 import { getWalletSummary } from "../services/authService";
 import { useParams } from "react-router-dom";
@@ -123,7 +124,7 @@ const BALL_IMAGES = {
   2: colorRed,
   3: colorGreen,
   4: colorRed,
-  5: colorRedViolet,
+  5: colorGreenViolet,
   6: colorRed,
   7: colorGreen,
   8: colorRed,

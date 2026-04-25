@@ -260,7 +260,7 @@ function ResultHistoryTab({ lottery }) {
   const fetchResults = async () => {
     try {
       const res = await getAllLotteryResults({
-        lotteryDigit: lottery?.lotteryDigit,
+        
       });
 
       if (res?.success) {

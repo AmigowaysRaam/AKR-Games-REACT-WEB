@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 
 export default function KeralaLottery({ items = [] }) {
     const [timers, setTimers] = useState([]);
-    const navigate =useNavigate();
+    const navigate = useNavigate();
     useEffect(() => {
         const initialTimers = items.map(() =>
             Math.floor(Math.random() * (60 * 60 * 12)) // up to 12 hrs
         );
         setTimers(initialTimers);
-        console.log("kerala lottery",items)
+        console.log("kerala lottery", items)
 
         const interval = setInterval(() => {
             setTimers((prev) =>
@@ -33,41 +33,30 @@ export default function KeralaLottery({ items = [] }) {
                     return (
                         <div
                             key={item.id}
-                           onClick={() => navigate(`/kerala-lottery/${item.id}`)}
+                            onClick={() => navigate(`/kerala-lottery/${item.id}`)}
                             className="rounded-sm overflow-hidden bg-white shadow-sm"
                         >
-                            {/* 🔥 IMAGE SECTION */}
                             <div
-                                className="relative h-[140px] text-white"
+                                className="relative h-[120px] text-white"
                                 style={{
                                     backgroundImage: `url(${item.img})`,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
+                                    backgroundSize: "contain",
+                                    backgroundRepeat: "no-repeat"
                                 }}
                             >
-                                <div className="absolute top-1 left-2 text-[10px] font-semibold bg-black/40 px-2 py-[2px] rounded">
+                                <div className="absolute top-1 left-2 text-[8px] font-semibold bg-black/40 px-2 py-[2px] rounded">
                                     weekly lottery
                                 </div>
-                                <div className="absolute top-1 right-2 text-[10px] font-semibold text-white">
-                                    NO.<br />{item.number || "BT-47"}
-                                </div>
-
-                                {/* Bottom Overlay Content */}
-                                <div className="absolute bottom-2 left-2">
-                                    <p className="text-xs font-semibold">
-                                        {/* {item.title || "ONLINE ONLY"} */}
-                                    </p>
-                                    {/* <p className="text-[11px]">WIN PRIZE</p>
-                                    <p className="text-lg font-bold leading-none">
-                                        {item.prize || "1.2 Crores"}
-                                    </p> */}
-                                </div>
+                                {
+                                    item?.number &&
+                                    <div className="absolute top-1 right-2 text-[10px] font-semibold text-white">
+                                        NO.<br />{item?.number}
+                                    </div>
+                                }
                             </div>
-
-                            {/* 💰 BOTTOM SECTION */}
                             <div className="px-2 py-2 flex justify-between items-center text-xs">
                                 <p className="font-semibold text-gray-800">
-                                    ₹{item.price || "50.00"}
+                                    ₹{item.price}
                                 </p>
 
                                 <div className="text-right text-gray-500 leading-tight">

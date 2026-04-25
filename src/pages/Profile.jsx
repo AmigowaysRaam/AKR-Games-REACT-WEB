@@ -24,7 +24,6 @@ export default function Profile() {
   const [sections, setSections] = useState([]);
   const [loading, setSloading] = useState(false);
 
-
   const fetchHistory = async () => {
     try {
       setSloading(true);
@@ -164,7 +163,12 @@ export default function Profile() {
   `}
                 >
                   <div className="flex items-center gap-2">
-                    <img src={item.image} className="w-10 h-10" />
+                    <div className="w-12 h-12">
+                      <img
+                        src={item.image}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
                     <div>
                       <p className="font-semibold text-sm">{item.title}</p>
                       <span className="text-xs">{item.tag}</span>
@@ -212,7 +216,7 @@ export default function Profile() {
       </div>
       <LuckySpinModal show={showSpin} onClose={() => setShowSpin(false)} />
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center ">
           <div className="bg-white w-[320px] rounded-2xl p-5 text-center">
             <h2 className="text-lg font-bold mb-2">Confirm Logout</h2>
             <p className="text-sm text-gray-500 mb-5">
@@ -227,7 +231,7 @@ export default function Profile() {
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 py-2 cursor-pointer bg-red-500 text-white rounded-xl"
+                className="flex-1 py-2 cursor-pointer bg-red-500 text-white rounded-xl "
               >
                 Logout
               </button>

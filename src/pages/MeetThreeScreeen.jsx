@@ -14,8 +14,8 @@ export default function MeetThreeScreeen() {
       const res = await getmeetthreeDetails({
         userId: JSON.parse(localStorage.getItem("user"))?.id,
       });
-      // alert(JSON.stringify(res?.image));
       if (res?.success) {
+        // alert(JSON.stringify(res))
         setApiData(res);
       }
     } catch (err) {
@@ -25,13 +25,14 @@ export default function MeetThreeScreeen() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchEarning();
   }, []);
+
   if (loading) return <GameLoader />;
+
   const bgImage =
-    apiData?.image 
+    apiData?.image
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center overflow-hidden">
       <div
@@ -94,26 +95,32 @@ export default function MeetThreeScreeen() {
                   ))}
                 </div>
               </div>
+              {/* <p>{JSON.stringify(apiData?.show_offer)}</p> */}
               <div className="mt-auto pt-4">
                 <p className="text-xs text-center opacity-80 mb-3">
                   {apiData?.terms?.length
                     ? apiData.terms.join(" ")
                     : "Only normal game players can participate. Malicious activity will cancel rewards."}
                 </p>
-                <button
-                  disabled={!apiData?.button?.can_join}
-                  onClick={() => {
-                    if (apiData?.button?.can_join) {
-                      navigate("/payRecharge");
-                    }
-                  }}
-                  className={`w-full py-3 rounded-full text-white font-semibold shadow-xl active:scale-95 transition ${apiData?.button?.can_join
-                    ? "bg-gradient-to-r from-yellow-400 to-yellow-600"
-                    : "bg-gray-400 cursor-not-allowed"
-                    }`}
-                >
-                  {apiData?.button?.text || "Join Now"}
-                </button>
+                {
+                  apiData?.show_offer &&
+                  <button
+                    disabled={!apiData?.button?.can_join}
+                    onClick={() => {
+                      if (apiData?.button?.can_join) {
+                        navigate("/payRecharge");
+                      }
+                    }}
+                    className={`w-full py-3 rounded-full text-white font-semibold shadow-xl active:scale-95 transition ${apiData?.button?.can_join
+                      ? "bg-gradient-to-r from-yellow-400 to-yellow-600"
+                      : "bg-gray-400 cursor-not-allowed"
+                      }`}
+                  >
+                    {apiData?.button?.text || "Join Now"}
+                  </button>
+                }
+
+
               </div>
             </div>
           </div>

@@ -455,6 +455,17 @@ export const getResultHistory = async (data) => {
   }
 };
 
+// bets-tab
+export const getBetTabHistory = async (data) => {
+  try {
+    const response = await API.post("?url=bets-tab", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const getWalletSummary = async (data) => {
   try {
     const response = await API.post("?url=wallet-summary", data);

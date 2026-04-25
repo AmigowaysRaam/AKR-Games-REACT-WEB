@@ -59,6 +59,7 @@ import MeetThreeScreeen from "./pages/MeetThreeScreeen";
 import CommingSoon from "./pages/commingSoon";
 import BonusClainHIstory from "./pages/BonusClainHIstory";
 import ScratchFullScreen from "./pages/ScratchCard";
+import QuickRaceGame from "./games/QuickRaceGame";
 // ─── APP WRAPPER ─────────────────
 function AppWrapper() {
   const location = useLocation();
@@ -66,6 +67,8 @@ function AppWrapper() {
   const [navActive, setNavActive] = useState("home");
   useEffect(() => {
     document.title = "AKR Games";
+    const storedUser = localStorage.getItem("user");
+
   }, []);
   // Scroll to top
   useEffect(() => {
@@ -80,6 +83,7 @@ function AppWrapper() {
     "/promo": "promo",
     "/profile": "profile",
   };
+
 
   useEffect(() => {
     setNavActive(pathToNav[pathname] || "home");
@@ -97,7 +101,17 @@ function AppWrapper() {
 
     return () => handler.remove();
   }, []);
-  const showBottomNavRoutes = ["/", "/earn", "/promo", "/profile",];
+  useEffect(() => {
+    document.title = "AKR Games";
+    const storedUser = localStorage.getItem("user");
+  }, []);
+  const storedUser = localStorage.getItem("user");
+  const showBottomNavRoutes = [
+    "/",
+    "/earn",
+    ...(!storedUser ? ["/promo"] : []),
+    "/profile",
+  ];
   // 🌐 NETWORK STATE
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [toast, setToast] = useState("");
@@ -156,6 +170,7 @@ function AppWrapper() {
             </div>
           )}
           <Routes>
+          <Route path="/quickrace" element={<PrivateRoute><QuickRaceGame /></PrivateRoute>} />
             <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
             <Route path="/dice/:key" element={<PrivateRoute><DiceGame /></PrivateRoute>} />
             {/* <Route path="/dice" element={<PrivateRoute><DiceGame /></PrivateRoute>} /> */}
@@ -164,7 +179,7 @@ function AppWrapper() {
             <Route path="/earn" element={<PrivateRoute><InviteFriends /></PrivateRoute>} />
             <Route path="/promo" element={<PrivateRoute><PromotionScreen /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-          
+
             <Route path="/bonusclainhist" element={<PrivateRoute><BonusClainHIstory /></PrivateRoute>} />
             <Route path="/comingsoon" element={<PrivateRoute><CommingSoon /></PrivateRoute>} />
             <Route path="/meetthreescreen" element={<PrivateRoute><MeetThreeScreeen /></PrivateRoute>} />
@@ -192,7 +207,7 @@ function AppWrapper() {
             {/* rechargRecords */}
             <Route path="/WalletScreen" element={<PrivateRoute><WalletScreen /></PrivateRoute>} />
             <Route path="/weeklysignup" element={<PrivateRoute><WeeklySignIn /></PrivateRoute>} />
-            
+
             <Route path="/eventdetails" element={<PrivateRoute><PromoEventDetails /></PrivateRoute>} />
             <Route path="/Maintenance" element={<PrivateRoute><Maintenance /></PrivateRoute>} />
             <Route path="/PasswordChangeScreen" element={<PrivateRoute><PasswordChangeScreen /></PrivateRoute>} />
@@ -206,7 +221,7 @@ function AppWrapper() {
             {/* Public */}
             <Route path="/Login" element={<LoginPage />} />
             <Route path="/Sign" element={<SignUpPage />} />
-            
+
             <Route
               path="/state-lottery"
               element={

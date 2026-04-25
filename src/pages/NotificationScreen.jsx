@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, FileExclamationPoint } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getNotificationList } from "../services/authService";
 
 export default function NotificationScreen() {
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("announcement");
+  const [activeTab, setActiveTab] = useState("system");
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
 

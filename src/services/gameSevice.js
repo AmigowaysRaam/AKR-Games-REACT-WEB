@@ -95,6 +95,16 @@ export const getDiceHistory = async ({ key, limit = 10, page = 1 }) => {
   }
 };
 
+export const getConfig = async (data) => {
+  try {
+    const res = await API.post("?url=get-config", data);
+    return res.data;
+  } catch (error) {
+    console.error("getConfig error", error);
+    return { success: false };
+  }
+};
+
 export const getCategoryDesc = async (payload) => {
   try {
     const res = await API.post("?url=cat-desc", payload);

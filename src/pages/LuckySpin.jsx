@@ -71,7 +71,8 @@ export default function LuckySpinModal({ show, onClose }) {
         try {
             const res = await getSpinResultData({
                 user_id: JSON.parse(localStorage.getItem("user"))?.id,
-                spin_count: count == "BULK" ? 30 : 1,
+                // count ALSo validate if FREE Send directly
+                spin_count: count == 'FREE' ? count : count == "BULK" ? 30 : 1,
             });
             if (res?.success) {
                 const winAmount = res.results;
@@ -227,8 +228,6 @@ export default function LuckySpinModal({ show, onClose }) {
                     <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
                 </div>
             )}
-
-
             {toast.show && (
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.4s_ease]">
                     <div

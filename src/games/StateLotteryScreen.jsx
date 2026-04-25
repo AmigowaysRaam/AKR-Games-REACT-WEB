@@ -229,10 +229,11 @@ export default function StateLotteryScreen() {
   />
 
 ) : game.activeGameTab === '2D' ? (
-  <TwoDBetGrid
-    isBetSelected={game.isBetSelected}
-    toggleBet={game.toggleBet}
-  />
+<TwoDBetGrid
+  isBetSelected={game.isBetSelected}
+  toggleBet={game.toggleBet}
+/>
+
 
   ) : game.activeGameTab === '3D' ? (  
   <ThreeDBetGrid
@@ -317,12 +318,12 @@ export default function StateLotteryScreen() {
               borderTop: "1px solid #e5e7eb"
             }}
           >
-             <BetSummaryBar
-        totalAmount={game.totalAmount}
-        totalNumbers={game.totalNumbers}
-        onClear={game.clearBets}
-        onPay={handlePay}
-      />
+        <BetSummaryBar
+  totalAmount={game.totalAmount}
+  totalNumbers={game.totalNumbers}
+  onClear={game.clearBets}
+  onPay={handlePay}
+/>
           </div>
      
     </div>

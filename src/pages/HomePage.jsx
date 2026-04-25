@@ -5,6 +5,8 @@ import MasterCategoryScreen from "./MasterCategory";
 import NottifeeBaner from "../components/NottifeeBaner";
 import PopupModal from "../PopupModal";
 import { homeApi } from "../services/authService";
+import { useLocation } from "react-router-dom";
+import GameLoader from "./LoaderComponet";
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [activeTab, setActiveTab] = useState("");
@@ -18,6 +20,9 @@ export default function HomePage() {
   const triggerRef = useRef(null);
   const [dataFromChild, setDataFromChild] = useState("");
   const [closeSignal, setCloseSignal] = useState(false);
+
+  const [laoding, setlaoding] = useState(false);
+
   useEffect(() => {
     if (closeSignal) {
       setCloseSignal(false); // reset after trigger
@@ -27,6 +32,7 @@ export default function HomePage() {
     setCloseSignal(true); // 👈 trigger child close
   };
 
+  const location = useLocation()
   const handleChildData = (value) => {
     setDataFromChild(value);
   };
@@ -38,6 +44,7 @@ export default function HomePage() {
 
   const fetchHome = async () => {
     try {
+      setlaoding(true)
       const res = await homeApi();
       if (res?.data) {
         setHomeData(res.data);
@@ -46,11 +53,13 @@ export default function HomePage() {
     } catch (err) {
       console.log(err);
     }
+    finally {
+      setlaoding(false)
+    }
   };
-
   useEffect(() => {
     fetchHome();
-  }, []);
+  }, [location?.key]);
 
   // ✅ Set default category/tab
   useEffect(() => {
@@ -63,11 +72,9 @@ export default function HomePage() {
     }
   }, [categories]);
 
-  // ✅ Sticky tab
   useEffect(() => {
     const node = triggerRef.current;
     if (!node) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsSticky((prev) => {
@@ -125,7 +132,6 @@ export default function HomePage() {
     }
     isPulling.current = false;
   };
-
   const triggerRefresh = async () => {
     setIsRefreshing(true);
     await fetchHome();
@@ -144,12 +150,12 @@ export default function HomePage() {
       document.body.style.overflow = "";
       document.body.style.touchAction = "";
     }
-  
     return () => {
       document.body.style.overflow = "";
       document.body.style.touchAction = "";
     };
   }, [dataFromChild]);
+
   return (
     <div
       className={`flex flex-col pb-24 max-w-[430px] mx-auto overflow-hidden }`}
@@ -158,6 +164,10 @@ export default function HomePage() {
       onTouchEnd={handleTouchEnd}
     >
       <PopupModal />
+      {
+        laoding &&
+        <GameLoader />
+      }
       {dataFromChild && (
         <div
           className="fixed inset-0 bg-black/80 z-50 backdrop-blur-sm"

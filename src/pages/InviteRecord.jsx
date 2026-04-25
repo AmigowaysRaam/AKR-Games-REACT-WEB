@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Headphones } from "lucide-react";
+import { CheckCheckIcon, ChevronLeft, Headphones, Inspect, PanelRightOpen, Timer } from "lucide-react";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -98,17 +98,20 @@ export default function InviteRecord() {
                   <div style={styles?.phone}>{item.username}</div>
                   <div style={styles?.email}>{item.phone}</div>
                 </div>
-                {/* <div
+                <div
                   style={{
                     ...styles.statusBadge,
                     background: item.is_verified ? "#dcfce7" : "#fee2e2",
                     color: item.is_verified ? "#16a34a" : "#dc2626",
                   }}
                 >
-                  {item.is_verified ? "Verified" : "Pending"}
-                </div> */}
+                  {item.is_verified ? <CheckCheckIcon /> : <Timer />}
+                </div>
               </div>
+
               <div style={styles.divider} />
+              {/* <p>{JSON.stringify(item,null,)}</p> */}
+
               <div style={styles.cardBody}>
                 <div>
                   <div style={styles.labelSmall}>email</div>
@@ -117,7 +120,7 @@ export default function InviteRecord() {
                 <div style={{ textAlign: "right" }}>
                   <div style={styles.labelSmall}>Joined</div>
                   <div style={styles.date}>
-                    {new Date(item.created_at).toLocaleDateString()}
+                    {new Date(item?.joined_date).toLocaleDateString()}
                   </div>
                 </div>
               </div>
@@ -164,8 +167,6 @@ export default function InviteRecord() {
     </div>
   );
 }
-
-/* ================== STYLES ================== */
 const styles = {
   container: {
     maxWidth: 430,
@@ -246,19 +247,16 @@ const styles = {
     fontSize: 14,
     fontWeight: 600,
   },
-
   email: {
     fontSize: 12,
     color: "#777",
   },
-
   statusBadge: {
     fontSize: 11,
     padding: "4px 8px",
     borderRadius: 20,
     fontWeight: 500,
   },
-
   divider: {
     height: 1,
     background: "#eee",
@@ -283,8 +281,9 @@ const styles = {
   },
 
   date: {
-    fontSize: 12,
     fontWeight: 500,
+    fontSize: "15px",
+    fontFamily: ""
   },
   emptyIcon: {
     fontSize: 60,
