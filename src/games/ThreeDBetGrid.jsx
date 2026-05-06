@@ -1,8 +1,8 @@
 export default function ThreeDBetGrid({ isBetSelected, toggleBet }) {
   const ROWS = [
-    { key: "A", color: "#F59E0B" }, // orange
     { key: "B", color: "#3B82F6" }, // blue
-    { key: "C", color: "#EF4444" }  // red
+    { key: "C", color: "#EF4444" }, // red
+    { key: "D", color: "#22C55E" }  // red
   ];
 
   return (

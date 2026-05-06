@@ -6,17 +6,17 @@ import WithdrawConfirmModal from "./WithdrawConfirmModal";
 import GameLoader from "./LoaderComponet";
 
 export default function WithdrawScreen() {
-
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("UPI"); // ✅ NEW
   const [amount, setAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [apiData, setApiData] = useState(null);
   const [selectedBankId, setSelectedBankId] = useState(null);
-
+  const [recipientAddress, setRecipientAddress] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [wihtdrawConfirm, setwihtdrawConfirm] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [selectedCoin, setSelectedCoin] = useState(null);
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -33,9 +33,17 @@ export default function WithdrawScreen() {
       setLoading(true);
       const res = await getWithdrawApi({
         active: activeTab,
+        tab: activeTab,
+
       });
       if (res?.success) {
         setApiData(res.data);
+        // 👇 set default coin
+        // alert(JSON.stringify(res.data?.upi?.list))
+        const coins = res.data?.usdt?.coins || [];
+        if (coins.length > 0) {
+          setSelectedCoin(coins[0].id);
+        }
         const selectedFromApi = res.data?.selected;
         if (selectedFromApi?.amount) {
           setAmount(selectedFromApi.amount);
@@ -46,7 +54,7 @@ export default function WithdrawScreen() {
           if (firstEnabled) setAmount(firstEnabled.amount);
         }
         const defaultBank =
-          res.data?.bank?.default || res.data?.bank?.list?.[0];
+          res.data?.upi?.list?.default || res.data?.upi?.list?.[0];
         if (defaultBank) setSelectedBankId(defaultBank.id);
       }
     } catch (err) {
@@ -60,13 +68,19 @@ export default function WithdrawScreen() {
     try {
       setwihtdrawConfirm(false);
       setLoading(true);
-
+      // const res = await withdrawCreate({
+      //   amount,
+      //   bank_id: selectedBankId,
+      //   otp, // 🔥 send otp
+      // });
       const res = await withdrawCreate({
         amount,
-        bank_id: selectedBankId,
-        otp, // 🔥 send otp
+        bank_id: activeTab === "UPI" ? selectedBankId : null,
+        wallet_address: activeTab === "USDT" ? recipientAddress : null,
+        type: activeTab, // 🔥 important (UPI / USDT)
+        otp,
+        coin: selectedCoin
       });
-
       if (res?.success) {
         showToast(res?.message, "success");
         navigate("/withdrawhistory");
@@ -83,7 +97,7 @@ export default function WithdrawScreen() {
     fetchWithdrawData();
   }, [activeTab]); // ✅ refetch when tab changes
   const balance = apiData?.balance || {};
-  const bank = apiData?.bank || {};
+  const bank = apiData?.upi || {};
   const summary = apiData?.summary || {};
   const withdrawOptions = apiData?.withdraw_options || [];
   const bankList = bank?.list || [];
@@ -142,10 +156,9 @@ export default function WithdrawScreen() {
           <Headphones onClick={() => navigate("/CustomerSupport")} className="cursor-pointer" />
         </div>
       </div>
-      {/* <p>{JSON.stringify(apiData)}</p> */}
-
+      {/* <p>{JSON.stringify(apiData?.usdt?.coins, null, 2)}</p>
+      [ { "id": "USDT-BEP20", "label": "USDT-BEP20", "network": "BSC", "icon": "usdt_bep20" }, { "id": "USDT-TRC20", "label": "USDT-TRC20", "network": "Tron", "icon": "usdt_trc20" } ] */}
       <div className="flex gap-3 p-3">
-        {/* Cash Balance */}
         <div className="flex-1 rounded-xl p-3 bg-gradient-to-r from-orange-800 to-orange-500 text-white flex items-center justify-between">
           <div>
             <p className="text-sm">Cash Balance</p>
@@ -155,16 +168,13 @@ export default function WithdrawScreen() {
           </div>
           <Wallet size={28} className="opacity-100" />
         </div>
-
         <div className="flex-1 rounded-xl p-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex items-center justify-between">
-
           <div>
             <p className="text-sm">Withdrawable</p>
             <p className="text-lg font-bold">
               ₹ {balance.withdrawable_balance || 0}
             </p>
           </div>
-
           <Banknote size={28} className="opacity-100" />
         </div>
       </div>
@@ -182,85 +192,104 @@ export default function WithdrawScreen() {
           </div>
         ))}
       </div>
-      <div className="mx-3 mt-3 bg-white rounded-xl p-4">
-        <div className="flex justify-between items-center mb-3">
-          <p className="text-sm text-gray-700">Accounts</p>
 
-          {bank?.has_account && (
-            <button
+      {activeTab == 'UPI' && <>
+        <div className="mx-3 mt-3 bg-white rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-sm text-gray-700">Accounts</p>
+            {bank?.has_account && (
+              <button
+                onClick={() => navigate("/AddbankAccount")}
+                className="flex items-center gap-1 cursor-pointer text-xs text-purple-600 font-medium"
+              >
+                <Plus size={14} /> Add
+              </button>
+            )}
+          </div>
+
+
+          {bank?.has_account && bankList.length > 0 ? (
+            <div>
+              <p className="text-xs text-gray-500 mb-2 px-1">
+                Select Bank Account
+              </p>
+
+              <div className="space-y-2 max-h-40 overflow-y-auto p-1">
+                {bankList.map((item) => {
+                  const isSelected = selectedBankId === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedBankId(item.id)}
+                      className={`relative flex items-center justify-between rounded-xl p-3 cursor-pointer transition-all ${isSelected
+                        ? "bg-purple-50 border-purple-500 border"
+                        : "bg-white border border-gray-200"
+                        }`}
+                    >
+                      <div className="pl-2">
+                        <p className="text-sm font-semibold text-gray-800">
+                          {item.account_name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.account_number}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {item.ifsc_code || item.upi_address}
+                        </p>
+                      </div>
+
+                      {/* RIGHT SELECT INDICATOR */}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center border ${isSelected
+                            ? "border-purple-600 bg-purple-600"
+                            : "border-gray-400"
+                            }`}
+                        >
+                          {isSelected && (
+                            <div className="w-2 h-2 bg-white rounded-full" />
+                          )}
+                        </div>
+                        <Trash2
+                          size={16}
+                          className="text-red-500 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDeleteModal(item.id);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div
               onClick={() => navigate("/AddbankAccount")}
-              className="flex items-center gap-1 cursor-pointer text-xs text-purple-600 font-medium"
+              className="border-2 border-dashed rounded-xl py-3 flex items-center justify-center text-purple-600 cursor-pointer"
             >
-              <Plus size={14} /> Add
-            </button>
+              + Add Account
+            </div>
           )}
         </div>
-
-        {bank?.has_account && bankList.length > 0 ? (
-          <div>
-            <p className="text-xs text-gray-500 mb-2 px-1">
-              Select Bank Account
-            </p>
-
-            <div className="space-y-2 max-h-40 overflow-y-auto p-1">
-              {bankList.map((item) => {
-                const isSelected = selectedBankId === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedBankId(item.id)}
-                    className={`relative flex items-center justify-between rounded-xl p-3 cursor-pointer transition-all ${isSelected
-                      ? "bg-purple-50 border-purple-500 border"
-                      : "bg-white border border-gray-200"
-                      }`}
-                  >
-                    <div className="pl-2">
-                      <p className="text-sm font-semibold text-gray-800">
-                        {item.account_name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {item.account_number}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {item.ifsc_code || item.upi_address}
-                      </p>
-                    </div>
-
-                    {/* RIGHT SELECT INDICATOR */}
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center border ${isSelected
-                          ? "border-purple-600 bg-purple-600"
-                          : "border-gray-400"
-                          }`}
-                      >
-                        {isSelected && (
-                          <div className="w-2 h-2 bg-white rounded-full" />
-                        )}
-                      </div>
-                      <Trash2
-                        size={16}
-                        className="text-red-500 cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDeleteModal(item.id);
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div
-            onClick={() => navigate("/AddbankAccount")}
-            className="border-2 border-dashed rounded-xl py-3 flex items-center justify-center text-purple-600 cursor-pointer"
-          >
-            + Add Account
-          </div>
-        )}
-      </div>
+      </>}
+      {activeTab === "USDT" && (
+        <div className="mx-3 mt-3 bg-white rounded-xl p-4">
+          <p className="text-sm font-medium mb-2">Recipient Address</p>
+          <input
+            maxLength={24}
+            type="text"
+            value={recipientAddress}
+            onChange={(e) => setRecipientAddress(e.target.value)}
+            placeholder="Enter USDT wallet address"
+            className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-purple-500"
+          />
+          <p className="text-xs text-gray-400 mt-2">
+            Make sure the address is correct (TRC20 / ERC20 based on system).
+          </p>
+        </div>
+      )}
       {toast.show && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50">
           <div
@@ -275,6 +304,45 @@ export default function WithdrawScreen() {
           </div>
         </div>
       )}
+      {
+        activeTab === "USDT" && (
+          <div className="mx-3 mt-3 bg-white rounded-xl p-4">
+            <p className="text-sm font-medium mb-3">Select Network</p>
+
+            <div className="space-y-2 mb-4">
+              {(apiData?.usdt?.coins || []).map((coin) => {
+                const isSelected = selectedCoin === coin.id;
+                return (
+                  <div
+                    key={coin.id}
+                    onClick={() => setSelectedCoin(coin.id)}
+                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer ${isSelected
+                      ? "border-purple-500 bg-purple-50"
+                      : "border-gray-200"
+                      }`}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold">{coin.label}</p>
+                      <p className="text-xs text-gray-500">{coin.network}</p>
+                    </div>
+
+                    {/* radio */}
+                    <div
+                      className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected
+                        ? "border-purple-600 bg-purple-600"
+                        : "border-gray-400"
+                        }`}
+                    >
+                      {isSelected && (
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       <div className="mx-3 mt-3 bg-white rounded-xl p-4">
         <p className="text-sm font-medium mb-3">Withdraw Amount</p>
         <div className="grid grid-cols-3 gap-3">
@@ -285,7 +353,6 @@ export default function WithdrawScreen() {
                 if (item.enabled) {
                   setAmount(item.amount);
                 } else {
-                  // alert(item.reason); // 🔥 show reason
                   showToast(item.reason, "error");
                 }
               }}
@@ -307,6 +374,7 @@ export default function WithdrawScreen() {
       {loading && (
         <GameLoader />
       )}
+
       <div className="mx-3 mt-3 bg-white rounded-xl p-4 text-sm">
         <div className="flex justify-between py-1">
           <span>Amount</span>
@@ -333,12 +401,18 @@ export default function WithdrawScreen() {
           <span>{noteText}</span>
         )}
       </div>
-
       <div className="fixed cursor-pointer bottom-0 w-full max-w-[430px] bg-white p-3 shadow-inner">
         <button
-          onClick={() => setwihtdrawConfirm(true)}
-          disabled={!selectedOption?.enabled || !selectedBankId}
-          className={`w-full py-3 rounded-full text-white font-bold ${selectedOption?.enabled && selectedBankId
+          onClick={() => {
+            if (activeTab === "USDT" && !recipientAddress) {
+              showToast("Please enter recipient address");
+              return;
+            }
+            else setwihtdrawConfirm(true)
+          }}
+          disabled={!selectedOption?.enabled}
+          className={`w-full py-3 rounded-full text-white font-bold ${selectedOption?.enabled
+            //  && selectedBankId
             ? "bg-purple-600"
             : "bg-gray-400"
             }`}
@@ -353,6 +427,9 @@ export default function WithdrawScreen() {
         onConfirm={handleWithdraw}
         preview={preview}
         selectedBankId={selectedBankId}
+        activeTab={activeTab}
+        recipientAddress={recipientAddress}
+        coin={selectedCoin}
       />
       {showConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

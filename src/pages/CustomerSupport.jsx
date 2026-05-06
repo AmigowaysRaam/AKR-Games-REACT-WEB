@@ -12,22 +12,10 @@ export default function CustomerSupport() {
     const saved = localStorage.getItem("theme");
     if (saved) setDark(saved === "dark");
   }, []);
-
   useEffect(() => {
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
-
   const chats = [
-    {
-      id: 1,
-      name: "Dice Game Predictions",
-      message: "Predictive Event...",
-      time: "15:22",
-      unread: "99+",
-      verified: true,
-      avatar:
-        "https://chatzol.scriptzol.in/assets/images/test1.png",
-    },
     {
       id: 2,
       name: "Customer Service",
@@ -37,52 +25,19 @@ export default function CustomerSupport() {
       avatar:
         "https://cdn-icons-png.flaticon.com/512/4712/4712027.png",
     },
-    {
-      id: 3,
-      name: "Live Color Prediction",
-      message: "Predictive Event...",
-      time: "15:16",
-      unread: "99+",
-      verified: true,
-      avatar:
-        "https://chatzol.scriptzol.in/assets/images/test2.png",
-    },
-    {
-      id: 4,
-      name: "AKR Official Channel",
-      message: "Photo",
-      time: "14:29",
-      unread: 75,
-      verified: true,
-      avatar:
-        "https://chatzol.scriptzol.in/assets/images/test3.png",
-    },
-    {
-      id: 5,
-      name: "Sapna",
-      message: "Hi sir this is Sapna from AKR Lottery!!!",
-      time: "2026/3/12 11:57",
-      avatar:
-        "https://randomuser.me/api/portraits/women/44.jpg",
-    },
   ];
-
   const theme = dark ? darkStyles : lightStyles;
   return (
     <div style={{ ...styles.container, ...theme.container }}>
-      {/* HEADER */}
       <div style={{ ...styles.header, ...theme.header }}>
         <ChevronLeft
           size={24}
           color={theme.iconColor}
           onClick={() => navigate(-1)}
         />
-
         <span style={{ ...styles.headerTitle, color: theme.text }}>
           Chats
         </span>
-
-        {/* THEME TOGGLE */}
         <div
           onClick={() => setDark(!dark)}
           style={styles.themeBtn}
@@ -99,7 +54,7 @@ export default function CustomerSupport() {
       <div>
         {chats.map((chat) => (
           <div
-          onClick={()=>navigate('/ChatDetailScreen')}
+            onClick={() => navigate('/ChatDetailScreen')}
             key={chat.id}
             style={{
               ...styles.chatItem,

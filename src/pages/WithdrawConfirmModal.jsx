@@ -6,7 +6,8 @@ export default function WithdrawConfirmModal({
     onCancel,
     onConfirm,
     preview,
-    selectedBankId
+    selectedBankId,
+    activeTab, recipientAddress, coin
 }) {
     const [otp, setOtp] = useState("");
     const [otpSent, setOtpSent] = useState(false);
@@ -50,23 +51,25 @@ export default function WithdrawConfirmModal({
     }, [timer]);
 
     if (!open) return null;
+
     const handleGetOtp = async () => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user?.phone || user.phone.length < 10) {
             showToast("Invalid phone number");
             return;
         }
-
         try {
             setLoading(true);
             const res = await getWithdrawOtpLogin(
                 user.phone,
                 user.country_code,
-                "withdraw",
+                activeTab,
                 selectedBankId,
-                preview?.amount
+                preview?.amount,
+                activeTab === "USDT" ? recipientAddress : null,
+                activeTab === "USDT" ? coin : null,
             );
-
+            console.log(res, " response.data response.data")
             if (res?.success) {
                 showToast(res?.message || "OTP sent", "success");
                 setOtpSent(true);
@@ -76,6 +79,7 @@ export default function WithdrawConfirmModal({
                 setOtpSent(false);
             }
         } catch (err) {
+            console.log(err, 'err')
             showToast(
                 err?.response?.data?.message || "Something went wrong",
                 "error"
@@ -102,8 +106,8 @@ export default function WithdrawConfirmModal({
                 <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100]">
                     <div
                         className={`px-4 py-2 rounded-lg text-white text-sm font-semibold shadow-lg ${toast.type === "success"
-                                ? "bg-green-500"
-                                : "bg-red-500"
+                            ? "bg-green-500"
+                            : "bg-red-500"
                             }`}
                     >
                         {toast.message}

@@ -4,22 +4,36 @@ export default function GoldenProgressBar({ progresspercent = 0 }) {
     const [progress, setProgress] = useState(0);
     const animationRef = useRef(null);
 
+    // Normalize value (supports 0–1 and 0–100)
+    const normalizeProgress = (value) => {
+        const num = Number(value);
+
+        if (isNaN(num) || num < 0) return 0;
+
+        const percent = num <= 1 ? num * 100 : num;
+
+        return Math.min(Math.round(percent), 100);
+    };
+
     useEffect(() => {
         let start = null;
-        const duration = 800; // animation duration (ms)
-        const initial = progress;
-        const target = progresspercent;
+        const duration = 800;
 
-        // easeOutCubic (smooth finish)
+        const initial = progress;
+        const target = normalizeProgress(progresspercent);
+
         const ease = (t) => 1 - Math.pow(1 - t, 3);
 
         const animate = (timestamp) => {
             if (!start) start = timestamp;
+
             const elapsed = timestamp - start;
             const progressRatio = Math.min(elapsed / duration, 1);
             const eased = ease(progressRatio);
+
             const value = Math.round(initial + (target - initial) * eased);
             setProgress(value);
+
             if (progressRatio < 1) {
                 animationRef.current = requestAnimationFrame(animate);
             }
@@ -41,7 +55,7 @@ export default function GoldenProgressBar({ progresspercent = 0 }) {
                 <div
                     className="h-full flex items-center justify-center transition-[width] duration-300"
                     style={{
-                        width: `${progress}%`,
+                        width: `${progress + 3}%`,
                         background:
                             "linear-gradient(90deg, #facc15, #f97316, #ec4899, #8b5cf6)",
                     }}
@@ -51,27 +65,33 @@ export default function GoldenProgressBar({ progresspercent = 0 }) {
                     </span>
                 </div>
 
-                {/* Glow Shine Animation */}
+                {/* Shine effect */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <div className="w-1/3 h-full bg-white/20 blur-md animate-shine" />
                 </div>
+
+                {/* Segment lines */}
                 <div className="absolute inset-0 flex pointer-events-none">
                     {[1, 2, 3, 4].map((_, i) => (
-                        <div key={i} className="flex-1 border-r border-yellow-300/40" />
+                        <div
+                            key={i}
+                            className="flex-1 border-r border-yellow-300/40"
+                        />
                     ))}
                 </div>
             </div>
-            {/* Custom animation */}
+
+            {/* Animation */}
             <style>
                 {`
-          @keyframes shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(900%); }
-          }
-          .animate-shine {
-            animation: shine 0.9s linear infinite;
-          }
-        `}
+                @keyframes shine {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(900%); }
+                }
+                .animate-shine {
+                    animation: shine 0.9s linear infinite;
+                }
+                `}
             </style>
         </div>
     );

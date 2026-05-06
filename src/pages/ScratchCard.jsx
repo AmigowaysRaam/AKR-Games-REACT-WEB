@@ -232,11 +232,10 @@ export default function ScratchFullScreen() {
           className="cursor-pointer"
           onClick={() => setshowInfo(!showInfo)}
         />
-
       </div>
       <RulesModal rulesD={apiData?.rules} open={showInfo} onClose={() => setshowInfo(false)} />
       {
-        apiData?.progress_percent && (
+        apiData?.progress_percent != 0 && (
           <GoldenProgressBar progresspercent={apiData?.progress_percent} />
         )
       }

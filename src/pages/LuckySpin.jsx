@@ -365,7 +365,7 @@ export default function LuckySpinModal({ show, onClose }) {
                             className="flex-1 bg-green-500 py-1 rounded-full text-white font-bold"
                         >
                             {buyLoading === "SINGLE" ? "..." : "x1"}
-                            <div className="text-[9px]">Spin</div>
+                            <div className="text-[9px]">Spin x10</div>
                         </button>
                         <button
                             onClick={() => openConfirm("Start 30 spins?", () => spinWheel("BULK"))}

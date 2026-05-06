@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function QuickRace({ items = [] }) {
+  const navigate = useNavigate();
   useEffect(() => { 
 
   }, [items]);
@@ -9,7 +11,7 @@ export default function QuickRace({ items = [] }) {
 
   return (
     <div className="px-3 py-3">
-      <div className="grid grid-cols-3 gap-3  cursor-pointer">
+      <div className="grid grid-cols-3 gap-3  cursor-pointer" onClick={()=>navigate("/quickrace")}>
         {items.map((item, index) => (
           <div
             key={item.id}

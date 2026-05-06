@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCheckIcon, ChevronLeft, Headphones, Inspect, PanelRightOpen, Timer } from "lucide-react";
+import { CheckCheckIcon, ChevronLeft, Headphones, Timer } from "lucide-react";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { getInviteRecords } from "../services/authService";
 import GameLoader from "./LoaderComponet";
-
 export default function InviteRecord() {
   const navigate = useNavigate();
-
-  const [showTimeSheet, setShowTimeSheet] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedTime, setSelectedTime] = useState("Today");
   const [apiDataRec, setapiDataRec] = useState(null);

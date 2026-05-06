@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 export default function Maintenance() {
   const [checking, setChecking] = useState(false);
   const navigate = useNavigate();
-
   const checkServer = async () => {
     try {
       setChecking(true);
@@ -40,7 +39,6 @@ export default function Maintenance() {
       if (res?.data) {
         if (res?.maintenance)
           navigate("/");
-        ;  // if it is false back to home page
       }
     } catch (err) {
       console.log(err);

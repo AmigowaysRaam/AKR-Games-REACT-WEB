@@ -8,6 +8,38 @@ export const getThreeDigitGame = async (data) => {
     return { success: false };
   }
 };
+
+export const getThreeDigitGameResult = async (data) => {
+  try {
+    const response = await API.post("?url=threedigit-main-result", data);
+    return response.data;
+  } catch (error) {
+    console.error("getThreeDigitGameResult error", error);
+    return { success: false };
+  }
+};
+
+
+export const getSateResultMain = async (data) => {
+  try {
+    const response = await API.post("?url=state-main", data);
+    return response.data;
+  } catch (error) {
+    console.error("getThreeDigitGameResult error", error);
+    return { success: false };
+  }
+};
+
+// getSateResultDetails
+export const getSateResultDetails = async (data) => {
+  try {
+    const response = await API.post("?url=state-get-result-history", data);
+    return response.data;
+  } catch (error) {
+    console.error("getThreeDigitGameResult error", error);
+    return { success: false };
+  }
+};
 export const getkeralaLottery = async (data) => {
   try {
     const responce = await API.post("?url=get-game-lottery", data)
@@ -70,6 +102,53 @@ export const getDiceGame = async (data) => {
     return { success: false };
   }
 };
+
+
+export const getSattaMatka = async (data) => {
+  try {
+    const response = await API.post("?url=satta-main", data);
+    return response.data;
+  } catch (error) {
+    console.error("getGame error", error);
+    return { success: false };
+  }
+};
+
+
+export const getSattamAtkaResult = async (data) => {
+  try {
+    const response = await API.post("?url=satta-result-list", data);
+    return response.data;
+  } catch (error) {
+    console.error("getGame error", error);
+    return { success: false };
+  }
+};
+// 
+export const placeSattaMatkaBet = async (data) => {
+  try {
+    console.log("👉 PLACE SATTA BET PAYLOAD:", data);
+
+    const response = await API.post("?url=satta-place-bet", data);
+
+    return response.data;
+
+  } catch (error) {
+    console.error("placeSattaMatkaBet error", error);
+    return { success: false };
+  }
+};
+export const getSattaUserBets = async (data) => {
+  try {
+    const res = await API.post("?url=satta-get-user-bets", data);
+    return res.data;
+  } catch (error) {
+    console.error("getSattaUserBets error", error);
+    return { success: false };
+  }
+};
+
+
 
 export const placeThreeDigitBet = async (data) => {
   try {
@@ -213,6 +292,25 @@ export const getColorUserBets = async (data) => {
     return res.data;
   } catch (error) {
     console.error("getColorUserBets error", error);
+    return { success: false };
+  }
+};
+export const getStateLottery = async (data) => {
+  try {
+    const response = await API.post("?url=state-main", data);
+    return response.data;
+  } catch (error) {
+    console.error("getGame error", error);
+    return { success: false };
+  }
+};
+
+export const PlaceBetStateLottery = async (data) => {
+  try {
+    const response = await API.post("?url=state-place-bet", data);
+    return response.data;
+  } catch (error) {
+    console.error("getGame error", error);
     return { success: false };
   }
 };

@@ -1,165 +1,123 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getColorUserBets } from "../services/gameSevice";
 
-/* 🎨 Color helpers */
+/* 🎨 Color Map */
 const COLOR_MAP = {
     red: "#ef4444",
     green: "#22c55e",
     violet: "#a855f7",
 };
 
-/* 🎯 Status Chip */
+/* 📅 Format Date */
+const formatDateTime = (dateStr) => {
+    if (!dateStr) return "--";
+
+    const d = new Date(dateStr);
+
+    return {
+        date: d.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        }),
+        time: d.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+        }),
+    };
+};
+
+/* 🎯 Status */
 function StatusBadge({ status }) {
     const map = {
         win: { bg: "#dcfce7", color: "#16a34a", text: "WIN" },
-        loss: { bg: "#fee2e2", color: "#dc2626", text: "LOSE" },
+        loss: { bg: "#fee2e2", color: "#dc2626", text: "LOSS" },
         pending: { bg: "#fef3c7", color: "#d97706", text: "PENDING" },
     };
-
     const s = map[status] || map.pending;
 
     return (
-        <span
-            style={{
-                background: s.bg,
-                color: s.color,
-                padding: "4px 10px",
-                borderRadius: 20,
-                fontSize: 11,
-                fontWeight: 700,
-            }}
-        >
+        <span style={{
+            background: s.bg,
+            color: s.color,
+            padding: "4px 10px",
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 700,
+        }}>
             {s.text}
         </span>
     );
 }
 
-/* 🎨 Value Badge */
+/* 🎨 Value */
 function ValueBadge({ type, value }) {
-    const bg =
-        type === "COLOR"
-            ? COLOR_MAP[value] || "#999"
-            : "#3b82f6";
+    const bg = type === "COLOR" ? COLOR_MAP[value] || "#999" : "#3b82f6";
 
     return (
-        <span
-            style={{
-                background: bg,
-                color: "#fff",
-                padding: "4px 10px",
-                borderRadius: 20,
-                fontSize: 12,
-                fontWeight: 700,
-                textTransform: "capitalize",
-            }}
-        >
+        <span style={{
+            background: bg,
+            color: "#fff",
+            padding: "5px 12px",
+            borderRadius: 20,
+            fontSize: 12,
+            fontWeight: 700,
+        }}>
             {type === "COLOR" ? value : `No. ${value}`}
         </span>
     );
 }
 
-/* 🎲 LOADER */
-function ColorOrderLoader() {
-    const [vals, setVals] = useState([1, 2, 3]);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setVals([
-                Math.floor(Math.random() * 10),
-                Math.floor(Math.random() * 10),
-                Math.floor(Math.random() * 10),
-            ]);
-        }, 120); // faster for smooth rolling
-
-        return () => clearInterval(interval);
-    }, []);
-
+/* 🔄 Loader */
+function Loader() {
     return (
-        <div style={{ textAlign: "center", padding: 50 }}>
+        <div style={{ textAlign: "center", padding: 40 }}>
+            <div className="loader" />
+            <p style={{ marginTop: 10 }}>Loading...</p>
 
-            {/* 🎲 ROLLING BALLS */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
-                {vals.map((v, i) => (
-                    <div
-                        key={i}
-                        style={{
-                            width: 52,
-                            height: 52,
-                            borderRadius: "50%",
-                            background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#fff",
-                            fontWeight: 900,
-                            fontSize: 18,
-                            animation: "roll 0.8s infinite ease-in-out",
-                            animationDelay: `${i * 0.2}s`,
-                            boxShadow: "0 6px 16px rgba(124,58,237,0.4)",
-                        }}
-                    >
-                        {/* {v} */}
-                    </div>
-                ))}
-            </div>
-
-            {/* ✨ TEXT */}
-            <div
-                style={{
-                    marginTop: 16,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    background: "linear-gradient(90deg,#7c3aed,#ec4899)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                }}
-            >
-                Rolling orders...
-            </div>
-
-            {/* 🎬 ANIMATION */}
-            <style>
-                {`
-            @keyframes roll {
-              0% {
-                transform: rotate(0deg) scale(1);
-              }
-              25% {
-                transform: rotate(90deg) scale(1.1);
-              }
-              50% {
-                transform: rotate(180deg) scale(0.95);
-              }
-              75% {
-                transform: rotate(270deg) scale(1.1);
-              }
-              100% {
-                transform: rotate(360deg) scale(1);
-              }
-            }
-          `}
-            </style>
+            <style>{`
+                .loader {
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid #eee;
+                    border-top: 4px solid #7c3aed;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: auto;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
         </div>
     );
 }
+
+/* ❌ Empty */
 function EmptyState() {
     return (
-        <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>
-            <div style={{ fontSize: 40 }}>🎨</div>
-            <div style={{ marginTop: 10 }}>No orders found</div>
+        <div style={{ textAlign: "center", padding: 50 }}>
+            <p>No orders found</p>
         </div>
     );
 }
 
-/* 🧠 MAIN COMPONENT */
+/* 🧠 MAIN */
 export default function MyOrderColorPrediction() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    /* 📄 Pagination */
+    const [page, setPage] = useState(1);
+    const perPage = 3;
+
     const user = JSON.parse(localStorage.getItem("user"));
 
     useEffect(() => {
-        if (user?.id) fetchOrders();
+        if (!user?.id) {
+            console.warn("User not found");
+            setLoading(false);
+            return;
+        }
+        fetchOrders();
     }, []);
 
     const fetchOrders = async () => {
@@ -167,10 +125,10 @@ export default function MyOrderColorPrediction() {
             setLoading(true);
 
             const res = await getColorUserBets({
-                user_id: user?.id,
+                user_id: user.id,
             });
 
-            if (!res?.success) {
+            if (!res?.success || !Array.isArray(res.data)) {
                 setOrders([]);
                 return;
             }
@@ -181,116 +139,151 @@ export default function MyOrderColorPrediction() {
                 type: item.type,
                 value: item.value,
                 amount: item.betAmount,
-                win: item.potentialWin,
                 result: item.result || "pending",
                 credit: item.creditAmount || 0,
                 debit: item.debitAmount || 0,
+                createdAt: item.createdAt,
+                settledAt: item.settledAt,
             }));
 
             setOrders(formatted);
         } catch (err) {
-            console.log(err);
+            console.error(err);
             setOrders([]);
         } finally {
             setLoading(false);
         }
     };
 
-    /* 📦 GROUP BY ISSUE */
+    /* 📦 Group */
     const grouped = useMemo(() => {
-        return Object.values(
-            orders.reduce((acc, o) => {
-                if (!acc[o.issue]) {
-                    acc[o.issue] = { issue: o.issue, items: [] };
-                }
-                acc[o.issue].items.push(o);
-                return acc;
-            }, {})
-        );
+        const map = {};
+        orders.forEach((o) => {
+            if (!map[o.issue]) {
+                map[o.issue] = { issue: o.issue, items: [] };
+            }
+            map[o.issue].items.push(o);
+        });
+        return Object.values(map);
     }, [orders]);
-    if (loading) return <ColorOrderLoader />;
-    if (!grouped?.length) return <EmptyState />;
+
+    /* 📄 Pagination Logic */
+    const totalPages = Math.ceil(grouped.length / perPage);
+
+    const paginatedData = useMemo(() => {
+        const start = (page - 1) * perPage;
+        return grouped.slice(start, start + perPage);
+    }, [grouped, page]);
+
+    if (loading) return <Loader />;
+    if (!grouped.length) return <EmptyState />;
+
     return (
-        <div style={{ padding: 10 }}>
-            {grouped.map((group, i) => {
+        <div style={{ padding: 12 }}>
+            {paginatedData.map((group, i) => {
                 const isPending = group.items.some((o) => o.result === "pending");
                 const isWin = group.items.some((o) => o.result === "win");
 
                 return (
-                    <div
-                        key={i}
-                        style={{
-                            background: "#fff",
-                            borderRadius: 14,
-                            marginBottom: 14,
-                            overflow: "hidden",
-                            boxShadow: "0 6px 16px rgba(0,0,0,0.06)",
-                        }}
-                    >
+                    <div key={i} style={{
+                        background: "#fff",
+                        borderRadius: 16,
+                        marginBottom: 16,
+                        boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                        overflow: "hidden",
+                    }}>
                         {/* HEADER */}
-                        <div
-                            className="bg-gradient-to-r from-purple-600 to-indigo-500 text-white"
-                            style={{
-                                padding: 10,
-                                fontWeight: 700,
-                                fontSize: 13,
-                                display: "flex",
-                                justifyContent: "space-between",
-                            }}
-                        >
+                        <div style={{
+                            background: "linear-gradient(90deg,#7c3aed,#6366f1)",
+                            color: "#fff",
+                            padding: "10px 14px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                        }}>
                             <span>Issue #{group.issue}</span>
                             <span>
-                                {isPending && "⏳ Pending"}
-                                {!isPending && isWin && "✅ Win"}
-                                {!isPending && !isWin && "❌ Lose"}
+                                {isPending ? "⏳ Pending" : isWin ? "✅ Win" : "❌ Loss"}
                             </span>
                         </div>
-                        {/* <p>{JSON.stringify(orders,null,2)}</p> */}
+
                         {/* ITEMS */}
-                        {group.items.map((o, j) => (
-                            <div
-                                key={j}
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    padding: "10px 12px",
+                        {group.items.map((o, j) => {
+                            const created = formatDateTime(o.createdAt);
+                            const settled = formatDateTime(o.settledAt);
+
+                            return (
+                                <div key={j} style={{
+                                    padding: 12,
                                     borderTop: "1px solid #f1f1f1",
-                                    alignItems: "center",
-                                }}
-                            >
-                                {/* LEFT */}
-                                <div>
-                                    <ValueBadge type={o.type} value={o.value} />
-                                    <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
-                                        Bet ₹{o.amount}
+                                }}>
+                                    <div style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                    }}>
+                                        <ValueBadge type={o.type} value={o.value} />
+                                        <StatusBadge status={o.result} />
+                                        <div style={{
+                                            fontWeight: 700,
+                                            color:
+                                                o.credit > 0
+                                                    ? "#16a34a"
+                                                    : o.debit > 0
+                                                        ? "#dc2626"
+                                                        : "#888",
+                                        }}>
+                                            {o.credit > 0 && `+₹${o.credit}`}
+                                            {o.debit > 0 && `-₹${o.debit}`}
+                                        </div>
+                                    </div>
+
+                                    {/* 📅 TIME INFO */}
+                                    <div style={{
+                                        fontSize: 11,
+                                        color: "#777",
+                                        marginTop: 6,
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                    }}>
+                                        <span>
+                                            Bet: {created.date} {created.time}
+                                        </span>
+                                        {o.result !== "pending" && (
+                                            <span>
+                                                Result: {settled.date} {settled.time}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-
-                                {/* CENTER */}
-                                <StatusBadge status={o.result} />
-
-                                {/* RIGHT */}
-                                <div
-                                    style={{
-                                        fontWeight: 700,
-                                        fontSize: 13,
-                                        color:
-                                            o.credit > 0
-                                                ? "#16a34a"
-                                                : o.debit > 0
-                                                    ? "#dc2626"
-                                                    : "#888",
-                                    }}
-                                >
-                                    {o.credit > 0 && `+₹${o.credit}`}
-                                    {o.debit > 0 && `-₹${o.debit}`}
-                                    {o.result === "pending" && "—"}
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 );
             })}
+
+            {/* 📄 PAGINATION */}
+            <div style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 10,
+                marginTop: 10,
+            }}>
+                <button
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                >
+                    Prev
+                </button>
+                <span>
+                    Page {page} / {totalPages}
+                </span>
+                <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                >
+                    Next
+                </button>
+            </div>
         </div>
     );
 }

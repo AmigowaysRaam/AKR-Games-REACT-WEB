@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, Headphones } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getBetTabHistory } from "../services/authService";
-
 import KeralLotteryMyOrders from "./KeralalotteryOrders";
 import MyDiceOrderTab from "../components/DiceOrdersScreen";
 import MyOrderColorPrediction from "../components/MyOrdersColorPrediction";
 import ThreeDigitOrders from "../components/ThreeDigitOrders";
+import MySattaMatkaBets from "./MyBetsSattaMatka";
 
 export default function MyBets() {
   const navigate = useNavigate();
@@ -74,7 +74,14 @@ export default function MyBets() {
             selectedDate={selectedDate}
           />
         );
-
+      case "matka":
+        return (
+          // <MatkaOrderLIst
+          //   activeTab={activeTab}
+          //   selectedDate={selectedDate}
+          // />
+          <MySattaMatkaBets />
+        );
       default:
         return (
           <div
@@ -134,17 +141,12 @@ export default function MyBets() {
   };
   return (
     <div style={styles.container}>
-
-      {/* HEADER + TOP */}
       <div style={styles.fixedTop}>
-
         <div style={styles.header}>
           <ChevronLeft size={22} onClick={() => navigate(-1)} />
           <span style={{ fontWeight: "600" }}>My Bets</span>
           <Headphones size={20} onClick={() => navigate("/CustomerSupport")} />
         </div>
-
-        {/* DATE */}
         <div style={styles.tabs}>
           <input
             type="date"
@@ -153,8 +155,6 @@ export default function MyBets() {
             style={styles.dateInput}
           />
         </div>
-
-        {/* CATEGORY */}
         <div style={styles.chipsContainer}>
           {categories.map((cat) => (
             <div
@@ -186,6 +186,7 @@ export default function MyBets() {
             </p>
           </div>
         )}
+        {/* <p>{activeCategory}</p> */}
         {!loading && !activeCategory && (
           <div style={styles.emptyWrapper}>
             <div style={styles.emptyCard}>
@@ -202,8 +203,6 @@ export default function MyBets() {
     </div>
   );
 }
-
-/* STYLES */
 const styles = {
   container: {
     maxWidth: 430,

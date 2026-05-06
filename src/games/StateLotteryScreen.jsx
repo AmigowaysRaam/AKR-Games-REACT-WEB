@@ -25,6 +25,15 @@ const getBetRulesInfo = (tab) => {
     case "4D":
       return "Select numbers for A, B, C, D";
 
+      case "2X":
+  return "Select numbers for C & D";
+
+case "3X":
+  return "Select numbers for A, B, C";
+
+case "4X":
+  return "Select numbers for A, B, C, D";
+
     default:
       return "";
   }
@@ -42,16 +51,19 @@ import FishPrawnCrabBet from "./FishPrawnCrabBet";
 import OneDigitBetGrid from "./OneDigitBetGrid";
 import ResultHistoryTab from "./ResultHistoryTab";
 import AnalyzeTab from "./AnalyzeTab";
-import { MyOrderTab, RulesModal, BetSummaryBar } from "./MyOrderTab";
+import { MyOrderTab, RulesModal, BetSummaryBar , BetSlipModal} from "./MyOrderTab";
 import { useCountdown, useLotteryGame } from "./hooks";
 import { GAME_TABS, PRIZE_TABS, LOTTERIES } from "../data/lotteryConfig";
 import { ChevronLeft } from "lucide-react";
+import MultiDigitBetGrid from "./MultiDigitBetGrid";
+import { PlaceBetStateLottery } from "../services/gameSevice";
 
 export default function StateLotteryScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const lottery = LOTTERIES.find(l => l.id === id);
+  console.log('lottery object:', lottery);
 
   if (!lottery) {
     return <div>Lottery not found</div>;
@@ -61,22 +73,223 @@ export default function StateLotteryScreen() {
   const [showRules, setShowRules] = useState(false);
   const [orders,    setOrders]    = useState([]);
   const [toast,     setToast]     = useState(null);
+  const [betSlip, setBetSlip] = useState([]);
+  const [showBetSlipModal, setShowBetSlipModal] = useState(false);
+
+  const [gameId, setGameId] = useState(null);
+
+// ── Tab → API tab name map ──
+const GAME_TAB_MAP = {
+  'TwoSide':       'twoside',
+  '1Digit':        '1digit',
+  '2D':            '2d',
+  '3D':            '3d',
+  '4D':            '4d',
+  '2X':            '2x',
+  '3X':            '3x',
+  '4X':            '4x',
+  'FishPrawnCrab': 'fishprawncrab',
+};
+
+// ── Prize tab → API prize value ──
+const PRIZE_MAP = {
+  '1st-prize': '1',
+  '2nd-prize': '2',
+  'both':      'both',
+};
+
+const handleAddToSlip = () => {
+  if (!game.isSelectionComplete) {
+    showT("⚠️ Please select all required columns");
+    return;
+  }
+
+  // buildCombinationSlips returns ready-made slips with cartesian applied
+  const newSlips = game.buildCombinationSlips(game.activeGameTab);
+
+  setBetSlip(prev => [...prev, ...newSlips]);
+  game.clearBets();
+  showT(`✅ ${newSlips.length} slip${newSlips.length > 1 ? 's' : ''} added!`);
+};
+
+const buildSelections = (slip) => {
+  const { gameType, bets } = slip;
+
+  if (gameType === 'TwoSide') {
+    // bets = { A: 'odd' } or { B: 'big' } — each slip is 1 bet
+    const types  = Object.keys(bets);
+    const values = Object.values(bets);
+    return { types, values };
+  }
+
+  if (gameType === 'FishPrawnCrab') {
+    // bets = { D: 'fish' }
+    const col = Object.keys(bets)[0];
+    return { [col]: [bets[col]] };
+  }
+
+  // 1Digit, 2D, 3D, 4D, 2X, 3X, 4X
+  // bets = { C: '3', D: '7' } — each value as array
+  const selections = {};
+  Object.entries(bets).forEach(([col, val]) => {
+    selections[col] = [String(val)];
+  });
+  return selections;
+};
+
+// ── GROUP slips into API bets array ──
+// Slips with same gameType + prizeTab + amount → merge selections
+const buildApiBets = (slipList, amounts) => {
+  // Each slip from betSlip is already 1 combination (cartesian result)
+  // But API wants them grouped by tab+prize+amount with merged selections
+  // So we group by: gameType + prizeTab + amount
+
+  const groups = {};
+
+  slipList.forEach((slip, i) => {
+    const amt       = amounts[i] ?? slip.amount;
+    const tabKey    = GAME_TAB_MAP[slip.gameType] ?? slip.gameType.toLowerCase();
+    const prizeKey  = PRIZE_MAP[game.activePrizeTab] ?? '1';
+    const groupKey  = `${tabKey}__${prizeKey}__${amt}`;
+
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        tab:        tabKey,
+        prize:      prizeKey,
+        amount:     amt,
+        slips:      [],
+      };
+    }
+    groups[groupKey].slips.push(slip);
+  });
+
+  // Convert each group into one API bet entry
+  return Object.values(groups).map(group => {
+    const { tab, prize, amount, slips } = group;
+
+    // Merge all slip selections
+    if (tab === 'twoside') {
+      const types  = slips.map(s => Object.keys(s.bets)[0]);
+      const values = slips.map(s => Object.values(s.bets)[0]);
+      return { tab, prize, selections: { types, values }, amount };
+    }
+
+    if (tab === 'fishprawncrab') {
+      const selections = {};
+      slips.forEach(s => {
+        Object.entries(s.bets).forEach(([col, val]) => {
+          if (!selections[col]) selections[col] = [];
+          selections[col].push(String(val));
+        });
+      });
+      return { tab, prize, selections, amount };
+    }
+
+    // 2d / 3d / 4d / 2x / 3x / 4x / 1digit
+    const selections = {};
+    slips.forEach(s => {
+      Object.entries(s.bets).forEach(([col, val]) => {
+        if (!selections[col]) selections[col] = [];
+        if (!selections[col].includes(String(val))) {
+          selections[col].push(String(val));
+        }
+      });
+    });
+    return { tab, prize, selections, amount };
+  });
+};
+
+// ── UPDATED handleFinalPay ──
+const handleFinalPay = async (amounts = {}) => {
+  if (!betSlip.length) return;
+  if (!gameId) { showT("⚠️ Game not loaded yet"); return; }
+
+  const bets = buildApiBets(betSlip, amounts);
+
+  const payload = {
+    user_id: 7,       // ← replace with your auth user id
+    game_id: gameId,
+    bets,
+  };
+
+  console.log('PlaceBet payload:', JSON.stringify(payload, null, 2));
+
+  try {
+    const res = await PlaceBetStateLottery(payload);
+
+    if (res.success) {
+      // Save to local orders with API response data
+      const newOrders = betSlip.map((slip, i) => ({
+        issue:       lottery.drawNumber,
+        gameType:    slip.gameType,
+        bets:        slip.bets,
+        totalNumbers: slip.totalNumbers,
+        amount:      amounts[i] ?? slip.amount,
+        status:      'pending',
+        betId:       res.bet_ids?.[i] ?? null,
+      }));
+
+      setOrders(prev => [...newOrders, ...prev]);
+      setBetSlip([]);
+      showT(`🎉 ${res.slip_count} slip(s) placed! Est. win ₹${res.estimated_win}`);
+    } else {
+      showT(`❌ ${res.message ?? 'Bet failed'}`);
+    }
+  } catch (err) {
+    console.error('PlaceBet error:', err);
+    showT('❌ Something went wrong');
+  }
+};
+
 
   /* ── Place bets ── */
   const handlePay = () => {
-    if (!game.totalNumbers) return;
-    const newOrders = game.selectedBets.map(b => ({
-      ...b, issue: lottery.drawNumber, status: 'pending',
-    }));
-    setOrders(prev => [...newOrders, ...prev]);
-    game.clearBets();
-    showT(`✅ ${newOrders.length} bet${newOrders.length > 1 ? 's' : ''} placed!`);
+  if (!game.totalNumbers) return;
+
+  const grouped = game.selectedBets.reduce((acc, b) => {
+    if (!acc[b.column]) acc[b.column] = [];
+    acc[b.column].push(b.type);
+    return acc;
+  }, {});
+
+  const order = {
+    issue: lottery.drawNumber,
+    gameType: game.activeGameTab,
+    bets: grouped,
+    totalNumbers: game.totalNumbers,
+    amount: game.totalAmount,
+    status: "pending"
   };
+
+  setOrders(prev => [order, ...prev]);
+
+  game.clearBets();
+
+  showT(`✅ ${order.totalNumbers} bet${order.totalNumbers > 1 ? 's' : ''} added!`);
+};
 
   const showT = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   };
+
+  const ROWS_2X = [
+  { key: "C", color: "#EF4444" },
+  { key: "D", color: "#22C55E" }
+];
+
+const ROWS_3X = [
+  { key: "A", color: "#3B82F6" }, // blue
+  { key: "B", color: "#F59E0B" }, // orange
+  { key: "C", color: "#EF4444" }  // red
+];
+
+const ROWS_4X = [
+  { key: "A", color: "#3B82F6" },
+  { key: "B", color: "#F59E0B" },
+  { key: "C", color: "#EF4444" },
+  { key: "D", color: "#22C55E" }
+];
 
   /* ─────────────────────────────────────────────────────
      RENDER
@@ -156,6 +369,7 @@ export default function StateLotteryScreen() {
           lottery={lottery}
           countdown={countdown}
           onRules={() => setShowRules(true)}
+          onGameIdReady={(id) => setGameId(id)}
         />
 
         {/* ── GAME TABS ── */}
@@ -252,8 +466,29 @@ export default function StateLotteryScreen() {
     isBetSelected={game.isBetSelected}
     toggleBet={game.toggleBet}
   />
+): game.activeGameTab === '2X' ? (
+  <MultiDigitBetGrid
+    rows={ROWS_2X}
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+):
 
-) : (
+game.activeGameTab === '3X' ?(
+  <MultiDigitBetGrid
+    rows={ROWS_3X}
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+):
+
+game.activeGameTab === '4X'?(
+  <MultiDigitBetGrid
+    rows={ROWS_4X}
+    isBetSelected={game.isBetSelected}
+    toggleBet={game.toggleBet}
+  />
+): (
   <div style={{
     padding: 40,
     textAlign: 'center',
@@ -266,6 +501,23 @@ export default function StateLotteryScreen() {
     </div>
   </div>
 )}
+{game.isSelectionComplete  && (
+  <div style={{
+    background: "#fff",
+    padding: "14px 16px",
+    borderTop: "1px solid #eee"
+  }}>
+    <BetSummaryBar
+      totalAmount={game.totalAmount}
+      totalNumbers={game.totalNumbers}
+      onClear={game.clearBets}
+      onPay={handleAddToSlip}
+      label="Add to bet slip"
+       disabled={!game.isSelectionComplete}
+    />
+  </div>
+)}
+
 
         {/* ── RESULT HISTORY SECTION ── */}
         <div style={{ background: '#fff', marginTop: 8 }}>
@@ -290,8 +542,13 @@ export default function StateLotteryScreen() {
             ))}
           </div>
 
+
           {/* Tab content */}
-          {game.activeHistTab === 'result'  && <ResultHistoryTab history={lottery.history} />}
+{game.activeHistTab === 'result' && (
+  <ResultHistoryTab
+    lotteryKey={lottery.key ?? lottery.id}  // ← use whichever field has the key
+  />
+)}
           {game.activeHistTab === 'analyze' && <AnalyzeTab history={lottery.history} />}
           {game.activeHistTab === 'myorder' && <MyOrderTab orders={orders} />}
 
@@ -299,32 +556,42 @@ export default function StateLotteryScreen() {
         </div>
       </div>
 
-      {/* ── STICKY BOTTOM BET BAR ── */}
-      <div
-            style={{
-              position: "fixed",
-              bottom: 0,
+{/* ── FIXED PAY BAR (BOTTOM) ── */}
+<div style={{
+  position: "fixed",
+  bottom: 0,
+  left: "50%",
+  transform: "translateX(-50%)",
+  width: "100%",
+  maxWidth: 420,
+  background: "#fff",
+  borderTop: "1px solid #eee",
+  padding: "12px 16px",
+  boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+  zIndex: 100
+}}>
+  <BetSummaryBar
+    totalAmount={betSlip.reduce((s,b)=>s+b.amount,0)}
+    totalNumbers={betSlip.reduce((s,b)=>s+b.totalNumbers,0)}
+    onClear={() => setBetSlip([])}
+    onPay={handleFinalPay}
+    onAmountClick={() => betSlip.length && setShowBetSlipModal(true)}  // 👈 NEW
+    label="Pay Now"
+  />
+</div>
 
-              // 👇 center it to match app container
-              left: "50%",
-              transform: "translateX(-50%)",
-
-              // 👇 SAME as your app max width
-              width: "100%",
-              maxWidth: 420,   // ⚠️ match your layout (420 / 480 etc)
-
-              zIndex: 100,
-              background: "#fff",
-              borderTop: "1px solid #e5e7eb"
-            }}
-          >
-        <BetSummaryBar
-  totalAmount={game.totalAmount}
-  totalNumbers={game.totalNumbers}
-  onClear={game.clearBets}
-  onPay={handlePay}
+{/* ── BET SLIP MODAL ── */}
+<BetSlipModal
+  visible={showBetSlipModal}
+  betSlip={betSlip}
+  onClose={() => setShowBetSlipModal(false)}
+  onRemove={(i) => setBetSlip(prev => prev.filter((_, idx) => idx !== i))}
+  onPay={(amounts) => {
+  handleFinalPay(amounts);
+  setShowBetSlipModal(false);
+}}
 />
-          </div>
+
      
     </div>
   );

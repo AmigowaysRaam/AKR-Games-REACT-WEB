@@ -9,7 +9,6 @@ import {
 
 export default function ForgetPassword() {
   const navigate = useNavigate();
-
   const [showCountry, setShowCountry] = useState(false);
   const [step, setStep] = useState(1);
   const [countryCode, setCountryCode] = useState("+91");
@@ -238,7 +237,7 @@ export default function ForgetPassword() {
                 </div>
 
                 <input
-                placeholder="Enter phone number"
+                  placeholder="Enter phone number"
                   type="tel"
                   value={phone}
                   onChange={(e) =>
@@ -302,7 +301,7 @@ export default function ForgetPassword() {
 
               <div className="flex items-center border-b pb-2 mb-1">
                 <input
-                placeholder='New Password'
+                  placeholder='New Password'
                   type={showPass ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -323,7 +322,7 @@ export default function ForgetPassword() {
 
               <div className="flex items-center border-b pb-2 mb-1">
                 <input
-                placeholder="Confirm Password"
+                  placeholder="Confirm Password"
                   type={showConfirm ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

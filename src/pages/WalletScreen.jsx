@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, Headphones, Info, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getWalletSummary } from "../services/authService";
-
+import GameLoader from "./LoaderComponet";
 export default function WalletScreen() {
   const navigate = useNavigate();
   const [showInfo, setShowInfo] = useState(false);
@@ -56,11 +56,13 @@ export default function WalletScreen() {
   const handleRefresh = () => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return;
-
     const parsedUser = JSON.parse(storedUser);
-    fetchWallet(parsedUser.id, true);
+    fetchWallet(parsedUser?.id, true);
   };
 
+  if (loading) {
+    return <GameLoader />
+  }
   return (
     <div className="max-w-[430px] mx-auto min-h-screen bg-gray-100 relative">
       {/* HEADER */}

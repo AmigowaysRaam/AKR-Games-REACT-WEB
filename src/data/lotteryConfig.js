@@ -62,7 +62,7 @@ export const BET_RULES = {
 };
 
 // ─── GAME TABS ─────────────────────────────────────────────────────────────
-export const GAME_TABS = ['TwoSide', 'FishPrawnCrab', '1Digit', '2D', '3D', '4D'];
+export const GAME_TABS = ['TwoSide', 'FishPrawnCrab', '1Digit', '2D', '3D', '4D','2X','3X','4X'];
 
 // ─── PRIZE TABS ───────────────────────────────────────────────────────────────
 export const PRIZE_TABS = ['1st-prize', '2nd-prize'];
@@ -73,7 +73,7 @@ export const LOTTERIES = [
     {
     id: 'nagaland_morning',
     nav:'nagaland_morning',
-    name: 'Nagaland Morning',
+    name: 'Dear 1 PM',
     shortName: 'Nagaland Mor...',
     drawNumber: 'Draw No.Dear 1 PM',
     jackpot: '₹9,60,000',
@@ -125,7 +125,7 @@ export const LOTTERIES = [
     {
     id: 'nagalandday',
     nav: 'nagalandday',
-    name: 'Nagaland Day',
+    name: 'Dear 6 PM',
     shortName: 'Nagaland Day...',
     drawNumber: 'Draw No.Dear 6 PM',
     jackpot: '₹9,60,000',
@@ -150,7 +150,7 @@ export const LOTTERIES = [
   {
     id: 'nagalandevening',
     nav: 'nagalandevening',
-    name: 'Nagaland Evening',
+    name: 'Dear 8 PM',
     shortName: 'Nagaland Eve...',
     drawNumber: 'Draw No.Dear 8 PM',
     jackpot: '₹9,60,000',
@@ -199,7 +199,7 @@ export const LOTTERIES = [
   {
     id: 'sthreesakthi',
     nav: 'sthree_sakthi',
-    name: 'Sthree Sakthi',
+    name: 'Sthreesakthi',
     shortName: 'Sthree Sakthi',
     drawNumber: 'Draw No.SS-400',
     jackpot: '₹9,60,000',
@@ -223,7 +223,7 @@ export const LOTTERIES = [
   {
     id: 'dhanalakshmi',
     nav: 'dhanalekshmi',
-    name: 'Dhanalekshmi',
+    name: 'dhanalakshm',
     shortName: 'Dhanalekshmi',
     drawNumber: 'Draw No.DL-100',
     jackpot: '₹9,60,000',
@@ -271,7 +271,7 @@ export const LOTTERIES = [
      {
     id: 'suvarna_keralam',
     nav: 'suvarna_keralam',
-    name: 'Suvarna Keralam',
+    name: 'Suvarna Kerlam',
     shortName: 'Suvarna Ker...',
     drawNumber: 'Draw No.03/04/2026',
     jackpot: '₹9,60,000',

@@ -1,242 +1,471 @@
-import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { ChevronLeft, RefreshCcw } from "lucide-react";
+import { getEarningDetails, handleResetLinkApi } from "../services/authService";
+import GameLoader from "./LoaderComponet";
 export default function MyCommission() {
   const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
+  const [data, SetApiData] = useState(null);
+
+  const copyCode = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+  
+    if (!user?.id) {
+      showToast("User not found", "error");
+      navigate("/login");
+      return;
+    }
+  
+    if (!data?.referral_code) {
+      showToast("Referral code not available", "error");
+      return;
+    }
+  
+    const url = `${window.location.origin}/Sign?ref=${data?.referral_code}`;
+  
+    // ✅ Modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("Link copied!", "success");
+        return;
+      } catch (err) {
+        console.log("Clipboard error:", err);
+      }
+    }
+  
+    // ✅ Fallback (important for HTTP / older browsers)
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+  
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+  
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+  
+      showToast("Link copied!", "success");
+    } catch (err) {
+      console.log(err);
+      showToast("Failed to copy link", "error");
+    }
+  };
+  const [toast, setToast] = useState({ show: false, msg: "", type: "success" });
+  const showToast = (msg, type = "success") => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => {
+      setToast({ show: false, msg: "", type: "success" });
+    }, 2000);
+  };
+  const handleShareLink = async () => {
+    const url = `${window.location.origin}/Sign?ref=${data.referral_code}`;
+    const shareData = {
+      title: "Join me on AKR Lottery!",
+      text: `Use my invite code ${data?.referral_code}`,
+      url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        showToast("Shared successfully!", "success");
+        return;
+      } catch (err) {
+      }
+      
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        // await navigator.clipboard.writeText(data?.referral_code);
+        await navigator.clipboard.writeText(url);
+        showToast("Link copied!", "success");
+        return;
+      } catch (err) {
+
+      }
+    }
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed"; // avoid scroll
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      showToast("Link copied!", "success");
+    } catch (err) {
+      showToast("Failed to copy link", "error");
+    }
+  };
+  const handleResetLink = async () => {
+    if (!JSON.parse(localStorage.getItem("user"))?.id) {
+      showToast("User not found", "error");
+      navigate('/login');
+      return;
+    }
+    try {
+      setLoading(true);
+      const resp = await handleResetLinkApi({
+        userId: JSON.parse(localStorage.getItem("user"))?.id,
+      });
+      if (resp?.success) {
+        showToast(resp?.message, "success");
+      }
+      else {
+        showToast(resp?.message, "error");
+      }
+      fetchEarning();
+    } catch (err) {
+      console.log(err);
+      showToast("Failed to reset referral code", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+  const [loading, setLoading] = useState(false);
+  const fetchEarning = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getEarningDetails({
+        userId: JSON.parse(localStorage.getItem("user"))?.id,
+      });
+      const api = res?.data;
+      SetApiData(api)
+    } catch (err) {
+      console.log(err);
+      showToast("Failed to load data", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchEarning();
+  }, []);
 
   return (
-    <div style={styles.container}>
-      {/* HEADER */}
-      <div style={styles.header}>
-        <ChevronLeft size={22} onClick={() => navigate(-1)} />
-        <span>Commission Detail</span>
+    <div style={container}>
+      <div style={header}>
+        <span onClick={() => navigate(-1)} style={back}>
+          <ChevronLeft
+            className="cursor-pointer" />
+        </span>
+        {/* <button className="cursor-pointer" onClick={() => navigate('/RulesScreeen')} style={rulesBtn}>Rules</button> */}
       </div>
-
-      {/* SEARCH */}
-      <input placeholder="Search Phone number" style={styles.search} />
-
-      {/* CARD */}
-      <div style={styles.card}>
-        <div style={styles.rowBetween}>
-          <div>
-            <div style={styles.label}>Total Commission</div>
-            <div style={styles.amount}>₹0.00</div>
-          </div>
-
-          <button
-            style={styles.rebateBtn}
-            onClick={() => setShowModal(true)}
-          >
-            Rebate ▶
-          </button>
-        </div>
-
-        {/* TIERS */}
-        <div style={styles.tiers}>
-          {["Tier 1", "Tier 2", "Tier 3", "Tier 4"].map((t, i) => (
-            <div key={i} style={{ ...styles.tier, background: tierColors[i] }}>
-              {t}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ✅ MODAL */}
-      {showModal && (
-        <div style={styles.overlay}>
-          <div style={styles.modal}>
-            
-            {/* HEADER */}
-            <div style={styles.modalHeader}>
-              <span style={{ fontWeight: "bold" }}>Commission Rate</span>
-              <span style={styles.close} onClick={() => setShowModal(false)}>
-                ✕
-              </span>
-            </div>
-
-            {/* TABLE */}
-            <div style={styles.table}>
-              <div style={styles.tableHead}>
-                <span>Type</span>
-                <span>T1</span>
-                <span>T2</span>
-                <span>T3</span>
-                <span>T4</span>
-              </div>
-
-              {dummyRates.map((item, i) => (
-                <div key={i} style={styles.tableRow}>
-                  <span>{item.name}</span>
-                  <span>{item.t1}</span>
-                  <span>{item.t2}</span>
-                  <span>{item.t3}</span>
-                  <span>{item.t4}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* FOOTER */}
-            <div style={styles.footer}>
-              Invite More Friends To Upgrade To Lv2 Earn Higher Commissions.
-            </div>
-          </div>
+      {toast?.show && (
+        <div
+          style={{
+            ...toastStyle,
+            background: toast.type === "error" ? "#ef4444" : "#22c55e",
+          }}
+        >
+          {toast?.msg}
         </div>
       )}
+      {/* {JSON.stringify(data)} */}
+      {
+        loading ?
+          <GameLoader />
+          :
+          <>
+            <div style={content}>
+              <div className="px-4 py-2 " style={{
+                banner,
+                backgroundImage: `url(${data?.image})`,
+                position: "relative", backgroundSize: "cover",
+                backgroundPosition: "center", borderBottomRightRadius: "4%",
+                borderBottomLeftRadius: "4%"
+              }}>
+                <div style={{
+                  position: "relative", zIndex: 2, paddingTop: "45%",
+                }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 14px",
+                      borderRadius: "14px",
+                      background: "linear-gradient(90deg, #6366f1, #3b82f6, #4f46e5)",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                      backdropFilter: "blur(10px)",
+                    }}
+                  >
+                    {/* Referral Code */}
+                    <span
+                      style={{
+                        fontWeight: "600",
+                        fontSize: "14px",
+                        letterSpacing: "1.2px",
+                        color: "#fff",
+                        padding: "1px 16px",
+                        borderRadius: "2px",
+                        background: "rgba(255,255,255,0.15)",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      {data?.referral_code || "------"}
+                    </span>
+
+                    {/* Actions */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      {/* Reset Button */}
+                      <button
+                        onClick={handleResetLink}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          border: "none",
+                          fontSize: "11px",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          background: data?.referral_code ? "#22c55e" : "#9ca3af",
+                          color: "#fff",
+                          opacity: data?.referral_code ? 1 : 0.6,
+                        }}
+                      >
+                        <RefreshCcw size={14} />
+                      </button>
+
+                      {/* Copy Button */}
+                      <button
+                        onClick={copyCode}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: "999px",
+                          border: "none",
+                          fontSize: "11px",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          background: data?.referral_code ? "#22c55e" : "#9ca3af",
+                          color: "#fff",
+                          opacity: data?.referral_code ? 1 : 0.6,
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      borderRadius: "16px",
+                      padding: "10px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      maxWidth: "400px",
+                      width: "100%",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "20px auto 0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "5px"
+                      }}
+                    >
+                      <div style={{ flex: 1, textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            color: "#777",
+                            marginBottom: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          💰 <span>Cumulative Income</span>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: "600",
+                            color: "#222"
+                          }}
+                        >
+                          ₹{data?.cumulative_income || 0}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: "1px",
+                          height: "40px",
+                          background: "#e5e5e5"
+                        }}
+                      ></div>
+                      <div style={{ flex: 1, textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontSize: "13px", color: "#777",
+                            marginBottom: "6px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                          }}                        >
+                          👥 <span>Total Invited</span>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: "600",
+                            color: "#222"
+                          }}
+                        >
+                          {data?.total_invited_count || 0}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        borderTop: "1px solid #eee",
+                        paddingTop: "12px",
+                        fontSize: "11px"
+                      }}
+                    >
+                      <span
+                        onClick={() => {
+                          if (!JSON.parse(localStorage.getItem("user"))?.id) {
+                            showToast("User not found", "error");
+                            navigate('/login');
+                            return;
+                          }
+                          navigate('/invitationRecord')
+                        }}
+                        style={{
+                          color: "#4a90e2", cursor: "pointer",
+                          fontWeight: "500", display: "flex",
+                          alignItems: "center",
+                          gap: "5px"
+                        }}
+                      >
+                        📜 Invitation Record
+                      </span>
+                      <span
+                        onClick={() => {
+                          if (!JSON.parse(localStorage.getItem("user"))?.id) {
+                            showToast("User not found", "error");
+                            navigate('/login');
+                            return;
+                          }
+                          navigate('/RulesScreeen')
+                        }}
+                        style={{
+                          color: "#4a90e2",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px"
+                        }}
+                      >
+                        📘 Reward Rules
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={list}>
+                {data?.inviteRules?.map((b, index) => (
+                  <div key={index} style={card}>
+                    <div style={cardHeader}>
+                      <span>{b?.title}</span>
+                      <span style={{ color: "#22c55e" }}>₹{b?.bonusAmount}</span>
+                    </div>
+                    <div style={grayRow}>
+                      <span>Number of invitees</span>
+                      <span>{b?.noOfPeople}</span>
+                    </div>
+                    <div style={grayRow}>
+                      <span>Recharge per people</span>
+                      <span style={{ color: "#22c55e" }}>
+                        ₹{b?.rechargePerPerson}
+                      </span>
+                    </div>
+                    <div style={progressRow}>
+                      <div>
+                        <span style={highlight}>
+                          {b?.inviteProgress?.split("/")?.[0]}
+                        </span>
+                        /{b?.noOfPeople}
+                        <div style={smallText}>Invitees</div>
+                      </div>
+                      <div>
+                        <span style={highlight}>
+                          {b?.depositProgress?.split("/")?.[0]}
+                        </span>
+                        /{b.noOfPeople}
+                        <div style={smallText}>Deposits</div>
+                      </div>
+                    </div>
+                    {/* <p>{JSON.stringify(b,null,2)}</p> */}
+                    <button
+                      onClick={() => !b?.isCompleted && handleShareLink()}
+                      disabled={b?.isCompleted}
+                      className={`px-4 py-2 rounded-lg text-white transition-all w-full
+                        my-4
+                        ${b?.isCompleted
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-500 active:scale-95"
+                        }
+  `}
+                    >
+                      {b?.isCompleted ? "Completed" : "Go Complete"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+      }
     </div>
   );
 }
-
-/* DATA */
-const dummyRates = [
-  { name: "Recharge", t1: "0.00%", t2: "0.00%", t3: "0.00%", t4: "0.00%" },
-  { name: "Kerala", t1: "10%", t2: "1%", t3: "0.1%", t4: "0.01%" },
-  { name: "Satta", t1: "4%", t2: "1%", t3: "0.5%", t4: "0.25%" },
-  { name: "3Digit", t1: "3%", t2: "0.75%", t3: "0.5%", t4: "0.25%" },
-  { name: "Quick 3D", t1: "0.8%", t2: "0.3%", t3: "0.12%", t4: "0.05%" },
-  { name: "Color", t1: "0.8%", t2: "0.3%", t3: "0.12%", t4: "0.05%" },
-  { name: "Dice", t1: "0.8%", t2: "0.3%", t3: "0.12%", t4: "0.05%" },
-  { name: "Scratch", t1: "0.2%", t2: "0.21%", t3: "0.08%", t4: "0.01%" },
-  { name: "Casino", t1: "0.45%", t2: "0.25%", t3: "0.09%", t4: "0.04%" },
-];
-
-const tierColors = ["#fca5a5", "#93c5fd", "#fde68a", "#a5b4fc"];
-
-/* STYLES */
-const styles = {
-  container: {
-    maxWidth: 430,
-    margin: "0 auto",
-    background: "#f6f7fb",
-    minHeight: "100vh",
-    fontFamily: "sans-serif",
-  },
-
-  header: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: 16,
-    background: "#fff",
-    fontWeight: "bold",
-  },
-
-  search: {
-    margin: 16,
-    padding: 12,
-    borderRadius: 8,
-    border: "1px solid #ddd",
-    width: "calc(100% - 32px)",
-  },
-
-  card: {
-    background: "#fff",
-    margin: "0 16px",
-    padding: 16,
-    borderRadius: 12,
-  },
-
-  rowBetween: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  label: { color: "#777" },
-
-  amount: {
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-
-  rebateBtn: {
-    background: "#7c3aed",
-    color: "#fff",
-    border: "none",
-    padding: "6px 14px",
-    borderRadius: 20,
-    cursor: "pointer",
-  },
-
-  tiers: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-
-  tier: {
-    padding: "6px 14px",
-    borderRadius: 20,
-    fontSize: 12,
-  },
-
-  /* MODAL */
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.5)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-  },
-
-  modal: {
-    width: "90%",
-    maxWidth: 380,
-    maxHeight: "80vh",
-    overflowY: "auto",
-    background: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    animation: "scaleIn 0.25s ease",
-  },
-
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-
-  close: {
-    cursor: "pointer",
-    fontSize: 18,
-  },
-
-  table: {
-    fontSize: 13,
-  },
-
-  tableHead: {
-    display: "grid",
-    gridTemplateColumns: "1.5fr 1fr 1fr 1fr 1fr",
-    fontWeight: "bold",
-    background: "#f1f1f1",
-    padding: 8,
-    borderRadius: 6,
-  },
-
-  tableRow: {
-    display: "grid",
-    gridTemplateColumns: "1.5fr 1fr 1fr 1fr 1fr",
-    padding: 8,
-    borderBottom: "1px solid #eee",
-  },
-  footer: {
-    marginTop: 12,
-    background: "linear-gradient(90deg,#7c3aed,#9333ea)",
-    color: "#fff",
-    textAlign: "center",
-    padding: 10,
-    borderRadius: 20,
-    fontSize: 12,
-  },
+const container = {
+  maxWidth: 430, margin: "0 auto",
+  height: "100vh", display: "flex", flexDirection: "column", background: "#f5f5f5",
+}; const content = {
+  flex: 1, overflowY: "auto",
+  paddingBottom: "20%",
+}; const header = {
+  height: 55, background: "#22c55e", color: "white", display: "flex",
+  alignItems: "center", justifyContent: "space-between", padding: "0 12px",
+  flexShrink: 0,
+}; const back = { fontSize: 15, cursor: "pointer" }; const banner = {};
+const list = { padding: "0 12px", };
+const card = {
+  background: "white", borderRadius: 12, padding: 12, marginBottom: 12,
 };
-const styleSheet = document.styleSheets[0];
-styleSheet.insertRule(`
-@keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-`, styleSheet.cssRules.length);
+const cardHeader = {
+  display: "flex", justifyContent: "space-between",
+  marginBottom: 10, fontWeight: "bold",
+}; const grayRow = {
+  background: "#f1f1f1",
+  padding: 8, borderRadius: 6, display: "flex", justifyContent: "space-between",
+  marginBottom: 6,
+}; const toastStyle = {
+  position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", color: "#fff",
+  padding: "10px 16px", borderRadius: 8, fontWeight: 500, zIndex: 999,
+}; const progressRow = { display: "flex", justifyContent: "space-between", marginTop: 10, };
+const highlight = { color: "#22c55e", fontWeight: "bold", };
+const smallText = { fontSize: 10, color: "#777", };

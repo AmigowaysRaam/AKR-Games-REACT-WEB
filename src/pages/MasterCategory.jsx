@@ -84,10 +84,8 @@ export default function MasterCategoryScreen({
 
             case "car":
                 return <QuickRace items={items} />;
-
             case "keralalottery":
                 return <KeralaLottery items={items} />;
-
             case "matka":
                 return <SattaMatka items={items} />;
             default:

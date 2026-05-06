@@ -10,8 +10,9 @@ export default function ThreeDigits({ items = [] }) {
       () => Math.floor(Math.random() * 3600) // up to 60 mins
     );
     setTimers(initialTimers);
-    console.log("threedigit",items)
+    console.log("threedigit", items)
   }, [items]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTimers((prev) =>
@@ -20,9 +21,7 @@ export default function ThreeDigits({ items = [] }) {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-
   if (!items.length) return null;
-
   return (
     <div className="px-3 py-3">
       {/* <h2 className="text-lg font-semibold mb-3">🎲 3 Digit Game</h2> */}
@@ -38,7 +37,6 @@ export default function ThreeDigits({ items = [] }) {
               key={item.id}
               className="rounded-lg overflow-hidden bg-white shadow-sm"
             >
-              {/* CARD IMAGE */}
               <div
                 className="relative h-35 text-white flex flex-col justify-between p-2"
                 style={{
@@ -47,18 +45,12 @@ export default function ThreeDigits({ items = [] }) {
                   backgroundPosition: "center",
                 }}
               >
-                {/* DARK OVERLAY */}
-                {/* <div className="absolute inset-0 bg-black/30" /> */}
-
-                {/* TOP CONTENT */}
+                <div className="absolute inset-0 bg-black/10" />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-semibold">{item.title}</p>
-
-                  {/* <p className="text-[11px] mt-1">WIN PRIZE</p> */}
-                  <p className="text-lg font-bold">₹{item.prize}</p>
+                  <p className="text-[11px] font-semibold text-white-900 drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]">
+                    {item?.title}
+                  </p>
                 </div>
-
-                {/* TIMER */}
                 <div className="relative z-10">
                   <p className="text-[10px]">
                     Time for Next Booking

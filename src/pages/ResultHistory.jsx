@@ -5,6 +5,10 @@ import { getResultHistory } from "../services/authService";
 import KeralaLotteryTab from "./KeralaOverallHistory";
 import DiceResultWithTabs from "./useDiceResult";
 import ColorHistoryComp from "./ColorPredictionResultComp";
+import SattaResutList from "../games/fetchResultSattaMatka";
+import ThreeDigittHistoryTable from "../games/ThreeDigitResultTab";
+import GameLoader from "./LoaderComponet";
+import StateLotteryResult from "./StateLotteryResultData";
 
 function useDragScroll() {
 
@@ -33,7 +37,6 @@ function useDragScroll() {
     handlers: { onMouseDown, onMouseUp },
   };
 }
-
 function useSwipeTabs(tabs, activeTab, setActiveTab) {
   const ref = useRef(null);
   let startX = 0;
@@ -61,7 +64,7 @@ export default function ResultScreen() {
   const mainTabScroll = useDragScroll();
   const subTabScroll = useDragScroll();
   const subTabRefs = useRef({});
-
+  
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -93,6 +96,9 @@ export default function ResultScreen() {
   const currentSubTabs = histdata[mainTab]?.subTabs || {};
   const subTabs = Object.keys(currentSubTabs);
   const contentSwipe = useSwipeTabs(subTabs, subTab, setSubTab);
+
+
+
   useEffect(() => {
     if (subTabRefs.current[subTab]) {
       subTabRefs.current[subTab].scrollIntoView({
@@ -105,13 +111,18 @@ export default function ResultScreen() {
     switch (subTab) {
       case "dice":
         return <DiceResultWithTabs />;
-
+      case "statelottery":
+        return <StateLotteryResult />;
       case "color":
         return <ColorHistoryComp />;
-
       case "kerala":
         return <KeralaLotteryTab lottery="kerala" />;
-
+      // 3digit
+      case "3digit":
+        return <ThreeDigittHistoryTable lottery="kerala" />;
+      case "matka":
+        return <SattaResutList />;
+      // 
       default:
         return <div
           style={{
@@ -179,55 +190,63 @@ export default function ResultScreen() {
         </button>
         Result
       </div>
+      {
+        loading ?
+          <GameLoader />
+          :
+          <>
+            {/* Main Tabs */}
+            <div ref={mainTabScroll.ref} {...mainTabScroll.handlers} style={styles.mainTabs}>
+              {mainTabs.map((tabKey) => (
+                <div
+                  key={tabKey}
+                  onClick={() => {
+                    setMainTab(tabKey);
+                    const firstSub = Object.keys(histdata[tabKey]?.subTabs || {})[0];
+                    setSubTab(firstSub || "");
+                  }}
+                  style={{
+                    ...styles.mainTab,
+                    ...(mainTab === tabKey && styles.activeMainTab),
+                  }}
+                >
+                  {histdata[tabKey]?.label}
+                </div>
+              ))}
+            </div>
+            {/* <p>{JSON.stringify(histdata,null,2)}</p> */}
+            <div ref={subTabScroll.ref} {...subTabScroll.handlers} style={styles.subTabs}>
+              {subTabs.map((key) => (
+                <div
+                  key={key}
+                  ref={(el) => (subTabRefs.current[key] = el)} // ✅ attach ref
+                  onClick={() => setSubTab(key)}
+                  style={{
+                    ...styles.subTabItem,
+                    transform: subTab === key ? "scale(1.05)" : "scale(1)",
+                    transition: "0.2s",
+                  }}
+                >
+                  <span
+                    style={{
+                      ...styles.subTabText,
+                      color: subTab === key ? "#000" : "#555",
+                    }}
+                  >
+                    {currentSubTabs[key]?.label}
+                  </span>
+                  {subTab === key && <div style={styles.activeUnderline} />}
+                </div>
+              ))}
+            </div>
+            {/* <p>{subTab}</p> */}
+            <div ref={contentSwipe.ref} {...contentSwipe.handlers} style={styles.content}>
+              {renderContent()}
+            </div>
 
-      {/* Main Tabs */}
-      <div ref={mainTabScroll.ref} {...mainTabScroll.handlers} style={styles.mainTabs}>
-        {mainTabs.map((tabKey) => (
-          <div
-            key={tabKey}
-            onClick={() => {
-              setMainTab(tabKey);
-              const firstSub = Object.keys(histdata[tabKey]?.subTabs || {})[0];
-              setSubTab(firstSub || "");
-            }}
-            style={{
-              ...styles.mainTab,
-              ...(mainTab === tabKey && styles.activeMainTab),
-            }}
-          >
-            {histdata[tabKey]?.label}
-          </div>
-        ))}
-      </div>
+          </>
+      }
 
-      {/* Sub Tabs */}
-      <div ref={subTabScroll.ref} {...subTabScroll.handlers} style={styles.subTabs}>
-        {subTabs.map((key) => (
-          <div
-            key={key}
-            ref={(el) => (subTabRefs.current[key] = el)} // ✅ attach ref
-            onClick={() => setSubTab(key)}
-            style={{
-              ...styles.subTabItem,
-              transform: subTab === key ? "scale(1.05)" : "scale(1)",
-              transition: "0.2s",
-            }}
-          >
-            <span
-              style={{
-                ...styles.subTabText,
-                color: subTab === key ? "#000" : "#555",
-              }}
-            >
-              {currentSubTabs[key]?.label}
-            </span>
-            {subTab === key && <div style={styles.activeUnderline} />}
-          </div>
-        ))}
-      </div>
-      <div ref={contentSwipe.ref} {...contentSwipe.handlers} style={styles.content}>
-        {renderContent()}
-      </div>
     </div>
   );
 }

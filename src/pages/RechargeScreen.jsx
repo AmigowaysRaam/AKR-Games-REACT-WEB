@@ -223,17 +223,30 @@ export default function RechargeScreen() {
             >
               <img
                 src={card?.image}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-contain"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/59 to-transparent"></div>
               <div className="relative z-10 p-4 text-white flex flex-col justify-between h-full">
                 {
                   card?.value &&
-                  <div className="text-lg font-extrabold leading-none " style={{ fontSize: "20px" }}>
+                  <div className="text-lg font-extrabold leading-none " style={{
+                    fontSize: "20px",
+                    textShadow: `
+                    0 1px 2px rgba(0,0,0,0.6),
+                    0 2px 4px rgba(0,0,0,0.6),
+                    0 0 8px rgba(255,255,255,0.3)
+                  `,
+                  }}>
                     {card?.value}
                   </div>
                 }
-                <div className="text-xs font-medium opacity-90">
+                <div className="text-xs font-medium opacity-90" style={{
+                  textShadow: `
+                    0 1px 2px rgba(0,0,0,0.6),
+                    0 2px 4px rgba(0,0,0,0.6),
+                    0 0 8px rgba(255,255,255,0.3)
+                  `,
+                }}>
                   {card?.title}
                 </div>
               </div>

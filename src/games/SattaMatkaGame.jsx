@@ -1,9 +1,8 @@
 import { ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
- 
-// ─── DATA ────────────────────────────────────────────────────────────────────
- 
+import { getSattaMatka ,placeSattaMatkaBet,getSattaUserBets} from "../services/gameSevice";
+import SattaResutList from "./fetchResultSattaMatka";
 const MATKA_MARKETS = [
   {
     id: 28,
@@ -162,9 +161,7 @@ const MATKA_MARKETS = [
     ],
   },
 ];
- 
 // ─── BET TYPES ────────────────────────────────────────────────────────────────
- 
 const BET_TYPES = [
   {
     key: "Ank",
@@ -223,9 +220,9 @@ const BET_TYPES = [
     maxLen: 6,
   },
 ];
- 
+
 // ─── RANK MEDAL ───────────────────────────────────────────────────────────────
- 
+
 function RankMedal({ rank }) {
   if (rank === 1) return <span className="text-xl">🥇</span>;
   if (rank === 2) return <span className="text-xl">🥈</span>;
@@ -236,15 +233,14 @@ function RankMedal({ rank }) {
     </span>
   );
 }
- 
+
 // ─── DETAIL SCREEN ────────────────────────────────────────────────────────────
- 
+
 export function SattaMatkaDetail() {
-  const { id } = useParams();
+  const { id, key } = useParams();
   const navigate = useNavigate();
   const market = MATKA_MARKETS.find((m) => m.id === parseInt(id));
   const onBack = () => navigate(-1);
- 
   // ✅ All hooks MUST be called before any early return
   const [activeBetType, setActiveBetType] = useState("Ank");
   const [openClose, setOpenClose] = useState("open");
@@ -252,20 +248,107 @@ export function SattaMatkaDetail() {
   const [buyAmount, setBuyAmount] = useState("");
   const [bids, setBids] = useState([]);
   const [activeTab, setActiveTab] = useState("result");
- 
+  const [apiGameData, setapiGameData] = useState(null);
+useEffect(() => {
+  if (key) {
+    fetchMainSattaMatka();
+  }
+}, [key]);
+
+const fetchMainSattaMatka = async () => {
+  try {
+    const res = await getSattaMatka({ key }); // ✅ FIXED
+
+    if (res?.success) {
+      setapiGameData(res.data);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const formatPanel = () => {
+  if (!apiGameData?.result) return "***-**-***";
+
+  const open = apiGameData.result.open;
+  const close = apiGameData.result.close;
+
+  if (open === "pending" || close === "pending") {
+    return "***-**-***";
+  }
+
+  const openFirst = open.slice(0, 3);   
+  const openLast = open.slice(3);         
+
+  const closeFirst = close.slice(0, 1);   
+  const closeLast = close.slice(1);       
+
+  const middle = openLast + closeFirst;   
+
+  return `${openFirst}-${middle}-${closeLast}`;
+};
+const formatTime = (time) => {
+  if (!time) return "";
+
+  const [hour, minute] = time.split(":");
+  let h = parseInt(hour);
+  const ampm = h >= 12 ? "PM" : "AM";
+
+  h = h % 12;
+  h = h === 0 ? 12 : h;
+
+  return `${h}:${minute} ${ampm}`;
+};
+
+
   if (!market) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">
         Market not found.{" "}
+        <p></p>
         <button onClick={onBack} className="ml-2 text-purple-600 underline">Go back</button>
       </div>
     );
   }
- 
+
   const currentBet = BET_TYPES.find((b) => b.key === activeBetType);
   const multiplier = { Ank: 9, Jodi: 90, SP: 120, DP: 180, TP: 600, HalfSangam: 1000, FullSangam: 10000 };
   const expectedWin = buyAmount ? parseInt(buyAmount || 0) * (multiplier[activeBetType] || 9) : 0;
  
+  const [myOrders, setMyOrders] = useState([]);
+const [orderPage, setOrderPage] = useState(1);
+const [loadingOrders, setLoadingOrders] = useState(false);
+useEffect(() => {
+  if (activeTab === "myorder") {
+    fetchMyOrders();
+  }
+}, [activeTab, orderPage]);
+const fetchMyOrders = async () => {
+  try {
+    setLoadingOrders(true);
+
+    const payload = {
+      user_id: 12, // 🔥 replace with real user
+      page: orderPage,
+      limit: 10,
+      market_id: apiGameData?.market_id, // or apiGameData?.market_id if available
+    };
+
+    console.log("👉 MY ORDERS PAYLOAD:", payload);
+
+    const res = await getSattaUserBets(payload);
+
+    if (res?.success) {
+      setMyOrders(res.data || []);
+    }
+
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoadingOrders(false);
+  }
+};
+
   const handleAdd = () => {
     if (!digitInput || !buyAmount) return;
     setBids((prev) => [
@@ -275,50 +358,91 @@ export function SattaMatkaDetail() {
     setDigitInput("");
     setBuyAmount("");
   };
- 
+  const handlePlaceBet = async () => {
+  if (!bids.length) return;
+
+  try {
+    for (let b of bids) {
+      const payload = {
+        user_id: 12, // 🔥 replace with real user
+        slot_number: apiGameData?.slot_number, // ✅ REAL VALUE
+        bet_type: b.type.toUpperCase(),
+        session: b.side,
+        number: b.digit,
+        amount: b.amount,
+      };
+
+      console.log("👉 SATTA BET PAYLOAD:", payload);
+
+      const res = await placeSattaMatkaBet(payload);
+
+      if (!res?.success) {
+        alert(res?.message || "Bet failed");
+        return;
+      }
+    }
+
+    alert("✅ All bets placed successfully");
+
+    setBids([]);
+    setDigitInput("");
+    setBuyAmount("");
+
+  } catch (err) {
+    console.log(err);
+  }
+};
+const handleRemoveBid = (index) => {
+  setBids((prev) => prev.filter((_, i) => i !== index));
+};
   const totalBid = bids.reduce((s, b) => s + b.amount, 0);
- 
+
   const twoRow = ["HalfSangam", "FullSangam"].includes(activeBetType);
- 
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
-        <button onClick={onBack} className="text-2xl text-gray-500 hover:text-gray-800 leading-none"><ChevronLeft/></button>
+        <button onClick={onBack} className="text-2xl text-gray-500 hover:text-gray-800 leading-none"><ChevronLeft /></button>
         <span className="font-semibold text-gray-900">Satta Matka</span>
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <span>Balance</span>
           <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">💰</div>
         </div>
       </div>
- 
+
       {/* Hero Banner */}
       <div
-        className="relative w-full h-38 bg-cover bg-center flex flex-col justify-between p-3"
-        style={{ backgroundImage: `url('${market.bgImage}')` }}
-      >
+  className="relative w-full h-38 bg-cover bg-center flex flex-col justify-between p-3"
+  style={{
+    backgroundImage: `url('${apiGameData?.image || ""}')`
+  }}
+>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70 rounded-none" />
         <div className="relative flex items-start justify-between">
           <div>
-            <div className="text-white font-extrabold text-lg tracking-wider drop-shadow">{market.name}</div>
+            <div className="text-white font-extrabold text-lg tracking-wider drop-shadow">{apiGameData?.name}
+</div>
             <div className="mt-1 bg-black/50 rounded-lg px-2 py-1 inline-flex items-center gap-1">
               <span className="text-xs text-gray-300 font-medium">PANEL:</span>
-              <span className="text-white font-mono text-xs tracking-widest">{market.panel}</span>
+              <span className="text-white font-mono text-xs tracking-widest">
+  {formatPanel()}
+</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white text-xs font-semibold">{market.number}</span>
+            <span className="text-white text-xs font-semibold">N0:{apiGameData?.market_id}</span>
             <button className="flex items-center gap-1 bg-white/20 border border-white/30 rounded-lg px-2 py-1 text-white text-xs hover:bg-white/30 transition-colors">
               📋 Rule
             </button>
           </div>
         </div>
         <div className="relative flex items-center justify-between text-xs text-white/90">
-          <span>🕐 Open {market.openTime}</span>
-          <span>🕐 Close {market.closeTime}</span>
+          <span>🕐 Open {formatTime(apiGameData?.open_time)}</span>
+          <span>🕐 Close {formatTime(apiGameData?.close_time)}</span>
         </div>
       </div>
- 
+
       {/* Bet Type Tabs */}
       <div className="bg-white border-b border-gray-100 px-3 pt-3 pb-2">
         <div className={`grid ${twoRow ? "grid-cols-5" : "grid-cols-5"} gap-2 mb-2`}>
@@ -326,11 +450,10 @@ export function SattaMatkaDetail() {
             <button
               key={bt.key}
               onClick={() => { setActiveBetType(bt.key); setDigitInput(""); }}
-              className={`py-2 rounded-xl text-xs font-semibold border transition-all ${
-                activeBetType === bt.key
-                  ? "bg-white border-purple-500 text-purple-600 shadow-sm"
-                  : "border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
+              className={`py-2 rounded-xl text-xs font-semibold border transition-all ${activeBetType === bt.key
+                ? "bg-white border-purple-500 text-purple-600 shadow-sm"
+                : "border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
             >
               {bt.label}
             </button>
@@ -341,18 +464,17 @@ export function SattaMatkaDetail() {
             <button
               key={bt.key}
               onClick={() => { setActiveBetType(bt.key); setDigitInput(""); }}
-              className={`py-2 rounded-xl text-xs font-semibold border transition-all ${
-                activeBetType === bt.key
-                  ? "bg-white border-purple-500 text-purple-600 shadow-sm"
-                  : "border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
+              className={`py-2 rounded-xl text-xs font-semibold border transition-all ${activeBetType === bt.key
+                ? "bg-white border-purple-500 text-purple-600 shadow-sm"
+                : "border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
             >
               {bt.label}
             </button>
           ))}
         </div>
       </div>
- 
+
       {/* Bet Input Section */}
       <div className="bg-white mx-0 px-4 pt-3 pb-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-2">
@@ -363,17 +485,15 @@ export function SattaMatkaDetail() {
             <div className="flex rounded-xl overflow-hidden border border-gray-200 text-xs font-semibold">
               <button
                 onClick={() => setOpenClose("open")}
-                className={`px-4 py-1.5 transition-colors ${
-                  openClose === "open" ? "bg-purple-600 text-white" : "text-gray-500 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-1.5 transition-colors ${openClose === "open" ? "bg-purple-600 text-white" : "text-gray-500 hover:bg-gray-50"
+                  }`}
               >
                 open
               </button>
               <button
                 onClick={() => setOpenClose("close")}
-                className={`px-4 py-1.5 transition-colors ${
-                  openClose === "close" ? "bg-purple-600 text-white" : "text-gray-500 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-1.5 transition-colors ${openClose === "close" ? "bg-purple-600 text-white" : "text-gray-500 hover:bg-gray-50"
+                  }`}
               >
                 close
               </button>
@@ -391,7 +511,7 @@ export function SattaMatkaDetail() {
           className="w-full border border-purple-200 rounded-xl px-4 py-3 text-sm text-center text-gray-700 placeholder-gray-300 focus:outline-none focus:border-purple-400 bg-gray-50"
         />
       </div>
- 
+      {/* <p>{JSON.stringify(useParams())}</p> */}
       {/* Expected Winning + Buy Amount */}
       <div className="bg-gray-50 px-4 pt-3 pb-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
@@ -421,16 +541,34 @@ export function SattaMatkaDetail() {
           {bids.length > 0 && (
             <div className="mt-3 border-t border-gray-100 pt-3 flex flex-col gap-1.5">
               {bids.map((b, i) => (
-                <div key={i} className="flex items-center justify-between text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-1.5">
-                  <span className="font-medium">{b.type} — {b.digit} ({b.side})</span>
-                  <span className="font-semibold text-purple-700">₹{b.amount}</span>
-                </div>
-              ))}
+  <div
+    key={i}
+    className="flex items-center justify-between text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-1.5"
+  >
+    <span className="font-medium">
+      {b.type} — {b.digit} ({b.side})
+    </span>
+
+    <div className="flex items-center gap-2">
+      <span className="font-semibold text-purple-700">
+        ₹{b.amount}
+      </span>
+
+      {/* ❌ REMOVE BUTTON */}
+      <button
+        onClick={() => handleRemoveBid(i)}
+        className="text-red-500 hover:text-red-700 text-sm font-bold"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+))}
             </div>
           )}
         </div>
       </div>
- 
+
       {/* Tabs */}
       <div className="bg-white border-b border-gray-100 px-4">
         <div className="flex">
@@ -442,9 +580,8 @@ export function SattaMatkaDetail() {
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`flex-1 py-3 text-sm relative transition-colors ${
-                activeTab === t.key ? "font-bold text-gray-900" : "text-gray-400 hover:text-gray-600"
-              }`}
+              className={`flex-1 py-3 text-sm relative transition-colors ${activeTab === t.key ? "font-bold text-gray-900" : "text-gray-400 hover:text-gray-600"
+                }`}
             >
               {t.label}
               {activeTab === t.key && (
@@ -454,34 +591,11 @@ export function SattaMatkaDetail() {
           ))}
         </div>
       </div>
- 
-      {/* Tab Content */}
+      {/* <p>{key}</p> */}
       <div className="flex-1 bg-white px-4 pb-24">
         {activeTab === "result" && (
-          <table className="w-full mt-3 text-sm">
-            <thead>
-              <tr className="text-gray-400 text-xs uppercase">
-                <th className="text-left py-2 font-semibold">Issue</th>
-                <th className="text-center py-2 font-semibold">Numbers</th>
-                <th className="text-right py-2 font-semibold">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {market.resultHistory.map((r, i) => (
-                <tr key={i} className="border-t border-gray-50">
-                  <td className="py-3 text-gray-500 text-xs">{r.issue}</td>
-                  <td className="py-3 text-center">
-                    <span className="bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-full text-xs">
-                      {r.numbers}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right text-gray-500 text-xs">{r.time}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <SattaResutList marketKey={key} resultHistory={market.resultHistory} />
         )}
- 
         {activeTab === "winners" && (
           <div className="mt-3 flex flex-col gap-3">
             {market.winners.map((w) => (
@@ -498,57 +612,81 @@ export function SattaMatkaDetail() {
             ))}
           </div>
         )}
- 
-        {activeTab === "myorder" && (
-          <div className="mt-6 text-center text-gray-400 text-sm py-12">
-            No orders placed yet.
-          </div>
-        )}
+       {activeTab === "myorder" && (
+  <div className="mt-3 flex flex-col gap-3">
+    {loadingOrders ? (
+      <div className="text-center text-gray-400 py-10">Loading...</div>
+    ) : myOrders.length === 0 ? (
+      <div className="text-center text-gray-400 py-10">
+        No orders found
       </div>
- 
-      {/* Bottom Pay Bar */}
-            <div style={{ 
-              position: "fixed",
-              bottom: 0,
+    ) : (
+      myOrders.map((order, i) => (
+        <div
+          key={i}
+          className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex flex-col gap-1"
+        >
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{order.slot_number}</span>
+            <span>{order.session.toUpperCase()}</span>
+          </div>
 
-              // 👇 center it to match app container
-              left: "50%",
-              transform: "translateX(-50%)",
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-gray-800">
+              {order.bet_type} — {order.number}
+            </span>
+            <span className="text-sm font-bold text-purple-600">
+              ₹{order.amount}
+            </span>
+          </div>
 
-              // 👇 SAME as your app max width
-              width: "100%",
-              maxWidth: 420,   // ⚠️ match your layout (420 / 480 etc)
-
-              zIndex: 100,
-              background: "#fff",
-              borderTop: "1px solid #e5e7eb"
-            }}>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>Win: ₹{order.potential_win}</span>
+            <span className="text-green-600 font-semibold">
+              {order.status || "Placed"}
+            </span>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+      </div>
+      <div style={{
+        position: "fixed",
+        bottom: 0,
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "100%",
+        maxWidth: 420,   // ⚠️ match your layout (420 / 480 etc)
+        zIndex: 100,
+        background: "#fff",
+        borderTop: "1px solid #e5e7eb"
+      }}>
 
         <div className="flex items-center gap-2 justify-between">
           <div className="flex gap-2">
-          <div className="w-9 h-9 bg-red-500 rounded-xl flex items-center justify-center">
-            <span className="text-white text-sm">🛒</span>
-          </div>
-          <div>
-            <div className="font-bold text-gray-900 text-base">₹{totalBid.toFixed(2)}</div>
-            <div className="text-xs text-gray-400">{bids.length} numbers</div>
-          </div>
+            <div className="w-9 h-9 bg-red-500 rounded-xl flex items-center justify-center">
+              <span className="text-white text-sm">🛒</span>
+            </div>
+            <div>
+              <div className="font-bold text-gray-900 text-base">₹{totalBid.toFixed(2)}</div>
+              <div className="text-xs text-gray-400">{bids.length} numbers</div>
+            </div>
           </div>
           <button
-          disabled={bids.length === 0}
-          className=" bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white font-bold px-8 py-3 rounded-full text-sm transition-colors"
-        >
-          Pay Now
-        </button>
+            onClick={handlePlaceBet}
+            disabled={bids.length === 0}
+            className=" bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white font-bold px-8 py-3 rounded-full text-sm transition-colors"
+          >
+            Pay Now
+          </button>
         </div>
-        
+
       </div>
     </div>
   );
 }
- 
-// ─── MARKET CARD ──────────────────────────────────────────────────────────────
- 
 function MarketCard({ market }) {
   const navigate = useNavigate();
   return (
@@ -563,7 +701,7 @@ function MarketCard({ market }) {
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/80" />
         <div className="absolute inset-0 flex flex-col justify-between p-3">
           <div className="text-white font-extrabold text-xl tracking-widest drop-shadow">
-            
+
           </div>
           <div className="flex flex-col gap-1">
             <div className="bg-black/50 rounded-lg px-2 py-1 self-start">
@@ -583,7 +721,7 @@ function MarketCard({ market }) {
     </div>
   );
 }
- 
+
 export function SattaMatkaList() {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6">
@@ -599,5 +737,5 @@ export function SattaMatkaList() {
     </div>
   );
 }
- 
+
 export default SattaMatkaList;  

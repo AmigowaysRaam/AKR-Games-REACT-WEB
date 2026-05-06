@@ -32,7 +32,8 @@ export default function GiftCodeModal({ open, onClose, code, setCode, loadData }
         } else {
             setAnimate(false);
             const t = setTimeout(() => {
-                setMounted(false); setCsetCouponode("");
+                setMounted(false);
+                //  setCsetCouponode("");
             }, 250);
             return () => clearTimeout(t);
         }

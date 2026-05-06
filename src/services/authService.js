@@ -49,11 +49,14 @@ export const getOtpLogin = async (phone, countryCode, flag) => {
   }
 };
 
-export const getWithdrawOtpLogin = async (phone, countryCode, flag, bId, amount) => {
+export const getWithdrawOtpLogin = async (phone, countryCode, flag, bId, amount, wallet_address, coin) => {
   try {
     const response = await API.post("?url=send-withdraw-otp", {
       "amount": amount,
-      "bank_id": bId
+      "bank_id": bId,
+      "type": flag,
+      wallet_address: wallet_address,
+      coin
     });
     return response.data;
   } catch (error) {
@@ -176,6 +179,29 @@ export const getEarningDetails = async (data) => {
     throw error;
   }
 };
+// agentDashboard
+export const agentDashboard = async (data) => {
+  try {
+    const response = await API.post("?url=agentDashboard", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+// 
+
+export const getAgencyAgentDetails = async (data) => {
+  try {
+    const response = await API.post("?url=earning-detail", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-recharge API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
 
 // getmeetthreeDetails
 export const getmeetthreeDetails = async (data) => {
@@ -197,7 +223,6 @@ export const handleResetLinkApi = async (data) => {
     throw error;
   }
 };
-
 export const getLangList = async (data) => {
   try {
     const response = await API.post("?url=languages", data);
@@ -297,7 +322,6 @@ export const getWithdrawApi = async (data) => {
     throw error;
   }
 };
-
 export const withdrawCreate = async (data) => {
   try {
     const response = await API.post("?url=withdraw-request", data);
@@ -396,6 +420,50 @@ export const getRechargeHist = async (data) => {
   }
 };
 
+// getTopicforCOnvo
+export const getTopicforCOnvo = async (data) => {
+  try {
+    const response = await API.post("?url=topics", data);
+    // alert(JSON.stringify(response));
+    return response.data;
+  } catch (error) {
+    console.error("create-getRechargeHist API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+export const startConversation = async (data) => {
+  try {
+    const response = await API.post("?url=start", data);
+    // alert(JSON.stringify(response));
+    return response.data;
+  } catch (error) {
+    console.error("create-getRechargeHist API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+// 
+export const getSyncConvo = async (data) => {
+  try {
+    const response = await API.post("?url=sync", data);
+    return response.data;
+  } catch (error) {
+    console.error("create-getRechargeHist API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// getInitData
+export const getInitData = async (data) => {
+  try {
+    const response = await API.post("?url=inti", data);
+    // alert(JSON.stringify(response));
+    return response.data;
+  } catch (error) {
+    console.error("create-getRechargeHist API Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // getPromoList
 export const getPromoList = async (data) => {
   try {
@@ -417,7 +485,7 @@ export const getCheckIndata = async (data) => {
 };
 export const getTransactionHist = async (data) => {
   try {
-    const response = await API.post("?url=transaction-history", data);
+    const response = await API.post("?url=transactions", data);
     return response.data;
   } catch (error) {
     console.error("create-getTransactionHist API Error:", error.response?.data || error.message);

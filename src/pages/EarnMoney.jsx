@@ -1,20 +1,59 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ChevronLeft, RefreshCcw } from "lucide-react";
-import { getEarningDetails, handleResetLinkApi } from "../services/authService";
+import { getAgencyAgentDetails, handleResetLinkApi } from "../services/authService";
 import GameLoader from "./LoaderComponet";
 export default function InviteFriends() {
   const navigate = useNavigate();
   const [data, SetApiData] = useState(null);
-  const copyCode = () => {
-    if (!JSON.parse(localStorage.getItem("user"))?.id) {
+  const copyCode = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user?.id) {
       showToast("User not found", "error");
-      navigate('/login');
+      navigate("/login");
       return;
     }
-    navigator.clipboard.writeText(data?.referral_code);
-    showToast('Copy to Clipboard', "success");
+
+    if (!data?.referral_code) {
+      showToast("Referral code not available", "error");
+      return;
+    }
+
+    const url = `${window.location.origin}/Sign?ref=${data?.referral_code}`;
+
+    // ✅ Modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("Link copied!", "success");
+        return;
+      } catch (err) {
+        console.log("Clipboard error:", err);
+      }
+    }
+    // ✅ Fallback (important for HTTP / older browsers)
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      showToast("Link copied!", "success");
+    } catch (err) {
+      console.log(err);
+      showToast("Failed to copy link", "error");
+    }
   };
+
+
   const [toast, setToast] = useState({ show: false, msg: "", type: "success" });
   const showToast = (msg, type = "success") => {
     setToast({ show: true, msg, type });
@@ -40,7 +79,7 @@ export default function InviteFriends() {
     }
     if (navigator.clipboard && window.isSecureContext) {
       try {
-        await navigator.clipboard.writeText(data?.referral_code);
+        await navigator.clipboard.writeText(url);
         showToast("Link copied!", "success");
         return;
       } catch (err) {
@@ -93,8 +132,7 @@ export default function InviteFriends() {
   const fetchEarning = async () => {
     try {
       setLoading(true);
-
-      const res = await getEarningDetails({
+      const res = await getAgencyAgentDetails({
         userId: JSON.parse(localStorage.getItem("user"))?.id,
       });
       const api = res?.data;
@@ -130,43 +168,37 @@ export default function InviteFriends() {
           {toast?.msg}
         </div>
       )}
-      {/* {JSON.stringify(data)} */}
       {
         loading ?
           <GameLoader />
           :
           <>
             <div style={content}>
-              <div className="px-4 py-2" style={{
+              <div className="px-4 py-2 " style={{
                 banner,
                 backgroundImage: `url(${data?.image})`,
-                position: "relative",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
+                position: "relative", backgroundSize: "cover",
+                backgroundPosition: "center", borderBottomRightRadius: "4%",
+                borderBottomLeftRadius: "4%"
               }}>
-
                 <div style={{
                   position: "relative", zIndex: 2, paddingTop: "45%",
                 }}>
                   <div
                     style={{
                       display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      background: "#f3f4f6",
-                      borderRadius: "12px",
-                      padding: "10px 12px",
-                      padding: "6px 10px", borderRadius: "10px",
+                      justifyContent: "space-between", alignItems: "center",
+                      background: "#f3f4f6", borderRadius: "12px",
+                      padding: "10px 12px", padding: "6px 10px", borderRadius: "10px",
                       background: "linear-gradient(90deg, rgba(255,215,0,0.9), rgba(255,255,255,0.1))",
-                      backdropFilter: "blur(12px)",
-                      display: "flex", alignItems: "center", gap: "10px"
+                      backdropFilter: "blur(12px)", display: "flex", alignItems: "center", gap: "10px"
 
                     }}
                   >
                     <span
                       style={{
                         fontWeight: "600",
-                        fontSize: "25px",
+                        fontSize: "15px",
                         letterSpacing: "1px",
                         color: "#111",
                         alignSelf: "center"
@@ -183,7 +215,7 @@ export default function InviteFriends() {
 
                         onClick={() => handleResetLink()}
                         style={{
-                          fontSize: "12px",
+                          fontSize: "10px",
                           color: data?.referral_code ? "#fff" : "#777",
                           cursor: "pointer",
                           fontWeight: "500",
@@ -207,7 +239,7 @@ export default function InviteFriends() {
                           cursor: "pointer",
                           fontWeight: "500",
                           background: data?.referral_code ? "#7c3aed" : "#e5e5e5",
-                          fontSize: "12px",
+                          fontSize: "10px",
                         }}
                       >
                         Copy
@@ -375,7 +407,7 @@ export default function InviteFriends() {
                       disabled={b?.isCompleted}
                       className={`px-4 py-2 rounded-lg text-white transition-all w-full
                         my-4
-    ${b?.isCompleted
+                        ${b?.isCompleted
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-violet-500 active:scale-95"
                         }

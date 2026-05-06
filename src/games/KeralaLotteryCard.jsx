@@ -398,21 +398,26 @@ function ResultHistoryTab({ lottery }) {
 function MyOrderTab({ lottery }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-    const formatDateTime = (date) => {
+const formatDateTime = (date) => {
   if (!date) return "-";
 
   const d = new Date(date);
 
-  return d.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
+  // ❗ handle invalid date
+  if (isNaN(d)) return date;
 
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = d.toLocaleString("en-IN", { month: "short" });
+  const year = d.getFullYear();
+
+  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
+};
   useEffect(() => {
     fetchOrders();
   }, [lottery]);
@@ -525,6 +530,27 @@ const getStatusUI = (order) => {
     );
 }
 
+const formatDateTime = (date) => {
+  if (!date) return "-";
+
+  // fix API format "YYYY-MM-DD HH:mm:ss"
+  const safeDate = date.includes(" ") ? date.replace(" ", "T") : date;
+
+  const d = new Date(safeDate);
+  if (isNaN(d)) return date;
+
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = d.toLocaleString("en-IN", { month: "short" });
+  const year = d.getFullYear();
+
+  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
+};
 export function KeralaLotteryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -591,7 +617,7 @@ useEffect(() => {
           name: item.name,
           code: item.code,
           number: item.lotteryDigit?.split(""),
-          drawTime: `${item.drawDate} ${item.drawTime}`,
+          drawTime: formatDateTime(`${item.drawDate} ${item.drawTime}`),
           price: item.price,
           prize: item.jackpot,
           tickets: [],

@@ -30,9 +30,14 @@ export default function SattaMatka({ items = [] }) {
             <div
               key={item.id}
               className="rounded-sm overflow-hidden shadow-sm bg-white"
-              onClick={() => navigate(`/matka/${item.id}`)}
+              // onClick={() => navigate(`/matka/${item.id}`)}
+              onClick={() => navigate(`/matka/${item.id}/${item.seoUrl}`)}
             >
+              {/* <p>{JSON.stringify(item)}</p> */}
               {/* CARD IMAGE */}
+              {/* {"id":26,"name":"Bengal Bazar","title":"Bengal Bazar","img":"https://www.akrlottery.com/uploads/1776343572134.png","seoUrl":"bengal-bazar","position":1,"description":null,"start_date":"2026-04-26T00:00:00.000Z","end_date":"2026-04-26T00:00:00.000Z","game_type":"matka","nav":"bengalbazar","key":"bengalbazar","price":"50.00","color_code":["bengalbazar"],"closed_image":null}
+ */}
+
               <div
                 className="relative h-[150px] flex items-center justify-center text-white"
                 style={{

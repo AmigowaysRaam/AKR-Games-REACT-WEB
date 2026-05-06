@@ -25,18 +25,17 @@ export default function MeetThreeScreeen() {
       setLoading(false);
     }
   };
+  
   useEffect(() => {
     fetchEarning();
   }, []);
-
   if (loading) return <GameLoader />;
-
   const bgImage =
     apiData?.image
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center overflow-hidden">
       <div
-        className="absolute inset-0 bg-cover bg-center scale-100 blur-sm brightness-45"
+        className="absolute inset-0 bg-cover bg-center scale-100 blur-sm brightness-20"
         style={{ backgroundImage: `url(${bgImage})` }}
       />
       <div className="relative w-full flex flex-col items-center">
@@ -95,7 +94,6 @@ export default function MeetThreeScreeen() {
                   ))}
                 </div>
               </div>
-              {/* <p>{JSON.stringify(apiData?.show_offer)}</p> */}
               <div className="mt-auto pt-4">
                 <p className="text-xs text-center opacity-80 mb-3">
                   {apiData?.terms?.length

@@ -106,7 +106,7 @@ export default function WithdrawHistory() {
 
                 <div>
                   <p className="text-gray-400">Ref ID</p>
-                  <p className="font-medium text-gray-700">{item.txn_id}</p>
+                  <p className="font-medium text-gray-700">{item.txn_id || '- - - - - - - - '}</p>
                 </div>
               </div>
             </div>

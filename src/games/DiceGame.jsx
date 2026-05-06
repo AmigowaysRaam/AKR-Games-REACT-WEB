@@ -7,11 +7,18 @@ import { getWalletSummary } from "../services/authService";
 import { ChevronLeft } from "lucide-react";
 import oddImg from "../assets/Odd.png";
 import evenImg from "../assets/Even.png";
-import smallImg from "../assets/Small.png";
+import smallImg from "../assets/Small.png"; 
 import bigImg from "../assets/Big.png";
+import dice1 from "../assets/dice1.png";
+import dice2 from "../assets/dice2.png";
+import dice3 from "../assets/dice3.png";
+import dice4 from "../assets/dice4.png";
+import dice5 from "../assets/dice5.png";
+import dice6 from "../assets/dice6.png";
 function useAudioEngine() {
   const ctxRef = useRef(null);
 const masterGainRef = useRef(null);
+
 const getCtx = useCallback(() => {
   if (!ctxRef.current) {
     ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -157,8 +164,6 @@ const playTick = useCallback((urgent = false) => {
 
   return { playRoll, playTick, playWin, playLose };
 }
-
-
 const PERIODS = [
   { key: "1m",  label: "1min",  seconds: 60,  lockAt: 10 },
   { key: "3m",  label: "3min",  seconds: 180, lockAt: 30 },
@@ -167,8 +172,6 @@ const PERIODS = [
 ];
 
 const BET_TABS = ["Sum", "Triple", "Double", "Single"];
-
-
 const TRIPLE_BETS = [1,2,3,4,5,6].map((n,i)=>({
   id:`T${n}`,
   label:String(n),
@@ -201,7 +204,7 @@ const BALL_IMAGES = {
   green: greenBall
 }
 
-
+const DICE_IMAGES = { 1: dice1, 2: dice2, 3: dice3, 4: dice4, 5: dice5, 6: dice6 };
 /* ══════════════════════════════════════════════════════
    SEED HISTORY
 ══════════════════════════════════════════════════════ */
@@ -217,86 +220,62 @@ function seedHistory() {
    ATOMS
 ══════════════════════════════════════════════════════ */
 function Dice3D({ value, rolling, size = 60 }) {
-  const half = size / 2;
+  const [displayValue, setDisplayValue] = React.useState(value);
+  const [shake, setShake] = React.useState(false);
 
-  // Each face is placed with getFacePosition(face, half).
-  // To SHOW face N, we rotate the CUBE in the OPPOSITE direction.
-  const faceTransforms = {
-    1: "rotateX(0deg) rotateY(0deg)",     // translateZ → no rotation needed
-    2: "rotateX(-90deg)",                  // face2 = rotateX(90) translateZ → show with rotateX(-90)
-    3: "rotateY(-90deg)",                  // ✅ FIXED — face3 = rotateY(90) → show with rotateY(-90)
-    4: "rotateY(90deg)",                   // ✅ FIXED — face4 = rotateY(-90) → show with rotateY(+90)
-    5: "rotateX(90deg)",                   // face5 = rotateX(-90) → show with rotateX(+90)
-    6: "rotateX(180deg)",                  // face6 = rotateX(180)
-  };
+  React.useEffect(() => {
+    if (rolling) {
+      setShake(true);
+      let count = 0;
+      const interval = setInterval(() => {
+        setDisplayValue(Math.ceil(Math.random() * 6));
+        count++;
+        if (count > 8) {
+          clearInterval(interval);
+          setDisplayValue(value);
+          setShake(false);
+        }
+      }, 80);
+      return () => clearInterval(interval);
+    } else {
+      setDisplayValue(value);
+      setShake(false);
+    }
+  }, [rolling, value]);
 
   return (
-    <div style={{ perspective: size * 6 }}>
-      <div
+    <div
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        animation: shake ? "diceShake 0.08s infinite alternate" : "none",
+      }}
+    >
+      <style>{`
+        @keyframes diceShake {
+          from { transform: rotate(-10deg) scale(1.05); }
+          to   { transform: rotate(10deg)  scale(0.95); }
+        }
+      `}</style>
+      <img
+        src={DICE_IMAGES[displayValue] || DICE_IMAGES[1]}
+        alt={`dice-${displayValue}`}
         style={{
-          width: size,
-          height: size,
-          position: "relative",
-          transformStyle: "preserve-3d",
-          transform: rolling
-            ? "rotateX(720deg) rotateY(720deg)"
-            : faceTransforms[value],
-          transition: rolling
-            ? "transform 0.8s cubic-bezier(0.2,0.8,0.2,1)"
-            : "transform 0.4s ease-out",
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          userSelect: "none",
+          pointerEvents: "none",
         }}
-      >
-        {[1, 2, 3, 4, 5, 6].map((face) => (
-          <div
-            key={face}
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              background: "white",
-              border: "2px solid #ccc",
-              borderRadius: size * 0.15,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transform: getFacePosition(face, half),
-            }}
-          >
-            <DiceDots value={face} size={size} />
-          </div>
-        ))}
-      </div>
+      />
     </div>
   );
 }
 
-function DiceDots({ value, size }) {
-  const dots = DICE_DOTS[value];
 
-  // 🔥 smarter scaling
-  const r = Math.max(3.5, size * 0.14);   // minimum size + responsive
-  const svgSize = size * 0.85;
-
-  return (
-    <svg width={svgSize} height={svgSize} viewBox="0 0 100 100">
-      {dots.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={r} fill="#111" />
-      ))}
-    </svg>
-  );
-}
-
-function getFacePosition(face, half) {
-  switch (face) {
-    case 1: return `translateZ(${half}px)`;
-    case 2: return `rotateX(90deg) translateZ(${half}px)`;
-    case 3: return `rotateY(90deg) translateZ(${half}px)`;
-    case 4: return `rotateY(-90deg) translateZ(${half}px)`;
-    case 5: return `rotateX(-90deg) translateZ(${half}px)`;
-    case 6: return `rotateX(180deg) translateZ(${half}px)`;
-    default: return "";
-  }
-}
 function DigitBox({digit,urgent}) {
   return (
     <div style={{
@@ -399,8 +378,8 @@ if (item.type === "special") return (
   src={getTagImage(item.label?.toUpperCase())}
   alt={item.label}
   style={{
-    width: "100%",
-    height: "100%",
+    width: "90%",
+    height: "90%",
     objectFit: "contain",
   }}
 />
@@ -783,147 +762,125 @@ function ResultHistoryTab({
   handleNext,
   handlePrev
 }) {
-
-  const Ball = ({ text, color }) => (
-    <div style={{
-      minWidth: 36,
-      height: 36,
-      borderRadius: "50%",
-      background: color,
-      color: "#fff",
-      fontSize: 11,
-      fontWeight: 700,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      boxShadow: "inset 0 2px 4px rgba(0,0,0,0.25)"
-    }}>
-      {text}
-    </div>
-  );
-
-  const SmallBall = ({ text, color }) => (
-    <div style={{
-      minWidth: 36,
-      height: 36,
-      borderRadius: "50%",
-      background: "#eee",
-      color: color,
-      fontSize: 11,
-      fontWeight: 700,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
-      {text}
-    </div>
-  );
-const cellCenter = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const cellLeft = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-start",
-};
   return (
-    <div style={{ padding: 10 }}>
+    <div style={{ padding: 12 }}>
 
       {/* HEADER */}
-<div style={{
-  display: "grid",
-  gridTemplateColumns: "1.4fr 1.2fr 0.6fr 0.9fr 0.9fr",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "#666",
-  padding: "8px 6px"
-}}>
-  <div style={{ textAlign: "left" }}>Issue</div>
-  <div style={{ textAlign: "center" }}>Result</div>
-  <div style={{ textAlign: "center" }}>Sum</div>
-  <div style={{ textAlign: "center" }}>Value</div>
-  <div style={{ textAlign: "center" }}>Number</div>
-</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.6fr 1.4fr 0.6fr 0.9fr 0.9fr",
+          fontSize: 13,
+          color: "#777",
+          padding: "10px 12px",
+        }}
+      >
+        <div>Issue</div>
+        <div style={{ textAlign: "center" }}>Result</div>
+        <div style={{ textAlign: "center" }}>Sum</div>
+        <div style={{ textAlign: "center" }}>Value</div>
+        <div style={{ textAlign: "center" }}>Number</div>
+      </div>
 
-      {/* LIST */}
-      {history.map((row, i) => (
-        <div key={i} style={{
-            display: "grid",
-  gridTemplateColumns: "1.4fr 1.2fr 0.6fr 0.9fr 0.9fr",
-  alignItems: "center",
-  padding: "10px 6px",
-  borderRadius: 10,
-  marginBottom: 6,
-  background: i % 2 === 0 ? "#fff" : "#f9f9fb"
-        }}>
+      {/* CARD LIST */}
+      <div
+        style={{
+          background: "#f6f7fb",
+          borderRadius: 16,
+          overflow: "hidden"
+        }}
+      >
+        {history.map((row, i) => (
+          <div
+            key={i}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.6fr 1.4fr 0.6fr 0.9fr 0.9fr",
+              alignItems: "center",
+              padding: "12px",
+              background: i % 2 === 0 ? "#fff" : "#f3f4f7"
+            }}
+          >
 
-          {/* ISSUE */}
-          <div style={{
-  ...cellLeft,
-  fontSize: 12,
-  color: "#444",
-  lineHeight: "14px"
-}}>
-  {row.issue}
-</div>
+            {/* ISSUE (2 LINE FORMAT like screenshot) */}
+            <div
+              style={{
+                fontSize: 10,
+                color: "#333",
+                lineHeight: "16px"
+              }}
+            >
+              {row.issue.slice(0, 16)} 
+              
+            </div>
 
-          {/* DICE */}
-          <div style={{
-  ...cellCenter,
-  gap: 4
-}}>
-  {row.dice.map((d, j) => (
-    <Dice3D key={j} value={d} size={26} dotScale={0.36} />
-  ))}
-</div>
+            {/* DICE */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 6
+              }}
+            >
+              {row.dice.map((d, j) => (
+                <Dice3D key={j} value={d} size={20}/>
+              ))}
+            </div>
 
-          {/* SUM */}
-          <div style={{
-  ...cellCenter,
-  fontSize: 16,
-  fontWeight: 700
-}}>
-  {row.sum}
-</div>
-          {/* BIG / SMALL */}
-<div style={cellCenter}>
-  <img
-    src={getTagImage(row.tag)}
-    style={{ width: 32, height: 32 }}
-  />
-</div>
+            {/* SUM */}
+            <div
+              style={{
+                textAlign: "center",
+                fontWeight: 700,
+                fontSize: 16
+              }}
+            >
+              {row.sum}
+            </div>
 
-          {/* ODD / EVEN */}
-<div style={cellCenter}>
-  <img
-    src={getTagImage(row.even ? "EVEN" : "ODD")}
-    style={{ width: 32, height: 32 }}
-  />
-</div>
+            {/* BIG / SMALL (reuse your image function) */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              {row.tag && (
+                <img
+                  src={getTagImage(row.tag)}
+                  alt={row.tag}
+                  style={{ width: 34, height: 34 }}
+                />
+              )}
+            </div>
 
-        </div>
-      ))}  
+            {/* EVEN / ODD (reuse same function) */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <img
+                src={getTagImage(row.even ? "EVEN" : "ODD")}
+                alt={row.even ? "EVEN" : "ODD"}
+                style={{ width: 34, height: 34 }}
+              />
+            </div>
+
+          </div>
+        ))}
+      </div>
 
       {/* PAGINATION */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 12,
-        padding: "8px"
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 14,
+          padding: "10px 4px"
+        }}
+      >
         <button
           onClick={handlePrev}
           disabled={histPage === 1}
           style={{
-            padding: "6px 12px",
-            borderRadius: 8,
+            width: 40,
+            height: 40,
+            borderRadius: 10,
             border: "none",
-            background: histPage === 1 ? "#ddd" : "#eee",
-            cursor: histPage === 1 ? "not-allowed" : "pointer"
+            background: "#eee"
           }}
         >
           ‹
@@ -937,17 +894,16 @@ const cellLeft = {
           onClick={handleNext}
           disabled={!hasMoreHistory}
           style={{
-            padding: "6px 12px",
-            borderRadius: 8,
+            width: 40,
+            height: 40,
+            borderRadius: 10,
             border: "none",
-            background: !hasMoreHistory ? "#ddd" : "#eee",
-            cursor: !hasMoreHistory ? "not-allowed" : "pointer"
+            background: "#eee"
           }}
         >
           ›
         </button>
       </div>
-
     </div>
   );
 }
@@ -1650,7 +1606,6 @@ useEffect(() => {
 
 const fetchGameData = async (key = periodKey) => {
   const res = await getDiceGame({ key });
-
   if (!res?.success) return;
 
   const g = res.data?.[0]; // ✅ FIX

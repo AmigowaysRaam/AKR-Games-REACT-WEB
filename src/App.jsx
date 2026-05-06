@@ -60,6 +60,8 @@ import CommingSoon from "./pages/commingSoon";
 import BonusClainHIstory from "./pages/BonusClainHIstory";
 import ScratchFullScreen from "./pages/ScratchCard";
 import QuickRaceGame from "./games/QuickRaceGame";
+import LotteryDetail from "./pages/lottteryDetails";
+import ServerDown from "./components/serverdown";
 // ─── APP WRAPPER ─────────────────
 function AppWrapper() {
   const location = useLocation();
@@ -170,7 +172,7 @@ function AppWrapper() {
             </div>
           )}
           <Routes>
-          <Route path="/quickrace" element={<PrivateRoute><QuickRaceGame /></PrivateRoute>} />
+            <Route path="/quickrace" element={<PrivateRoute><QuickRaceGame /></PrivateRoute>} />
             <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
             <Route path="/dice/:key" element={<PrivateRoute><DiceGame /></PrivateRoute>} />
             {/* <Route path="/dice" element={<PrivateRoute><DiceGame /></PrivateRoute>} /> */}
@@ -218,10 +220,9 @@ function AppWrapper() {
             <Route path="/RulesScreeen" element={<PrivateRoute><RulesScreen /></PrivateRoute>} />
             {/*  */}
             <Route path="/ForgetPassword" element={<PrivateRoute><ForgetPassword /></PrivateRoute>} />
-            {/* Public */}
             <Route path="/Login" element={<LoginPage />} />
             <Route path="/Sign" element={<SignUpPage />} />
-
+            <Route path="/server-down" element={<ServerDown />} />
             <Route
               path="/state-lottery"
               element={
@@ -238,10 +239,12 @@ function AppWrapper() {
                 </PrivateRoute>
               }
             />
+            <Route path="/lotterydetails/:id" element={<LotteryDetail />} />
             <Route path="/threedigit" element={<PrivateRoute><ThreeDigitList /></PrivateRoute>} />
             <Route path="/threedigit/:id" element={<PrivateRoute><ThreeDigitDetail /></PrivateRoute>} />
             <Route path="/matka" element={<PrivateRoute><SattaMatkaList /></PrivateRoute>} />
-            <Route path="/matka/:id" element={<PrivateRoute><SattaMatkaDetail /></PrivateRoute>} />
+            <Route path="/matka/:id/:key" element={<PrivateRoute><SattaMatkaDetail /></PrivateRoute>} />
+            {/* <Route path="/matka/:id/:key" element={<SattaMatkaDetail />} /> */}
             <Route path="/kerala-lottery" element={<PrivateRoute><KeralaLotteryList /></PrivateRoute>} />
             <Route path="/kerala-lottery/:id" element={<PrivateRoute><KeralaLotteryDetail /></PrivateRoute>} />
           </Routes>

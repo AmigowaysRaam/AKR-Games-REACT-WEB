@@ -5,7 +5,7 @@ import MasterCategoryScreen from "./MasterCategory";
 import NottifeeBaner from "../components/NottifeeBaner";
 import PopupModal from "../PopupModal";
 import { homeApi } from "../services/authService";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate, useNavigation } from "react-router-dom";
 import GameLoader from "./LoaderComponet";
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState("");
@@ -21,6 +21,7 @@ export default function HomePage() {
   const [dataFromChild, setDataFromChild] = useState("");
   const [closeSignal, setCloseSignal] = useState(false);
 
+  const navigate = useNavigate();
   const [laoding, setlaoding] = useState(false);
 
   useEffect(() => {
@@ -279,6 +280,66 @@ export default function HomePage() {
                     )}
                   </button>
                 ))}
+            </div>
+          </div>
+        </div>
+        <>
+          <style> {`
+                  @keyframes spinBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } @keyframes antiSpin { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } } `} </style>
+        </>
+        <div
+          onClick={() => navigate("/promo")}
+          style={{
+            position: "fixed",
+            transform: "translateX(-50%)",
+            bottom: "calc(100px + env(safe-area-inset-bottom))",
+            width: "80px",
+            height: "100px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 40,
+            cursor: "pointer",
+            left: "50%",
+            transform: "translateX(100px)", // move right inside container
+          }}
+        >
+          <div
+            style={{
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              padding: "3px",
+              background: "conic-gradient(red, orange, yellow, red)",
+              animation: "spinBorder 0.5s linear infinite",
+              boxShadow: "0 0 15px rgba(255,0,0,1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                background: "#f9f9f9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                animation: "antiSpin 0.5s linear infinite",
+              }}
+            >
+              <img
+                src="https://www.akrlottery.com/assets/images/promotion.png"
+                style={{
+                  width: "60%",
+                  height: "60%",
+                  objectFit: "contain",
+                }}
+              />
             </div>
           </div>
         </div>

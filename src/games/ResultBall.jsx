@@ -71,7 +71,7 @@ export default function ResultBall({ digit, color, size = 36, style = {} }) {
 /** Row of 6 result balls — used in Previous Result + History */
 export function ResultBallRow({ digits, size = 32 }) {
   // Column color mapping for the 6 positions
-  const COL_COLORS = ['#9CA3AF','#9CA3AF','#F59E0B','#3B82F6','#EF4444','#22C55E'];
+  const COL_COLORS = ['#F59E0B','#3B82F6','#EF4444','#22C55E'];
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
       {digits.map((d, i) => (

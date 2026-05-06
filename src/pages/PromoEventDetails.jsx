@@ -84,7 +84,11 @@ export default function PromoEventDetails() {
           }
           {event?.levels?.length > 0 && (
             <div className="bg-white mx-4  p-4  shadow-lg">
-              <p className="font-semibold mb-3">Event Rewards</p>
+              {
+                event?.key !== 'agent-promotion' &&
+                <p className="font-semibold mb-3">Event Rewards</p>
+              }
+
               <div className="space-y-2 text-xs">
                 {event?.levels.map((lvl, index) => (
                   <div

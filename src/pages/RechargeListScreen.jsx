@@ -91,10 +91,32 @@ export default function RechargeListScreen() {
       <div className="header">
         <ChevronLeft size={22} className=" cursor-pointer" onClick={() => navigate(-1)} />
         <span className="title">VIP</span>
-        <div className="balance">
-          <span>Balance</span>
-          <b>{wallet}</b>
-          <div className="walletIcon" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+
+            background: "rgba(255, 255, 255, 0.08)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            borderRadius: "4px",
+            padding: "2px 12px",
+            color: "#fff",
+            minWidth: "120px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+          }}
+        >
+          <div style={{}}>
+            <span style={{ fontSize: "10px", opacity: 0.7, color: "#000" }}>
+              Balance
+            </span>
+            <b style={{ fontSize: "16px", marginTop: "2px", color: "#000" }}>
+              {` ₹${wallet}`}
+            </b>
+          </div>
         </div>
       </div>
       {loading && (
